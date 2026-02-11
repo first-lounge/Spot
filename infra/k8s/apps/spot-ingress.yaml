@@ -19,3 +19,10 @@ spec:
                 name: spot-gateway
                 port:
                   number: 80
+          - path: /kafka-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: kafka-ui-svc
+                port:
+                  number: 80
