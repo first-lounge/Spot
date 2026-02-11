@@ -93,6 +93,8 @@ services:
   connect-init:
     image: curlimages/curl:latest
     container_name: connect-init
+    env_file:
+      - .env
     depends_on:
       - connect
     networks:
@@ -118,6 +120,7 @@ services:
     networks:
       - spot-network
 
+# --- Temporal 1---
   temporal:
     container_name: temporal
     image: temporalio/auto-setup:1.29.3
