@@ -4,23 +4,37 @@ kind: Kustomization
 # namespace: spot 제거 - 각 리소스가 자체 네임스페이스 유지
 
 resources:
+  # Base
   - base/namespace.yaml
   - base/configmap.yaml
   - base/postgres.yaml
   - base/redis.yaml
-  - base/kafka.yaml
+
+  # Kafka
+  - base/kafka/kafka.yaml
+  - base/kafka/kafka-connect.yaml
+  - base/kafka/kafka-connect-init.yaml
+  - base/kafka/kafka-ui.yaml
+
+  # Monitoring & Logging
   - base/monitoring/loki/loki.yaml
   - base/monitoring/loki/loki-config.yaml
   - base/monitoring/monitoring-ingress.yaml
-  - base/monitoring/grafana/grafana.yaml
-  - base/monitoring/grafana/grafana-config.yaml
   - base/monitoring/fluent-bit/fluent-bit.yaml
   - base/monitoring/fluent-bit/fluent-bit-config.yaml
+
+  # Grafana
+  - base/monitoring/grafana/grafana.yaml
+  - base/monitoring/grafana/grafana-config.yaml
+
+  # Spot Monitoring
   - base/monitoring/servicemonitors/spot-gateway-servicemonitor.yaml
   - base/monitoring/servicemonitors/spot-user-servicemonitor.yaml
   - base/monitoring/servicemonitors/spot-order-servicemonitor.yaml
   - base/monitoring/servicemonitors/spot-store-servicemonitor.yaml
   - base/monitoring/servicemonitors/spot-payment-servicemonitor.yaml
+
+  # Spot Apps
   - apps/spot-ingress.yaml
   - apps/spot-gateway.yaml
   - apps/spot-user.yaml
@@ -42,6 +56,16 @@ configMapGenerator:
       - ../../config/spot-payment.yml
     options:
       disableNameSuffixHash: true
+
+  - name: kafka-connect-init-config
+    namespace: spot
+    files:
+        - ../../connectors/order-outbox.json
+        - ../../connectors/payment-outbox.json
+        - ../../connectors/register-connectors.sh
+    options:
+      disableNameSuffixHash: true
+
   - name: grafana-dashboards-spot
     namespace: monitoring
     files:

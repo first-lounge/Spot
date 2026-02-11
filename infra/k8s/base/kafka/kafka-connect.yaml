@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-connect
+  namespace: spot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-connect
+  template:
+    metadata:
+      labels:
+        app: kafka-connect
+    spec:
+      containers:
+        - name: kafka-connect
+          image: quay.io/debezium/connect:3.4.0.Final
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+          env:
+            - name: CONNECT_CONFIG_PROVIDERS
+              value: 'env'
+            - name: CONNECT_CONFIG_PROVIDERS_ENV_CLASS
+              value: 'org.apache.kafka.common.config.provider.EnvVarConfigProvider'
+            - name: CONNECT_BOOTSTRAP_SERVERS
+              value: kafka:9092
+            - name: GROUP_ID
+              value: "1"
+            - name: CONFIG_STORAGE_TOPIC
+              value: my_connect_configs
+            - name: OFFSET_STORAGE_TOPIC
+              value: my_connect_offsets
+            - name: STATUS_STORAGE_TOPIC
+              value: my_connect_statuses
+            - name: KEY_CONVERTER
+              value: org.apache.kafka.connect.json.JsonConverter
+            - name: VALUE_CONVERTER
+              value: org.apache.kafka.connect.json.JsonConverter
+            - name: CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE
+              value: "false"
+            - name: CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE
+              value: "false"
+            - name: LOGGING_LEVEL
+              value: 'WARN'
+            - name: CONNECT_LOG4J_LOGGERS
+              value: "org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-connect-svc
+  namespace: spot
+spec:
+  type: ClusterIP
+  selector:
+    app: kafka-connect
+  ports:
+      - port: 8083
+        targetPort: 8083
