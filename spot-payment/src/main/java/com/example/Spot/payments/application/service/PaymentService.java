@@ -44,8 +44,8 @@ public class PaymentService {
     // ******* //
     // 결제 취소 //
     // ******* //
-    public boolean refundByOrderId(UUID orderId) {
-        return paymentCancellationService.refundByOrderId(orderId);
+    public boolean refundByOrderId(UUID orderId, String reason) {
+        return paymentCancellationService.refundByOrderId(orderId, reason);
     }
 
     public PaymentResponseDto.Cancel executeCancel(PaymentRequestDto.Cancel request) {

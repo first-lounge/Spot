@@ -6,7 +6,8 @@ import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
 
 @WorkflowInterface
-public interface PaymentWorkflow {
+public interface PaymentCancelWorkflow {
+    
     @WorkflowMethod
-    void processPayment(UUID paymentId);
+    void processCancel(UUID orderId, String reason);
 }

@@ -9,19 +9,18 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.Spot.global.presentation.advice.ResourceNotFoundException;
 import com.example.Spot.payments.domain.entity.PaymentHistoryEntity;
 import com.example.Spot.payments.domain.entity.PaymentKeyEntity;
-import com.example.Spot.payments.domain.entity.PaymentRetryEntity;
 import com.example.Spot.payments.domain.repository.PaymentHistoryRepository;
 import com.example.Spot.payments.domain.repository.PaymentKeyRepository;
-import com.example.Spot.payments.domain.repository.PaymentRetryRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentHistoryService {
 
     private final PaymentHistoryRepository paymentHistoryRepository;
-    private final PaymentRetryRepository paymentRetryRepository;
     private final PaymentKeyRepository paymentKeyRepository;
 
     @Transactional
@@ -50,6 +49,11 @@ public class PaymentHistoryService {
     }
 
     @Transactional
+    public void recordCancelFailure(UUID paymentId) {
+        createPaymentHistory(paymentId, PaymentHistoryEntity.PaymentStatus.CANCEL_FAILED);
+    }
+
+    @Transactional
     public void recordPaymentProgress(UUID paymentId) {
         PaymentHistoryEntity latestItem =
             paymentHistoryRepository
@@ -57,17 +61,18 @@ public class PaymentHistoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("[PaymentService] 결제 이력을 찾을 수 없습니다."));
 
         if (latestItem.getStatus() != PaymentHistoryEntity.PaymentStatus.READY) {
-            throw new IllegalStateException("[PaymentService] 이미 처리된 결제입니다");
+            log.info("[멱등성 패스] 이미 처리 중이거나 완료된 결제입니다. 현재 상태: {}, paymentId: {}",
+                    latestItem.getStatus(), paymentId);
+            return;
+            
         }
 
         createPaymentHistory(paymentId, PaymentHistoryEntity.PaymentStatus.IN_PROGRESS);
     }
 
     @Transactional
-    public void recordFailure(UUID paymentId, Exception e) {
-        PaymentHistoryEntity paymentHistory =
-            createPaymentHistory(paymentId, PaymentHistoryEntity.PaymentStatus.ABORTED);
-        createPaymentRetry(paymentId, paymentHistory.getId(), e.getMessage());
+    public void recordFailure(UUID paymentId) {
+        createPaymentHistory(paymentId, PaymentHistoryEntity.PaymentStatus.ABORTED);
     }
 
     @Transactional
@@ -96,19 +101,5 @@ public class PaymentHistoryService {
                 .confirmedAt(confirmedAt)
                 .build();
         return paymentKeyRepository.save(paymentKeyEntity);
-    }
-
-    private PaymentRetryEntity createPaymentRetry(
-        UUID paymentId, UUID paymentHistoryId, String exception) {
-        PaymentRetryEntity paymentRetry =
-            PaymentRetryEntity.builder()
-                .paymentId(paymentId)
-                .failedPaymentHistoryId(paymentHistoryId)
-                .maxRetryCount(10)
-                .strategy(PaymentRetryEntity.RetryStrategy.FIXED_INTERVAL)
-                .nextRetryAt(LocalDateTime.now().plusMinutes(5))
-                .build();
-
-        return paymentRetryRepository.save(paymentRetry);
     }
 }

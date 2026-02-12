@@ -11,7 +11,6 @@ import com.example.Spot.global.feign.OrderClient;
 import com.example.Spot.global.feign.UserClient;
 import com.example.Spot.global.presentation.advice.BillingKeyNotFoundException;
 import com.example.Spot.global.presentation.advice.ResourceNotFoundException;
-import com.example.Spot.payments.application.service.PaymentHistoryService;
 import com.example.Spot.payments.domain.entity.PaymentEntity;
 import com.example.Spot.payments.domain.entity.PaymentHistoryEntity;
 import com.example.Spot.payments.domain.entity.PaymentKeyEntity;
@@ -41,7 +40,6 @@ public class PaymentApprovalService {
 
     private final PaymentGateway paymentGateway;
     private final PaymentEventProducer paymentEventProducer;
-    private final PaymentHistoryService paymentHistoryService;
 
     @Value("${toss.payments.timeout}")
     private Integer timeout;
@@ -56,21 +54,20 @@ public class PaymentApprovalService {
 
     @Ready
     public UUID ready(Integer userId, UUID orderId, PaymentRequestDto.Confirm request) {
-        PaymentEntity payment = createPayment(userId, orderId, request);
-        return payment.getId();
-    }
+        return paymentRepository.findByOrderId(orderId)
+                .map(PaymentEntity::getId)
+                .orElseGet(() -> {
+                    PaymentEntity payment = PaymentEntity.builder()
+                            .userId(userId)
+                            .orderId(orderId)
+                            .title(request.title())
+                            .content(request.content())
+                            .paymentMethod(request.paymentMethod())
+                            .totalAmount(request.paymentAmount())
+                            .build();
 
-    private PaymentEntity createPayment(Integer userId, UUID orderId, PaymentRequestDto.Confirm request) {
-        PaymentEntity payment = PaymentEntity.builder()
-                .userId(userId)
-                .orderId(orderId)
-                .title(request.title())
-                .content(request.content())
-                .paymentMethod(request.paymentMethod())
-                .totalAmount(request.paymentAmount())
-                .build();
-
-        return paymentRepository.save(payment);
+                    return paymentRepository.save(payment).getId();
+                });
     }
 
     @PaymentBillingApproveTrace
@@ -85,9 +82,7 @@ public class PaymentApprovalService {
         UUID uniqueOrderId = payment.getOrderId();
 
         TossPaymentResponse response = confirmBillingPayment(payment, billingAuth, uniqueOrderId);
-
-        paymentHistoryService.recordPaymentSuccess(paymentId, response.getPaymentKey());
-
+        
         return PaymentResponseDto.Confirm.builder()
                 .paymentId(paymentId)
                 .amount(response.getTotalAmount())

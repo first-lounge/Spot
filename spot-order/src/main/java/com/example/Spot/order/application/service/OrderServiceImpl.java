@@ -302,6 +302,7 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity order = OrderValidationContext.getCurrentOrder();
         order.initiateCancel(reason, null);
         orderEventProducer.reserveOrderCancelled(order.getId(), reason);
+        sendSignalToWorkflow(orderId, OrderStatus.CANCEL_PENDING);
         log.info("주문 거절 처리 시작 (환불 대기): orderId={}, reason={}", orderId, reason);
         
         return OrderResponseDto.from(order);
@@ -371,6 +372,7 @@ public class OrderServiceImpl implements OrderService {
         order.initiateCancel(reason, CancelledBy.CUSTOMER);
         // 주문 취소(거절) 이벤트 발행
         orderEventProducer.reserveOrderCancelled(order.getId(), reason);
+        sendSignalToWorkflow(orderId, OrderStatus.CANCEL_PENDING);
         log.info("고객에 의한 취소 처리 시작 (환불 대기): orderId={}, reason={}", orderId, reason);
 
         // 결제 취소 처리 (Payment 서비스 호출) - 비동기 전환으로 인한 주석처리: 추후 삭제 afterDelete
@@ -388,6 +390,7 @@ public class OrderServiceImpl implements OrderService {
         order.initiateCancel(reason, CancelledBy.STORE);
         // 주문 취소(거절) 이벤트 발행
         orderEventProducer.reserveOrderCancelled(order.getId(), reason);
+        sendSignalToWorkflow(orderId, OrderStatus.CANCEL_PENDING);
         log.info("가게에 의한 취소 처리 시작 (환불 대기): orderId={}, reason={}", orderId, reason);
 
         return OrderResponseDto.from(order);
@@ -428,20 +431,22 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDto completePayment(UUID orderId) {
         OrderEntity order = orderRepository.findByIdWithLock(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
-
+        
+        // 멱등성 보장 결제 처리 로직
         if (order.getOrderStatus() == OrderStatus.PENDING ||
-            order.getOrderStatus().isFinalStatus() ||
-            order.getOrderStatus() == OrderStatus.PAYMENT_FAILED) {
-            log.info("[멱등성처리] 이미 처리되었거나 변경 불가능한 상태입니다. 스킵: orderId={}, status={}",
-                    orderId, order.getOrderStatus());
-            return OrderResponseDto.from(order); // 예외 없이 정상 응답을 반환하여 컨슈머가 Ack를 찍게 함
+            order.getOrderStatus().isFinalStatus()) {
+            if (order.getOrderStatus() == OrderStatus.CANCELLED) {
+                log.warn("[주문서비스] 이미 취소된 주문에 결제 성공 이벤트 수신. 환불을 예약합니다. orderId={}", orderId);
+                orderEventProducer.reserveOrderCancelled(orderId, "타임아웃 이후 결제 성공 발생");
+            } else {
+                log.info("[멱등성처리] 이미 처리된 주문입니다. 스킵: orderId={}, status={}", orderId, order.getOrderStatus());
+            }
+            return OrderResponseDto.from(order); 
         }
         
+        // 정상 결제 처리 로직
         log.info("결제 성공 이벤트 수신 - 주문 확정 처리 시작: orderId={}", orderId);
-        
-        // 1. 상태 변경(PAYMENT_PENDING -> PENDING)
         order.completePayment();
-        // 2. 가게 사장에게 수락/거절의 이벤트 발행
         orderEventProducer.reserveOrderPending(order.getStoreId(), order.getId());
         log.info("결제 처리 및 사장님 알림 이벤트 발행 완료: orderId={}", orderId);
         sendSignalToWorkflow(orderId, OrderStatus.PENDING);

@@ -1,14 +1,13 @@
 package com.example.Spot.payments.application.service.command;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.Spot.global.presentation.advice.ResourceNotFoundException;
-import com.example.Spot.payments.application.service.PaymentHistoryService;
 import com.example.Spot.payments.domain.entity.PaymentEntity;
 import com.example.Spot.payments.domain.entity.PaymentKeyEntity;
 import com.example.Spot.payments.domain.gateway.PaymentGateway;
@@ -28,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentCancellationService {
 
     private final PaymentGateway paymentGateway;
-    private final PaymentHistoryService paymentHistoryService;
 
     @Value("${toss.payments.timeout}")
     private Integer timeout;
@@ -37,20 +35,21 @@ public class PaymentCancellationService {
     private final PaymentKeyRepository paymentKeyRepository;
 
     @Transactional
-    public boolean refundByOrderId(UUID orderId) {
-        PaymentEntity payment = paymentRepository.findActivePaymentByOrderId(orderId)
-                .orElseThrow(() -> {
-                    log.warn("[환불 스킵] 취소 가능한 결제 내역이 없거나 이미 취소되었습니다. OrderID: {}", orderId);
-                    return new ResourceNotFoundException("취소 가능한 결제 내역을 찾을 수 없습니다.");
-                });
+    public boolean refundByOrderId(UUID orderId, String reason) {
+        Optional<PaymentEntity> paymentOpt = paymentRepository.findActivePaymentByOrderId(orderId);
+        
+        if (paymentOpt.isEmpty()) {
+            log.info("[환불 스킵] 취소 가능한 결제 내역이 없습니다. (이미 취소됨 혹은 결제 전 실패) OrderID: {}", orderId);
+            return true;
+        }
+        PaymentEntity payment = paymentOpt.get();
 
         PaymentRequestDto.Cancel cancelRequest = PaymentRequestDto.Cancel.builder()
                 .paymentId(payment.getId())
-                .cancelReason("주문 서비스 요청에 의한 보상 트랜잭션 수행")
+                .cancelReason(reason)
                 .build();
 
         executeCancel(cancelRequest);
-
         return true;
     }
 
@@ -60,12 +59,8 @@ public class PaymentCancellationService {
                 .findByPaymentId(request.paymentId())
                 .orElseThrow(() -> new IllegalStateException(
                         "[PaymentCancellationService] 결제 키가 없어 취소할 수 없습니다."));
-
-        paymentHistoryService.recordCancelProgress(request.paymentId());
-
+        
         tossPaymentCancel(request.paymentId(), paymentKeyEntity.getPaymentKey(), request.cancelReason());
-
-        paymentHistoryService.recordCancelSuccess(request.paymentId());
 
         return PaymentResponseDto.Cancel.builder()
                 .paymentId(request.paymentId())

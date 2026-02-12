@@ -13,10 +13,16 @@ import io.temporal.workflow.Saga;
 import io.temporal.workflow.Workflow;
 import lombok.extern.slf4j.Slf4j;
 
-@WorkflowImpl(taskQueues = PaymentConstants.PAYMENT_TASK_QUEUE)
 @Slf4j
-public class PaymentWorkflowImpl implements PaymentWorkflow {
-    
+@WorkflowImpl(taskQueues = PaymentConstants.PAYMENT_TASK_QUEUE)
+public class PaymentApproveWorkflowImpl implements PaymentApproveWorkflow {
+
+    private static final String[] DO_NOT_RETRY_EXCEPTIONS = {
+            "com.example.Spot.global.presentation.advice.BillingKeyNotFoundException",
+            "com.example.Spot.global.presentation.advice.ResourceNotFoundException",
+            "java.lang.IllegalArgumentException"
+    };
+
     private final PaymentActivities activities = Workflow.newActivityStub(
             PaymentActivities.class,
             ActivityOptions.newBuilder()
@@ -26,30 +32,29 @@ public class PaymentWorkflowImpl implements PaymentWorkflow {
                             .setBackoffCoefficient(2.0)
                             .setMaximumInterval(Duration.ofMinutes(1))
                             .setMaximumAttempts(6)
-                            .setDoNotRetry(
-                                    "com.example.Spot.global.presentation.advice.BillingKeyNotFoundException",
-                                    "com.example.Spot.global.presentation.advice.ResourceNotFoundException",
-                                    "java.lang.IllegalArgumentException"
-                            )
+                            .setDoNotRetry(DO_NOT_RETRY_EXCEPTIONS)
                             .build())
-            .build());
-    
+                    .build());
+
     @Override
-    public void processPayment(UUID paymentId) {
+    public void processApprove(UUID paymentId) {
         Saga saga = new Saga(new Saga.Options.Builder().setContinueWithError(false).build());
-        
         try {
+            
             activities.recordStatus(paymentId, "IN_PROGRESS");
+            saga.addCompensation(activities::recordFailure, paymentId);
             activities.executePayment(paymentId);
-            saga.addCompensation(activities::refundByPaymentId, paymentId);
+            saga.addCompensation(activities::refundByPaymentId, paymentId, "시스템 오류로 인한 자동 결제 취소");
             activities.publishSucceeded(paymentId);
+
+            log.info("[승인워크플로우] 완료 - PaymentID: {}", paymentId);
             
         } catch (Exception e) {
-            log.error("[PaymentWorkflow] 최종 실패. ID: {}", paymentId);
+            log.error("[결제워크플로우] 결제 프로세스 중 에러 발생. ID: {}, 사유: {}", paymentId, e.getMessage());
             try {
                 saga.compensate();
             } catch (Exception ce) {
-                log.error("[Critical] 보상 트랜잭션 실패", ce);
+                log.error("[결제사가패턴] 보상 트랜잭션 실행 중 치명적 실패!", ce);
             }
             activities.recordStatus(paymentId, "ABORTED");
             activities.publishAuthRequired(paymentId, e.getMessage());

@@ -18,5 +18,7 @@ public interface OrderActivity {
 
     @ActivityMethod
     void cancelOrder(UUID orderId, String reason);
-        
+
+    @ActivityMethod
+    void finalizeOrder(UUID orderId);
 }

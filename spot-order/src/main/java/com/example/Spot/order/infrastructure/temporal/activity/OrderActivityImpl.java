@@ -50,4 +50,14 @@ public class OrderActivityImpl implements OrderActivity {
             orderEventProducer.reserveOrderCancelled(order.getId(), reason);
         }
     }
+    
+    @Override
+    @Transactional
+    public void finalizeOrder(UUID orderId) {
+        OrderEntity order = orderRepository.findByIdWithLock(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문 없음: " + orderId));
+        
+        order.finalizeCancel();
+    }
+    
 }

@@ -50,18 +50,14 @@ public class PaymentAspect {
             log.info("[멱등성 처리] 이미 진행 중인 결제가 존재합니다. 기존 ID 반환: {}", existingActivePayment.get().getId());
             return existingActivePayment.get().getId();
         }
-
-        try {
-            Object result = joinPoint.proceed();
-            UUID paymentId = (UUID) result;
-            paymentHistoryService.recordPaymentReady(paymentId);
-            return result;
-        } catch (Exception e) {
-            throw e;
-        }
+        
+        Object result = joinPoint.proceed();
+        UUID paymentId = (UUID) result;
+        paymentHistoryService.recordPaymentReady(paymentId);
+        return result;
     }
 
-    @Around("@annotation(paymentBillingApproveTrace)")
+    @Around("@annotation(trace)")
     public Object handlePaymentBillingApproveStatus(ProceedingJoinPoint joinPoint, PaymentBillingApproveTrace trace) throws Throwable {
 
         UUID paymentId = (UUID) joinPoint.getArgs()[0];
@@ -71,18 +67,15 @@ public class PaymentAspect {
 
             Object result = joinPoint.proceed();
 
-            if (result instanceof PaymentResponseDto.Confirm) {
-                PaymentResponseDto.Confirm response = (PaymentResponseDto.Confirm) result;
+            if (result instanceof PaymentResponseDto.Confirm response) {
                 String paymentKey = response.paymentKey();
-                
                 paymentHistoryService.recordPaymentSuccess(paymentId, paymentKey);
             }
 
             return result;
 
         } catch (Exception e) {
-            // 잠시 막아둠 - 02.04.
-            // paymentHistoryService.recordFailure(paymentId, e);
+            paymentHistoryService.recordFailure(paymentId);
             throw e;
         }
     }
@@ -94,7 +87,7 @@ public class PaymentAspect {
         }
     }
 
-    @Around("@annotation(cancelTrace)")
+    @Around("@annotation(cancel)")
     public Object handleCancelStatus(ProceedingJoinPoint jointPoint, Cancel cancel) throws Throwable {
 
         PaymentRequestDto.Cancel request = (PaymentRequestDto.Cancel) jointPoint.getArgs()[0];
@@ -110,8 +103,8 @@ public class PaymentAspect {
             return result;
 
         } catch (Exception e) {
-            paymentHistoryService.recordFailure(request.paymentId(), e);
-            throw new RuntimeException("[PaymentService] 결제 취소 실패: " + e.getMessage(), e);
+            paymentHistoryService.recordFailure(request.paymentId());
+            throw e;
         }
     }
 

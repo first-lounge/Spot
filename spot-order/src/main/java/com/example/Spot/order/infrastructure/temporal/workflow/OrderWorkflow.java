@@ -16,4 +16,7 @@ public interface OrderWorkflow {
     
     @SignalMethod
     void signalStatusChanged(OrderStatus nextStatus);
+
+    @SignalMethod
+    void signalRefundCompleted();
 }

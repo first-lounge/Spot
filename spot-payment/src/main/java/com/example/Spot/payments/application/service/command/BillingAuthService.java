@@ -16,7 +16,6 @@ import com.example.Spot.payments.presentation.dto.response.PaymentResponseDto;
 
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -87,7 +86,6 @@ public class BillingAuthService {
 
     @CircuitBreaker(name = "user_validate_activeUser")
     @Bulkhead(name = "user_validate_activeUser", type = Bulkhead.Type.SEMAPHORE)
-    @Retry(name = "user_validate_activeUser")
     private void validateUserExists(Integer userId) {
         if (!userClient.existsById(userId)) {
             throw new ResourceNotFoundException("[BillingAuthService] 사용자를 찾을 수 없습니다.");
