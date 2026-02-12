@@ -16,6 +16,10 @@ resources:
   - base/kafka/kafka-connect-init.yaml
   - base/kafka/kafka-ui.yaml
 
+  # temporal
+  - base/temporal/temporal.yaml
+  - base/temporal/temporal-ui.yaml
+
   # Monitoring & Logging
   - base/monitoring/loki/loki.yaml
   - base/monitoring/loki/loki-config.yaml

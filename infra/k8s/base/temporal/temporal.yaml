@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal
+  namespace: spot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temporal
+  template:
+    metadata:
+      labels:
+        app: temporal
+    spec:
+      containers:
+        - name: temporal
+          image: temporalio/auto-setup:1.29.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 7233
+          env:
+            - name: DB
+              value: postgres12
+            - name: POSTGRES_SEEDS
+              value: postgres
+            - name: DB_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: "admin"
+            - name: POSTGRES_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: spot-secrets
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: DBNAME
+              value: "spot_temporal"
+            - name: VISIBILITY_DBNAME
+              value: "spot_visibility"
+            - name: SKIP_SCHEMA_SETUP
+              value: "false"
+            - name: ENABLE_ES
+              value: "false"
+            - name: SKIP_DEFAULT_NAMESPACE_CREATION
+              value: "false"
+            - name: LOG_LEVEL
+              value: "warn"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-svc
+  namespace: spot
+spec:
+  type: ClusterIP
+  selector:
+    app: temporal
+  ports:
+    - port: 7233
+      targetPort: 7233

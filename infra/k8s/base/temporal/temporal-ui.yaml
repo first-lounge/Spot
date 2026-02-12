@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-ui
+  namespace: spot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temporal-ui
+  template:
+    metadata:
+      labels:
+        app: temporal-ui
+    spec:
+      containers:
+        - name: temporal-ui
+          image: temporalio/ui:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TEMPORAL_ADDRESS
+              value: "temporal-svc:7233"
+            - name: TEMPORAL_CORS_ALLOW_ORIGINS
+              value: "*"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-ui-svc
+  namespace: spot
+spec:
+  type: ClusterIP
+  selector:
+    app: temporal-ui
+  ports:
+    - port: 80
+      targetPort: 8080

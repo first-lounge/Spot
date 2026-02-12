@@ -164,6 +164,8 @@ deploy_all() {
     kubectl wait --for=condition=available deployment/kafka -n spot --timeout=180s
     kubectl wait --for=condition=available deployment/kafka-connect -n spot --timeout=180s
     kubectl wait --for=condition=available deployment/kafka-ui -n spot --timeout=180s
+    kubectl wait --for=condition=available deployment/temporal -n spot --timeout=180s
+    kubectl wait --for=condition=available deployment/temporal-ui -n spot --timeout=180s
 
     log_info "Infrastructure deployed successfully!"
 
