@@ -120,11 +120,11 @@ services:
     networks:
       - spot-network
 
-# --- Temporal 1---
+# --- Temporal ---
   temporal:
     container_name: temporal
     image: temporalio/auto-setup:1.29.3
-    ports: 
+    ports:
       - "7233:7233"
     environment:
       - DB=postgres12
@@ -142,8 +142,8 @@ services:
       - db
     networks:
       - spot-network
-      
-  
+
+
   temporal-ui:
     container_name: temporal-ui
     image: temporalio/ui:latest
@@ -156,7 +156,7 @@ services:
       - temporal
     networks:
       - spot-network
-      
+
   # --- Application Services ---
   spot-gateway:
     build:
