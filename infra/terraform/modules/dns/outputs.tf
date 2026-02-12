@@ -18,12 +18,8 @@ output "certificate_arn" {
   value       = aws_acm_certificate_validation.main.certificate_arn
 }
 
-output "api_domain" {
-  description = "API 커스텀 도메인"
-  value       = var.create_api_domain ? "api.${var.domain_name}" : null
-}
-
-output "api_domain_target" {
-  description = "API Gateway 커스텀 도메인의 target domain name"
-  value       = var.create_api_domain ? aws_apigatewayv2_domain_name.api[0].domain_name_configuration[0].target_domain_name : null
+# ALB 레코드 FQDN
+output "alb_record_fqdn" {
+  description = "ALB Alias 레코드 FQDN"
+  value       = var.create_alb_record ? aws_route53_record.alb[0].fqdn : null
 }

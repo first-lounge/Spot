@@ -21,7 +21,7 @@ resource "aws_security_group" "redis" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "Redis from ECS"
+    description     = "Redis from EKS nodes"
     from_port       = 6379
     to_port         = 6379
     protocol        = "tcp"

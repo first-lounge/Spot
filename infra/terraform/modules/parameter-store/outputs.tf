@@ -3,7 +3,7 @@
 # =============================================================================
 
 # =============================================================================
-# Parameter ARNs (ECS Task Definition secrets 블록에서 사용)
+# Parameter ARNs (EKS에서는 IRSA로 Pod에서 SSM GetParameter 권한 부여 후 사용)
 # =============================================================================
 output "db_password_arn" {
   description = "DB Password Parameter ARN"
@@ -39,14 +39,14 @@ output "redis_endpoint_arn" {
 # All Parameter ARNs (IAM Policy용)
 # =============================================================================
 output "all_parameter_arns" {
-  description = "모든 Parameter ARN 목록 (IAM Policy용)"
+  description = "모든 Parameter ARN 목록 (EKS IRSA/IAM Policy용)"
   value = compact([
     aws_ssm_parameter.db_password.arn,
     aws_ssm_parameter.jwt_secret.arn,
-    var.mail_password != "" ? aws_ssm_parameter.mail_password[0].arn : null,
-    var.toss_secret_key != "" ? aws_ssm_parameter.toss_secret_key[0].arn : null,
+      var.mail_password != "" ? aws_ssm_parameter.mail_password[0].arn : null,
+      var.toss_secret_key != "" ? aws_ssm_parameter.toss_secret_key[0].arn : null,
     aws_ssm_parameter.db_endpoint.arn,
-    var.redis_endpoint != "" ? aws_ssm_parameter.redis_endpoint[0].arn : null,
+      var.redis_endpoint != "" ? aws_ssm_parameter.redis_endpoint[0].arn : null,
   ])
 }
 
@@ -54,6 +54,6 @@ output "all_parameter_arns" {
 # Parameter Name Prefix (for wildcard IAM policies)
 # =============================================================================
 output "parameter_prefix" {
-  description = "Parameter Store prefix for IAM policies"
+  description = "Parameter Store prefix (EKS IRSA/IAM wildcard policy에서 사용)"
   value       = "/${var.project}/${var.environment}"
 }

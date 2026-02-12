@@ -50,41 +50,20 @@ resource "aws_acm_certificate_validation" "main" {
   validation_record_fqdns = [for record in aws_route53_record.acm_validation : record.fqdn]
 }
 
+
 # =============================================================================
-# API Gateway Custom Domain (Optional)
+# EKS(ALB) Record
 # =============================================================================
-resource "aws_apigatewayv2_domain_name" "api" {
-  count = var.create_api_domain ? 1 : 0
-
-  domain_name = "api.${var.domain_name}"
-
-  domain_name_configuration {
-    certificate_arn = aws_acm_certificate_validation.main.certificate_arn
-    endpoint_type   = "REGIONAL"
-    security_policy = "TLS_1_2"
-  }
-
-  tags = merge(var.common_tags, { Name = "${var.name_prefix}-api-domain" })
-}
-
-resource "aws_apigatewayv2_api_mapping" "api" {
-  count = var.create_api_domain ? 1 : 0
-
-  api_id      = var.api_gateway_id
-  domain_name = aws_apigatewayv2_domain_name.api[0].id
-  stage       = "$default"
-}
-
-resource "aws_route53_record" "api" {
-  count = var.create_api_domain ? 1 : 0
+resource "aws_route53_record" "alb" {
+  count = var.create_alb_record ? 1 : 0
 
   zone_id = aws_route53_zone.main.zone_id
-  name    = "api.${var.domain_name}"
+  name    = var.alb_record_name
   type    = "A"
 
   alias {
-    name                   = aws_apigatewayv2_domain_name.api[0].domain_name_configuration[0].target_domain_name
-    zone_id                = aws_apigatewayv2_domain_name.api[0].domain_name_configuration[0].hosted_zone_id
+    name                   = var.alb_dns_name
+    zone_id                = var.alb_zone_id
     evaluate_target_health = false
   }
 }

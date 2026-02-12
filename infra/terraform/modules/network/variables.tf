@@ -49,3 +49,12 @@ variable "single_nat_gateway" {
   type        = bool
   default     = true
 }
+
+# =============================================================================
+# EKS Cluster Name
+# =============================================================================
+variable "eks_cluster_name" {
+  description = "EKS 클러스터 이름 (Subnet tag 용도)"
+  type        = string
+  default     = "spot-eks"
+}

@@ -1,5 +1,5 @@
 # =============================================================================
-# WAF Web ACL for API Gateway
+# WAF Web ALB (EKS Ingress via AWS Load Balancer Controller)
 # =============================================================================
 resource "aws_wafv2_web_acl" "main" {
   name        = "${var.name_prefix}-waf"
@@ -111,15 +111,7 @@ resource "aws_wafv2_web_acl" "main" {
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-waf" })
 }
 
-# =============================================================================
-# WAF Association with API Gateway
-# =============================================================================
-#resource "aws_wafv2_web_acl_association" "api_gateway" {
-#  count = var.api_gateway_stage_arn != "" ? 1 : 0
-#
-#  resource_arn = var.api_gateway_stage_arn
-#  web_acl_arn  = aws_wafv2_web_acl.main.arn
-#}
+
 
 # =============================================================================
 # CloudWatch Log Group for WAF

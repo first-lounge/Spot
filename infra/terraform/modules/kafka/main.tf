@@ -27,7 +27,7 @@ resource "aws_security_group" "kafka" {
   name   = "${var.name_prefix}-kafka-sg"
   vpc_id = var.vpc_id
 
-  # Kafka 클라이언트 포트 (ECS에서 접근)
+  # Kafka 클라이언트 포트 (EKS에서 접근)
   ingress {
     from_port       = local.kafka_port
     to_port         = local.kafka_port

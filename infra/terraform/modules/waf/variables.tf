@@ -9,11 +9,6 @@ variable "common_tags" {
   default     = {}
 }
 
-variable "api_gateway_stage_arn" {
-  description = "API Gateway Stage ARN"
-  type        = string
-  default     = ""
-}
 
 variable "rate_limit" {
   description = "5분당 최대 요청 수 (Rate Limiting)"

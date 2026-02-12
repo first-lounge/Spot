@@ -206,7 +206,23 @@ resource "aws_s3_bucket_policy" "logs" {
             "aws:SourceAccount" = var.account_id
           }
         }
+      },
+      # ALB Access Logs
+      {
+        Sid    = "AllowALBAccessLogs"
+        Effect = "Allow"
+        Principal = {
+          Service = "elasticloadbalancing.amazonaws.com"
+        }
+        Action   = "s3:PutObject"
+        Resource = "${aws_s3_bucket.logs.arn}/alb-logs/*"
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = var.account_id
+          }
+        }
       }
+
     ]
   })
 }

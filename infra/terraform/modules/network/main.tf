@@ -20,6 +20,9 @@ resource "aws_subnet" "public_a" {
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-public-a"
     Tier = "public"
+
+    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
+    "kubernetes.io/role/elb"                        = "1"
   })
 }
 
@@ -32,6 +35,9 @@ resource "aws_subnet" "public_c" {
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-public-c"
     Tier = "public"
+
+    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
+    "kubernetes.io/role/elb"                        = "1"
   })
 }
 
@@ -46,6 +52,9 @@ resource "aws_subnet" "private_a" {
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-private-a"
     Tier = "private"
+
+    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb"               = "1"
   })
 }
 
@@ -54,7 +63,13 @@ resource "aws_subnet" "private_c" {
   cidr_block        = var.private_subnet_cidrs["c"]
   availability_zone = var.availability_zones["c"]
 
-  tags = merge(var.common_tags, { Name = "${var.name_prefix}-private-c" })
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-private-c"
+    Tier = "private"
+
+    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb"               = "1"
+  })
 }
 
 # =============================================================================
