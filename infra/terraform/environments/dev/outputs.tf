@@ -115,3 +115,33 @@ output "sns_alerts_topic_arn" {
   description = "알람 알림 SNS Topic ARN"
   value       = module.monitoring.sns_topic_arn
 }
+
+
+# =============================================================================
+# eks
+# =============================================================================
+
+output "eks_cluster_name" {
+  value = module.eks.cluster_name
+}
+
+output "eks_cluster_endpoint" {
+  value = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_ca" {
+  value = module.eks.cluster_ca
+}
+
+output "eks_node_security_group_id" {
+  value = module.eks.node_security_group_id
+}
+
+output "oidc_issuer_url" {
+  value = try(data.aws_eks_cluster.this.identity[0].oidc[0].issuer, null)
+}
+
+
+output "irsa_role_arns" {
+  value = module.irsa.service_account_role_arns
+}

@@ -262,3 +262,62 @@ module "monitoring" {
   # Redis 모니터링 (선택)
   redis_cluster_id = "${local.name_prefix}-redis-001"
 }
+
+# =============================================================================
+# eks
+# =============================================================================
+module "eks" {
+  source = "../../modules/eks"
+
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  cluster_name    = var.cluster_name
+  cluster_version = var.cluster_version
+
+  vpc_id = module.network.vpc_id
+
+  subnet_ids      = module.network.private_subnet_ids
+  node_subnet_ids = module.network.private_subnet_ids
+
+  endpoint_private_access = true
+  endpoint_public_access  = false
+
+  enable_node_group = false
+
+  enable_node_ssm = true
+}
+
+
+data "aws_eks_cluster" "this" {
+  name = module.eks.cluster_name
+}
+
+module "irsa" {
+  source = "../../modules/irsa"
+
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  oidc_issuer_url = module.eks.oidc_issuer_url
+
+  service_accounts = {
+    aws_load_balancer_controller = {
+      namespace       = "kube-system"
+      service_account = "aws-load-balancer-controller"
+      policy_json     = var.alb_controller_policy_json
+    }
+  }
+}
+
+module "eks_addons" {
+  source = "../../modules/eks-addons"
+
+  common_tags  = local.common_tags
+  cluster_name = module.eks.cluster_name
+
+  enable_vpc_cni    = true
+  enable_coredns    = true
+  enable_kube_proxy = true
+  enable_ebs_csi    = true
+}

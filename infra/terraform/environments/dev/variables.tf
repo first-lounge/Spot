@@ -349,3 +349,21 @@ variable "kafka_log_retention_hours" {
   type        = number
   default     = 168 # 7일
 }
+
+
+# =============================================================================
+# eks 설정
+# =============================================================================
+variable "cluster_name" {
+  cluster_name = "spot-cluster-test"
+  type = string
+}
+
+variable "cluster_version" {
+  type    = string
+  default = "1.29"
+}
+
+variable "alb_controller_policy_json" {
+  type = string
+}
