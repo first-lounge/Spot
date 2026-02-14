@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aws-ingress
+  namespace: spot
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip # IP 모드
+    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+    alb.ingress.kubernetes.io/success-codes: "200"  # 헬스 체크 성공 코드
+spec:
+  ingressClassName: alb
+  rules:
+    # spot
+    - host: spotorder.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spot-gateway
+                port:
+                  number: 80
+#
+#    # kafka
+#    - host: kafka.localhost
+#      http:
+#        paths:
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: kafka-ui-svc
+#                port:
+#                  number: 80
+#
+#    # temporal
+#    - host: temporal.localhost
+#      http:
+#        paths:
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: temporal-ui-svc
+#                port:
+#                  number: 80

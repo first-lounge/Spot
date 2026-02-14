@@ -20,7 +20,7 @@ spec:
             - containerPort: 8080
           env:
             - name: TEMPORAL_ADDRESS
-              value: "temporal:7233"
+              value: "temporal-svc:7233"
             - name: TEMPORAL_CORS_ALLOW_ORIGINS
               value: "*"
           resources:

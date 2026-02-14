@@ -1,0 +1,68 @@
+{{- range $key, $val := .Values.apps }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $val.name }}
+  namespace: {{ $val.name }}
+  labels:
+    app: {{ $val.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $val.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $val.name }}
+    spec:
+      containers:
+        - name: {{ $val.name }}
+          image: {{ .Values.global.repository }}/{{ $val.name }}:latest
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ $val.port }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.env.activeProfile }}
+            - name: LOGGING_CONFIG
+              value: {{ .Values.env.loggingConfig }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.config.secretName }}
+
+          # 리소스 설정
+          resources:
+            requests:
+              cpu: {{ .Values.global.requests.cpu }}
+              memory: {{ .Values.global.requests.memory}}
+            limits:
+              cpu: {{ .Values.global.limits.cpu }}
+              memory: {{ .Values.global.limits.memory }}
+
+          # 헬스 체크
+          readinessProbe:
+            httpGet:
+              path: {{ $.Values.global.probes.path }}
+              port: {{ $val.port }}
+            initialDelaySeconds: {{ $.Values.global.probes.readiness.initial }}
+            periodSeconds: {{ $.Values.global.probes.readiness.period }}
+          livenessProbe:
+            httpGet:
+              path: {{ $.Values.global.probes.path }}
+              port: {{ $val.port }}
+            initialDelaySeconds: {{ $.Values.global.probes.liveness.initial }}
+            periodSeconds: {{ $.Values.global.probes.liveness.period }}
+
+          # 볼륨 마운트
+          volumeMounts:
+            - name: app-config-vol
+              mountPath: /config
+              readOnly: true
+
+      volumes:
+        - name: app-config-vol
+          configMap:
+            name: {{ $.Values.config.configMapName }}
+  {{- end }}
