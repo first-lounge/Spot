@@ -30,6 +30,7 @@ import com.example.Spot.order.domain.entity.OrderItemOptionEntity;
 import com.example.Spot.order.domain.enums.CancelledBy;
 import com.example.Spot.order.domain.enums.OrderStatus;
 import com.example.Spot.order.domain.exception.DuplicateOrderException;
+import com.example.Spot.order.domain.exception.InvalidOrderStatusTransitionException;
 import com.example.Spot.order.domain.repository.OrderItemOptionRepository;
 import com.example.Spot.order.domain.repository.OrderRepository;
 import com.example.Spot.order.infrastructure.aop.OrderStatusChange;
@@ -300,6 +301,10 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDto rejectOrder(UUID orderId, String reason) {
         
         OrderEntity order = OrderValidationContext.getCurrentOrder();
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            throw new InvalidOrderStatusTransitionException(order.getOrderStatus(), OrderStatus.CANCEL_PENDING);
+        }
+        
         order.initiateCancel(reason, null);
         orderEventProducer.reserveOrderCancelled(order.getId(), reason);
         sendSignalToWorkflow(orderId, OrderStatus.CANCEL_PENDING);

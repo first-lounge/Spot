@@ -72,8 +72,12 @@ public class OrderWorkflowImpl implements OrderWorkflow {
     }
 
     private void waitForRefundAndFinalize(UUID orderId, OrderActivity activities) {
-        Workflow.await(() -> isRefundCompleted);
-        activities.finalizeOrder(orderId);
+        boolean isSuccess = Workflow.await(Duration.ofMinutes(30), () -> isRefundCompleted);
+        if (isSuccess) {
+            activities.finalizeOrder(orderId);
+        } else {
+            activities.handleRefundTimeout(orderId);
+        }
     }
 
     @Override

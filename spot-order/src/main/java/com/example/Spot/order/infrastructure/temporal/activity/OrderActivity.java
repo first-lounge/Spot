@@ -21,4 +21,7 @@ public interface OrderActivity {
 
     @ActivityMethod
     void finalizeOrder(UUID orderId);
+    
+    @ActivityMethod
+    void handleRefundTimeout(UUID orderId);
 }

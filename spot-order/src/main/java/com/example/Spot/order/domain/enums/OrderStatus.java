@@ -10,7 +10,8 @@ public enum OrderStatus {
     READY("픽업 대기"),
     COMPLETED("픽업 완료"),
     CANCEL_PENDING("취소 처리 중"),
-    CANCELLED("주문 취소");
+    CANCELLED("주문 취소"),
+    REFUND_ERROR("환불 확인 필요");
 
     private final String description;
 
@@ -23,7 +24,7 @@ public enum OrderStatus {
     }
     
     public boolean isFinalStatus() {
-        return this == COMPLETED || this == CANCELLED || this == REJECTED || this == PAYMENT_FAILED;
+        return this == COMPLETED || this == CANCELLED || this == REJECTED || this == PAYMENT_FAILED || this == REFUND_ERROR;
     }
     
     public boolean isPaid() {
@@ -39,7 +40,7 @@ public enum OrderStatus {
             case PENDING -> newStatus == ACCEPTED || newStatus == CANCEL_PENDING;
             case ACCEPTED -> newStatus == COOKING || newStatus == CANCEL_PENDING;
             case COOKING -> newStatus == READY || newStatus == CANCEL_PENDING;
-            case CANCEL_PENDING ->  newStatus == CANCELLED || newStatus ==  REJECTED;
+            case CANCEL_PENDING ->  newStatus == CANCELLED || newStatus ==  REJECTED || newStatus == REFUND_ERROR;
             case READY -> newStatus == COMPLETED;
             default -> false;
         };

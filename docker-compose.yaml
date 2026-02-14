@@ -31,44 +31,102 @@ services:
       - spot-network
 
   # --- Infrastructure: Event Broker (Kafka) ---
-  kafka:
+  kafka1:
     image: apache/kafka:4.0.0
-    container_name: kafka-local
+    container_name: kafka1
     restart: always
-    ports:
-      - "9092:9092"
-      - "19093:19093"
     environment:
       KAFKA_NODE_ID: 1
-      KAFKA_LOG4J_ROOT_LOGLEVEL: 'WARN'
-      KAFKA_LOG4J_LOGGERS: 'kafka=WARN,state.change.logger=WARN'
       KAFKA_PROCESS_ROLES: 'broker,controller'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:19093'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:19093,2@kafka2:19093,3@kafka3:19093'
       KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:19093'
-      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka:29092,EXTERNAL://localhost:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka1:29092,EXTERNAL://localhost:9092'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT'
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       CLUSTER_ID: 'J9Xz7kQPRYyK8VkqH3mW5A'
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
-      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_NUM_PARTITIONS: 3
-      KAFKA_HEAP_OPTS: '-Xmx512M -Xms512M'
+      KAFKA_HEAP_OPTS: '-Xmx256M -Xms256M'
+      KAFKA_LOG4J_ROOT_LOGLEVEL: 'WARN'
+      KAFKA_LOG4J_LOGGERS: 'kafka=WARN,state.change.logger=WARN'
+    ports:
+      - "9092:9092"
     volumes:
-      - kafka-data:/var/lib/kafka/data
+      - kafka-data-1:/var/lib/kafka/data
+    networks:
+      - spot-network
+      
+  kafka2:
+    image: apache/kafka:4.0.0
+    container_name: kafka2
+    restart: always
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:19093,2@kafka2:19093,3@kafka3:19093'
+      KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:19093'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka2:29092,EXTERNAL://localhost:9093'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      CLUSTER_ID: 'J9Xz7kQPRYyK8VkqH3mW5A'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_HEAP_OPTS: '-Xmx256M -Xms256M'
+      KAFKA_LOG4J_ROOT_LOGLEVEL: 'WARN'
+      KAFKA_LOG4J_LOGGERS: 'kafka=WARN,state.change.logger=WARN'
+    ports:
+      - "9093:9093"
+    volumes:
+      - kafka-data-2:/var/lib/kafka/data
+    networks:
+      - spot-network
+
+  kafka3:
+    image: apache/kafka:4.0.0
+    container_name: kafka3
+    restart: always
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:19093,2@kafka2:19093,3@kafka3:19093'
+      KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:19093'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka3:29092,EXTERNAL://localhost:9094'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      CLUSTER_ID: 'J9Xz7kQPRYyK8VkqH3mW5A'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_HEAP_OPTS: '-Xmx256M -Xms256M'
+      KAFKA_LOG4J_ROOT_LOGLEVEL: 'WARN'
+      KAFKA_LOG4J_LOGGERS: 'kafka=WARN,state.change.logger=WARN'
+    ports:
+      - "9094:9094"
+    volumes:
+      - kafka-data-3:/var/lib/kafka/data
     networks:
       - spot-network
         
-  connect:
+  connect1: &connect-common
+    container_name: connect1
     image: quay.io/debezium/connect:3.4.0.Final
-    container_name: connect
-    depends_on:
-      - kafka
-      - db
     ports:
       - "8888:8083"
     env_file:
@@ -76,47 +134,64 @@ services:
     environment:
       CONNECT_CONFIG_PROVIDERS: 'env'
       CONNECT_CONFIG_PROVIDERS_ENV_CLASS: 'org.apache.kafka.common.config.provider.EnvVarConfigProvider'
-      BOOTSTRAP_SERVERS: kafka:29092
-      GROUP_ID: 1
-      CONFIG_STORAGE_TOPIC: my_connect_configs
-      OFFSET_STORAGE_TOPIC: my_connect_offsets
-      STATUS_STORAGE_TOPIC: my_connect_statuses
+      BOOTSTRAP_SERVERS: kafka1:29092,kafka2:29092,kafka3:29092
+      GROUP_ID: "spot-connect-group"
+      CONFIG_STORAGE_TOPIC: "connect_configs"
+      OFFSET_STORAGE_TOPIC: "connect_offsets"
+      STATUS_STORAGE_TOPIC: "connect_status"
+      CONFIG_STORAGE_REPLICATION_FACTOR: 3
+      OFFSET_STORAGE_REPLICATION_FACTOR: 3
+      STATUS_STORAGE_REPLICATION_FACTOR: 3
       KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
       CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
       LOGGING_LEVEL: 'WARN'
       CONNECT_LOG4J_LOGGERS: "org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR"
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+      - db
     networks:
       - spot-network
+
+  connect2:
+    <<: *connect-common
+    container_name: connect2
+    ports:
+      - "8889:8083"
       
   connect-init:
-    image: curlimages/curl:latest
+    image: alpine:latest
     container_name: connect-init
     env_file:
       - .env
     depends_on:
-      - connect
+      - connect1
+      - connect2
     networks:
       - spot-network
     volumes:
       - ./connectors:/configs
-    entrypoint: ["/bin/sh", "/configs/register-connectors.sh"]
+    entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl jq && chmod +x /configs/register-connectors.sh && /configs/register-connectors.sh"]
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
-    container_name: kafka-ui-local
+    container_name: kafka-ui
     ports:
       - "8989:8080"
     environment:
-      KAFKA_CLUSTERS_0_NAME: local-spot-cluster
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 'kafka:29092'
-      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: connect
-      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: 'http://connect:8083'
+      KAFKA_CLUSTERS_0_NAME: spot-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 'kafka1:29092,kafka2:29092,kafka3:29092'
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: connect-cluster
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: 'http://connect1:8083'
       LOGGING_LEVEL_ROOT: WARN
       LOGGING_LEVEL_COM_PROVECTUS: WARN
     depends_on:
-      - kafka
+      - kafka1
+      - kafka2
+      - kafka3
     networks:
       - spot-network
 
@@ -192,14 +267,16 @@ services:
     environment:
       - DB_HOST=db
       - SPRING_DATA_REDIS_HOST=redis
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29092,kafka3:29092
       - SPRING_TEMPORAL_CONNECTION_TARGET=temporal:7233
       - LOGGING_LEVEL_ROOT=WARN
     depends_on:
       - db
       - redis
-      - kafka
       - temporal
+      - kafka1
+      - kafka2
+      - kafka3
     networks:
       - spot-network
     env_file:
@@ -219,12 +296,14 @@ services:
     environment:
       - DB_HOST=db
       - SPRING_DATA_REDIS_HOST=redis
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29092,kafka3:29092
       - LOGGING_LEVEL_ROOT=WARN
     depends_on:
       - db
       - redis
-      - kafka
+      - kafka1
+      - kafka2
+      - kafka3
     networks:
       - spot-network
 
@@ -240,7 +319,6 @@ services:
     environment:
       - DB_HOST=db
       - SPRING_DATA_REDIS_HOST=redis
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - LOGGING_LEVEL_ROOT=WARN
     depends_on:
       - db
@@ -262,7 +340,6 @@ services:
     environment:
       - DB_HOST=db
       - SPRING_DATA_REDIS_HOST=redis
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - LOGGING_LEVEL_ROOT=WARN
     depends_on:
       - db
@@ -277,5 +354,7 @@ networks:
     driver: bridge
 
 volumes:
-  kafka-data:
+  kafka-data-1:
+  kafka-data-2:
+  kafka-data-3:
   postgres_data:
