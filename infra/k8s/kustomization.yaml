@@ -6,7 +6,7 @@ kind: Kustomization
 resources:
   # Base
   - base/namespace.yaml
-  - base/configmap.yaml
+  - base/secrets.yaml
 #  - base/postgres.yaml
 #  - base/redis.yaml
 
@@ -87,7 +87,6 @@ secretGenerator:
       - ../../.env
     options:
       disableNameSuffixHash: true
-
 
 generatorOptions:
   disableNameSuffixHash: true
