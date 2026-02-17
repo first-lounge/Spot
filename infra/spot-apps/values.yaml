@@ -1,0 +1,87 @@
+# [1] Ingress 공통 설정 (기본값: AWS ALB)
+ingress:
+  enabled: true
+  className: "alb"
+
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+    alb.ingress.kubernetes.io/success-codes: "200"  # 헬스 체크 성공 코드
+
+  subs:
+    - name: www
+      serviceName: spot-gateway
+    - name: kafka
+      serviceName: kafka-ui-svc
+    - name: temporal
+      serviceName: temporal-ui-svc
+
+# 도메인 (AWS)
+domain: spotorder.org
+
+# [2] Deployment 공통 설정 (Global)
+global:
+  name: spot
+  repository: 322546275072.dkr.ecr.ap-northeast-2.amazonaws.com
+  imagePullPolicy: Always
+  replicas: 1
+
+  # 리소스 제한
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+  limits:
+    cpu: "800m"
+    memory: "1Gi"
+
+  # 헬스 체크
+  path: /actuator/health
+
+  readiness:
+    initial: 90
+    period: 10
+  liveness:
+    initial: 120
+    period: 30
+
+# [3] app 목록
+apps:
+  gateway:
+    name: spot-gateway
+    port: 80
+    targetPort: 8080
+    timeoutSeconds: 5
+    failureThreshold: 5
+    successThreshold: 1
+
+  user:
+    name: spot-user
+    port: 8081
+
+  store:
+    name: spot-store
+    port: 8083
+
+  order:
+    name: spot-order
+    port: 8082
+
+  payment:
+    name: spot-payment
+    port: 8084
+
+# [4] env
+env:
+  activeProfile: "k8s"
+  loggingConfig: "classpath:logback-spring.xml"
+  postgres:
+    - db: POSTGRES_DB
+      value: "myapp_db"
+    - user: POSTGRES_USER
+      value: "admin"
+
+# [5] config
+config:
+  secretName: spot-secrets
+  configMapName: spot-app-config

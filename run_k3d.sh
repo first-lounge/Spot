@@ -209,6 +209,20 @@ deploy_all() {
 
     log_info "Infrastructure deployed successfully!"
 
+    # 5. Apps 배포 (Helm)
+    log_info "Deploying Apps (Helm)..."
+
+    CHART_PATH="$SCRIPT_DIR/infra/spot-apps"
+
+    helm upgrade --install spot "$CHART_PATH" \
+        -n spot \
+        -f "$CHART_PATH/values/local-values.yaml" \
+        --set global.secretName=spot-secrets \
+        --wait \
+        --timeout 10m
+
+    log_info "Apps Deployed Successfully!"
+
     log_info "Waiting for monitoring system to be ready..."
     kubectl wait --for=condition=available deployment/loki-deploy -n monitoring --timeout=180s || true
     kubectl wait --for=condition=available deployment/grafana-deploy -n monitoring --timeout=180s || true
