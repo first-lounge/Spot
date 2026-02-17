@@ -7,14 +7,16 @@ resources:
   # Base
   - base/namespace.yaml
   - base/configmap.yaml
-  - base/postgres.yaml
-  - base/redis.yaml
+#  - base/postgres.yaml
+#  - base/redis.yaml
 
   # Kafka
   - base/kafka/kafka.yaml
+  - base/kafka/kafka-nodepool.yml
   - base/kafka/kafka-connect.yaml
-  - base/kafka/kafka-connect-init.yaml
+  - base/kafka/connectors.yaml
   - base/kafka/kafka-ui.yaml
+  - base/kafka/allow-kafka-ui-netpol.yaml
 
   # temporal
   - base/temporal/temporal.yaml

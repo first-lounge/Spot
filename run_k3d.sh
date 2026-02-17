@@ -66,6 +66,9 @@ cleanup_existing() {
     if [ -f "$SCRIPT_DIR/docker-compose.yaml" ]; then
         docker compose -f "$SCRIPT_DIR/docker-compose.yaml" down --remove-orphans 2>/dev/null || true
     fi
+    
+    log_info "Starting essential infrastructure (DB, Redis) via Docker Compose..."
+    docker compose -f "$SCRIPT_DIR/docker-compose.yaml" up -d db redis
 
     if k3d cluster list | grep -q "$CLUSTER_NAME"; then
         log_info "Deleting existing k3d cluster: $CLUSTER_NAME"
@@ -92,19 +95,33 @@ build_and_push_images() {
     log_info "Building and pushing Docker images to local registry..."
 
     SERVICES=("spot-gateway" "spot-user" "spot-store" "spot-order" "spot-payment")
-
+  
+    log_info "Building Kafka Connect with Debezium..."
+    docker build -t "$REGISTRY_NAME:$REGISTRY_PORT/spot-connect-custom:latest" "$SCRIPT_DIR/infra/k8s/base/kafka/"
+    n=0
+    until [ $n -ge 3 ]; do
+        docker push "$REGISTRY_NAME:$REGISTRY_PORT/spot-connect-custom:latest" && break
+        n=$((n+1))
+        log_warn "Push failed for spot-connect-custom. Retrying ($n/3)..."
+        sleep 2
+    done
+    
     for service in "${SERVICES[@]}"; do
         log_info "Building $service..."
-
         (cd "$SCRIPT_DIR/$service" && ./gradlew bootJar -x test)
-
+        
         docker build -t "$REGISTRY_NAME:$REGISTRY_PORT/$service:latest" "$SCRIPT_DIR/$service"
 
-        docker push "$REGISTRY_NAME:$REGISTRY_PORT/$service:latest"
-
+        n=0
+        until [ $n -ge 3 ]; do
+            docker push "$REGISTRY_NAME:$REGISTRY_PORT/$service:latest" && break
+            n=$((n+1))
+            log_warn "Push failed for $service. Retrying ($n/3)..."
+            sleep 2
+        done
         log_info "$service image pushed successfully!"
     done
-}
+  }
 
 install_argocd() {
     log_info "Installing ArgoCD..."
@@ -146,24 +163,47 @@ install_prometheus() {
     log_info "Prometheus installed successfully!"
 }
 
+install_strimzi() {
+  log_info "Installing Strimzi Kafka Operator via Helm..."
+  
+  kubectl create namespace strimzi --dry-run=client -o yaml | kubectl apply -f -
+  kubectl create namespace spot --dry-run=client -o yaml | kubectl apply -f -
+  
+  helm repo add strimzi https://strimzi.io/charts/ >/dev/null 2>&1 || true
+  helm repo update
+
+  helm upgrade --install strimzi-operator strimzi/strimzi-kafka-operator \
+    -n strimzi \
+    --set watchNamespaces={spot} \
+    --wait
+  
+  log_info "Strimzi Operator installed successfully!"
+}
+
 deploy_all() {
     log_info "Deploying all resources using Kustomize..."
 
     # Ingress Controller 설치
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.14.3/deploy/static/provider/cloud/deploy.yaml
-
-    # Ingress Controller 대기
     kubectl wait --for=condition=ready pod -n ingress-nginx --selector=app.kubernetes.io/component=controller --timeout=120s
 
-    # Apply all resources using Kustomize (--load-restrictor: 상위 디렉토리 파일 접근 허용)
+    # Kustomize 배포
     kustomize build "$SCRIPT_DIR/infra/k8s/" --load-restrictor LoadRestrictionsNone | kubectl apply -f -
 
-    log_info "Waiting for infrastructure to be ready..."
-    kubectl wait --for=condition=available deployment/postgres -n spot --timeout=180s
-    kubectl wait --for=condition=available deployment/redis -n spot --timeout=180s
-    kubectl wait --for=condition=available deployment/kafka -n spot --timeout=180s
-    kubectl wait --for=condition=available deployment/kafka-connect -n spot --timeout=180s
+#    log_info "Waiting for infrastructure to be ready..."
+#    kubectl wait --for=condition=available deployment/postgres -n spot --timeout=180s
+#    kubectl wait --for=condition=available deployment/redis -n spot --timeout=180s
+    
+    log_info "Waiting for Kafka Cluster (KRaft)..."
+    kubectl wait --for=condition=Ready kafka/spot-cluster -n spot --timeout=300s
+
+    log_info "Waiting for Kafka Connect..."
+    kubectl wait --for=condition=Ready kafkaconnect/spot-connect -n spot --timeout=300s
+
+    log_info "Waiting for Kafka UI..."
     kubectl wait --for=condition=available deployment/kafka-ui -n spot --timeout=180s
+  
+    log_info "Waiting for Temporal..."
     kubectl wait --for=condition=available deployment/temporal -n spot --timeout=180s
     kubectl wait --for=condition=available deployment/temporal-ui -n spot --timeout=180s
 
@@ -214,8 +254,12 @@ main() {
             cleanup_existing
             exit 0
             ;;
-        --status)
-            show_status
+        --build_only)
+            build_and_push_images
+            exit 0
+            ;;
+        --deploy-only)
+            deploy_all
             exit 0
             ;;
     esac
@@ -226,6 +270,7 @@ main() {
     build_and_push_images
     install_argocd
     install_prometheus
+    install_strimzi
     deploy_all
     restart_grafana_for_provisioning
     show_status

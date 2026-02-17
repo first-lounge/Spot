@@ -23,7 +23,7 @@ spec:
             - name: DB
               value: postgres12
             - name: POSTGRES_SEEDS
-              value: postgres
+              value: host.k3d.internal
             - name: DB_PORT
               value: "5432"
             - name: POSTGRES_USER

@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-kafka-ui-to-connect
+  namespace: spot
+spec:
+  podSelector:
+    matchLabels:
+      strimzi.io/kind: KafkaConnect
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: kafka-ui
+      ports:
+        - protocol: TCP
+          port: 8083
