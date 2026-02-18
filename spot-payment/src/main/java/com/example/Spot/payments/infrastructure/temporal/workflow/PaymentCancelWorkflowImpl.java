@@ -29,7 +29,9 @@ public class PaymentCancelWorkflowImpl implements PaymentCancelWorkflow {
                     .setStartToCloseTimeout(Duration.ofMinutes(1))
                     .setRetryOptions(RetryOptions.newBuilder()
                             .setInitialInterval(Duration.ofSeconds(5))
-                            .setMaximumAttempts(8)
+                            .setBackoffCoefficient(2.0)
+                            .setMaximumInterval(Duration.ofMinutes(3)) 
+                            .setMaximumAttempts(15)
                             .setDoNotRetry(DO_NOT_RETRY_EXCEPTIONS)
                             .build())
                     .build());

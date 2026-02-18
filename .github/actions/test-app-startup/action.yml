@@ -22,6 +22,8 @@ runs:
     - name: Test application startup
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        KAFKA_BOOTSTRAP_SERVERS: localhost:9092
       run: |
         for service in ${{ inputs.services }}; do
           echo "Testing Service... [$service]"

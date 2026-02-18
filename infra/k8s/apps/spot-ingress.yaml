@@ -24,3 +24,27 @@ spec:
                 name: spot-gateway
                 port:
                   number: 80
+
+      # kafka
+    - host: kafka.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kafka-ui-svc
+                port:
+                  number: 80
+
+      # temporal
+    - host: temporal.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: temporal-ui-svc
+                port:
+                  number: 80

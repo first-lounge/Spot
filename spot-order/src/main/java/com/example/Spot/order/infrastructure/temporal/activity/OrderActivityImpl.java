@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.Spot.order.domain.entity.OrderEntity;
+import com.example.Spot.order.domain.enums.CancelledBy;
 import com.example.Spot.order.domain.enums.OrderStatus;
 import com.example.Spot.order.domain.repository.OrderRepository;
 import com.example.Spot.order.infrastructure.producer.OrderEventProducer;
@@ -13,7 +14,9 @@ import com.example.Spot.order.infrastructure.temporal.config.OrderConstants;
 
 import io.temporal.spring.boot.ActivityImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 @ActivityImpl(taskQueues = OrderConstants.ORDER_TASK_QUEUE)
@@ -46,7 +49,7 @@ public class OrderActivityImpl implements OrderActivity {
         
         if (order.getOrderStatus() != OrderStatus.CANCELLED &&
         order.getOrderStatus() != OrderStatus.REJECTED) {
-            order.initiateCancel(reason, null);
+            order.initiateCancel(reason, CancelledBy.SYSTEM);
             orderEventProducer.reserveOrderCancelled(order.getId(), reason);
         }
     }
@@ -58,6 +61,18 @@ public class OrderActivityImpl implements OrderActivity {
                 .orElseThrow(() -> new IllegalArgumentException("주문 없음: " + orderId));
         
         order.finalizeCancel();
+    }
+    
+    @Override
+    @Transactional
+    public void handleRefundTimeout(UUID orderId) {
+        OrderEntity order = orderRepository.findByIdWithLock(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문 없음: " + orderId));
+        
+        order.markAsRefundError();
+        log.error("[환불 타임아웃 발생] 관찰 필요 - OrderID: {}, 현재상태: {}",
+                orderId, order.getOrderStatus());
+        orderRepository.save(order);
     }
     
 }

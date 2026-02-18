@@ -10,17 +10,17 @@ spec:
   replicas: 2
   bootstrapServers: spot-cluster-kafka-bootstrap:9092
   image: spot-registry.localhost:5111/spot-connect-custom:latest
-
+  
   groupId: spot-connect-group
   configStorageTopic: connect_configs
   offsetStorageTopic: connect_offsets
   statusStorageTopic: connect_status
-
+  
   config:
     config.storage.replication.factor: 3
     offset.storage.replication.factor: 3
     status.storage.replication.factor: 3
-
+    
     key.converter: org.apache.kafka.connect.json.JsonConverter
     value.converter: org.apache.kafka.connect.json.JsonConverter
     key.converter.schemas.enable: false

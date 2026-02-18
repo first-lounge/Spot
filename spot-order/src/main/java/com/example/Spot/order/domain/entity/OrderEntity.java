@@ -226,6 +226,14 @@ public class OrderEntity extends BaseEntity {
         }
     }
     
+    public void markAsRefundError() {
+        if (this.orderStatus != OrderStatus.CANCEL_PENDING) {
+            throw new IllegalStateException("환불 대기 상태가 아닌 주문은 에러 처리를 할 수 없습니다.");
+        }
+        
+        this.orderStatus = OrderStatus.REFUND_ERROR;
+    }
+    
     // 상태 전환 검증
     private void validateStatusTransition(OrderStatus newStatus) {
         if (!this.orderStatus.canTransitionTo(newStatus)) {

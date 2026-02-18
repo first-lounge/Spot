@@ -27,7 +27,7 @@ spec:
               value: spot-cluster
             - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
               value: 'spot-cluster-kafka-bootstrap:9092'
-
+            
             - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME
               value: "spot-connect"
             - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS
