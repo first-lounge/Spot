@@ -2,41 +2,41 @@
 # ElastiCache Redis - 캐시 및 세션 저장소
 # =============================================================================
 #
-# # -----------------------------------------------------------------------------
-# # Subnet Group
-# # -----------------------------------------------------------------------------
-# resource "aws_elasticache_subnet_group" "redis" {
-#   name       = "${var.name_prefix}-redis-subnet"
-#   subnet_ids = var.subnet_ids
-#
-#   tags = merge(var.common_tags, { Name = "${var.name_prefix}-redis-subnet" })
-# }
-#
+# -----------------------------------------------------------------------------
+# Subnet Group
+# -----------------------------------------------------------------------------
+resource "aws_elasticache_subnet_group" "redis" {
+  name       = "${var.name_prefix}-redis-subnet"
+  subnet_ids = var.subnet_ids
+
+  tags = merge(var.common_tags, { Name = "${var.name_prefix}-redis-subnet" })
+}
+
 # # -----------------------------------------------------------------------------
 # # Security Group
 # # -----------------------------------------------------------------------------
-# resource "aws_security_group" "redis" {
-#   name        = "${var.name_prefix}-redis-sg"
-#   description = "Security group for ElastiCache Redis"
-#   vpc_id      = var.vpc_id
-#
-#   ingress {
-#     description     = "Redis from EKS nodes"
-#     from_port       = 6379
-#     to_port         = 6379
-#     protocol        = "tcp"
-#     security_groups = var.allowed_security_group_ids
-#   }
-#
-#   egress {
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-#
-#   tags = merge(var.common_tags, { Name = "${var.name_prefix}-redis-sg" })
-# }
+resource "aws_security_group" "redis" {
+  name        = "${var.name_prefix}-redis-sg"
+  description = "Security group for ElastiCache Redis"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description     = "Redis from EKS nodes"
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = var.allowed_security_group_ids
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(var.common_tags, { Name = "${var.name_prefix}-redis-sg" })
+}
 
 # -----------------------------------------------------------------------------
 # Parameter Group (Redis 설정 커스터마이징)

@@ -21,3 +21,8 @@ variable "log_retention_days" {
   type        = number
   default     = 30
 }
+
+variable "alb_name" {
+  type    = string
+  default = "spot-dev-alb"
+}

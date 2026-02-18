@@ -33,6 +33,7 @@ variable "public_subnet_cidrs" {
   type        = map(string)
   default = {
     "a" = "10.0.1.0/24"
+    "c" = "10.0.2.0/24"
   }
 }
 
@@ -122,8 +123,8 @@ variable "services" {
       desired_count     = 1
       health_check_path = "/actuator/health"
       # 모든 트래픽을 Gateway로 몰아주기 위해 /* 패턴 사용
-      path_patterns     = ["/*"]
-      priority          = 1   # 가장 높은 우선순위
+      path_patterns = ["/*"]
+      priority      = 1 # 가장 높은 우선순위
       environment_vars = {
         SERVICE_NAME = "spot-gateway"
       }
@@ -265,6 +266,7 @@ variable "jwt_secret" {
   description = "JWT 시크릿 키"
   type        = string
   sensitive   = true
+  default     = "jmXDQDnLqV+lOaPKMR06v4+RQ7aj2cj8LR+zgPOlz/GS989tptPtAmIpyaZHrsLOPqKoVtPus28YeXZTL8O8nw=="
 }
 
 variable "jwt_expire_ms" {
@@ -355,8 +357,8 @@ variable "kafka_log_retention_hours" {
 # eks 설정
 # =============================================================================
 variable "cluster_name" {
-  cluster_name = "spot-cluster-test"
-  type = string
+  type    = string
+  default = "spot-cluster-test"
 }
 
 variable "cluster_version" {
@@ -364,6 +366,3 @@ variable "cluster_version" {
   default = "1.29"
 }
 
-variable "alb_controller_policy_json" {
-  type = string
-}

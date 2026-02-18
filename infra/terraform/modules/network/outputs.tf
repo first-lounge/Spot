@@ -14,13 +14,14 @@ output "public_subnet_a_id" {
 }
 
 output "public_subnet_c_id" {
-  description = "Public Subnet C ID"
-  value       = length(aws_subnet.public_c) > 0 ? aws_subnet.public_c[0].id : null
+  value = try(aws_subnet.public_c[0].id, null)
 }
 
 output "public_subnet_ids" {
-  description = "Public Subnet IDs"
-  value       = length(aws_subnet.public_c) > 0 ? [aws_subnet.public_a.id, aws_subnet.public_c[0].id] : [aws_subnet.public_a.id]
+  value = compact([
+    aws_subnet.public_a.id,
+    try(aws_subnet.public_c[0].id, null)
+  ])
 }
 
 output "private_subnet_a_id" {

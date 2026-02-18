@@ -54,6 +54,10 @@ resource "aws_acm_certificate_validation" "main" {
 # =============================================================================
 # EKS(ALB) Record
 # =============================================================================
+data "aws_lb" "ingress_alb" {
+  name = var.alb_name
+}
+
 resource "aws_route53_record" "alb" {
   count = var.create_alb_record ? 1 : 0
 
@@ -62,8 +66,9 @@ resource "aws_route53_record" "alb" {
   type    = "A"
 
   alias {
-    name                   = var.alb_dns_name
-    zone_id                = var.alb_zone_id
+    name                   = data.aws_lb.ingress_alb.dns_name
+    zone_id                = data.aws_lb.ingress_alb.zone_id
     evaluate_target_health = false
   }
 }
+

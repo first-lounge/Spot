@@ -13,9 +13,10 @@ resource "aws_vpc" "main" {
 # Public Subnets
 # =============================================================================
 resource "aws_subnet" "public_a" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.public_subnet_cidrs["a"]
-  availability_zone = var.availability_zones["a"]
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_cidrs["a"]
+  availability_zone       = var.availability_zones["a"]
+  map_public_ip_on_launch = true
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-public-a"
@@ -27,10 +28,11 @@ resource "aws_subnet" "public_a" {
 }
 
 resource "aws_subnet" "public_c" {
-  count             = var.use_nat_gateway && !var.single_nat_gateway ? 1 : (contains(keys(var.public_subnet_cidrs), "c") ? 1 : 0)
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = lookup(var.public_subnet_cidrs, "c", "10.1.2.0/24")
-  availability_zone = var.availability_zones["c"]
+  count                   = var.use_nat_gateway && !var.single_nat_gateway ? 1 : (contains(keys(var.public_subnet_cidrs), "c") ? 1 : 0)
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = lookup(var.public_subnet_cidrs, "c", "10.1.2.0/24")
+  availability_zone       = var.availability_zones["c"]
+  map_public_ip_on_launch = true
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-public-c"
@@ -45,9 +47,10 @@ resource "aws_subnet" "public_c" {
 # Private Subnets
 # =============================================================================
 resource "aws_subnet" "private_a" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnet_cidrs["a"]
-  availability_zone = var.availability_zones["a"]
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.private_subnet_cidrs["a"]
+  availability_zone       = var.availability_zones["a"]
+  map_public_ip_on_launch = false
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-private-a"
@@ -59,9 +62,10 @@ resource "aws_subnet" "private_a" {
 }
 
 resource "aws_subnet" "private_c" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnet_cidrs["c"]
-  availability_zone = var.availability_zones["c"]
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.private_subnet_cidrs["c"]
+  availability_zone       = var.availability_zones["c"]
+  map_public_ip_on_launch = false
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-private-c"
@@ -133,10 +137,13 @@ resource "aws_instance" "nat_instance" {
 
   user_data = <<-EOF
               #!/bin/bash
-              sudo sysctl -w net.ipv4.ip_forward=1
-              sudo nft add table ip nat
-              sudo nft add chain ip nat postrouting { type nat hook postrouting priority 100 \; }
-              sudo nft add rule ip nat postrouting oifname eth0 masquerade
+              set -euo pipefail
+              sysctl -w net.ipv4.ip_forward=1
+
+              # NAT (masquerade) via nftables (AL2023)
+              nft list table ip nat >/dev/null 2>&1 || nft add table ip nat
+              nft list chain ip nat postrouting >/dev/null 2>&1 || nft add chain ip nat postrouting '{ type nat hook postrouting priority 100 ; }'
+              nft add rule ip nat postrouting oifname "eth0" masquerade 2>/dev/null || true
               EOF
 
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-nat-instance" })
@@ -167,19 +174,21 @@ resource "aws_nat_gateway" "main" {
 
   depends_on = [aws_internet_gateway.igw]
 }
-
 # =============================================================================
 # Route Tables
 # =============================================================================
+# -------------------------
+# Public Route Table
+# -------------------------
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
+  tags   = merge(var.common_tags, { Name = "${var.name_prefix}-public-rt" })
+}
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
-
-  tags = merge(var.common_tags, { Name = "${var.name_prefix}-public-rt" })
+resource "aws_route" "public_internet" {
+  route_table_id         = aws_route_table.public.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.igw.id
 }
 
 resource "aws_route_table_association" "public_a" {
@@ -187,36 +196,44 @@ resource "aws_route_table_association" "public_a" {
   route_table_id = aws_route_table.public.id
 }
 
+locals {
+  create_public_c = (
+    var.use_nat_gateway && !var.single_nat_gateway
+    ? true
+    : contains(keys(var.public_subnet_cidrs), "c")
+  )
+}
+
 resource "aws_route_table_association" "public_c" {
-  count          = length(aws_subnet.public_c) > 0 ? 1 : 0
+  count          = local.create_public_c ? 1 : 0
   subnet_id      = aws_subnet.public_c[0].id
   route_table_id = aws_route_table.public.id
 }
 
-# Private Route Table for AZ-a
+
+
+# -------------------------
+# Private Route Table (AZ-a)
+# -------------------------
 resource "aws_route_table" "private_a" {
   vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block           = "0.0.0.0/0"
-    nat_gateway_id       = var.use_nat_gateway ? aws_nat_gateway.main[0].id : null
-    network_interface_id = var.use_nat_gateway ? null : aws_instance.nat_instance[0].primary_network_interface_id
-  }
-
-  tags = merge(var.common_tags, { Name = "${var.name_prefix}-private-rt-a" })
+  tags   = merge(var.common_tags, { Name = "${var.name_prefix}-private-rt-a" })
 }
 
-# Private Route Table for AZ-c (separate when using multi NAT Gateway)
-resource "aws_route_table" "private_c" {
-  count  = var.use_nat_gateway && !var.single_nat_gateway ? 1 : 0
-  vpc_id = aws_vpc.main.id
+# Private default route via NAT Gateway (when enabled)
+resource "aws_route" "private_a_nat_gw" {
+  count                  = var.use_nat_gateway ? 1 : 0
+  route_table_id         = aws_route_table.private_a.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.main[0].id
+}
 
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main[1].id
-  }
-
-  tags = merge(var.common_tags, { Name = "${var.name_prefix}-private-rt-c" })
+# Private default route via NAT Instance (dev cost optimized)
+resource "aws_route" "private_a_nat_instance" {
+  count                  = var.use_nat_gateway ? 0 : 1
+  route_table_id         = aws_route_table.private_a.id
+  destination_cidr_block = "0.0.0.0/0"
+  network_interface_id   = aws_instance.nat_instance[0].primary_network_interface_id
 }
 
 resource "aws_route_table_association" "private_a" {
@@ -224,7 +241,30 @@ resource "aws_route_table_association" "private_a" {
   route_table_id = aws_route_table.private_a.id
 }
 
+# -------------------------
+# Private Route Table (AZ-c)
+# - Multi NAT GW이면 별도 RT + NAT GW(1)
+# - Single NAT GW이면 private_a RT를 공유
+# -------------------------
+resource "aws_route_table" "private_c" {
+  count  = var.use_nat_gateway && !var.single_nat_gateway ? 1 : 0
+  vpc_id = aws_vpc.main.id
+
+  tags = merge(var.common_tags, { Name = "${var.name_prefix}-private-rt-c" })
+}
+
+resource "aws_route" "private_c_nat_gw" {
+  count                  = var.use_nat_gateway && !var.single_nat_gateway ? 1 : 0
+  route_table_id         = aws_route_table.private_c[0].id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.main[1].id
+}
+
 resource "aws_route_table_association" "private_c" {
-  subnet_id      = aws_subnet.private_c.id
-  route_table_id = var.use_nat_gateway && !var.single_nat_gateway ? aws_route_table.private_c[0].id : aws_route_table.private_a.id
+  subnet_id = aws_subnet.private_c.id
+  route_table_id = (
+    var.use_nat_gateway && !var.single_nat_gateway
+    ? aws_route_table.private_c[0].id
+    : aws_route_table.private_a.id
+  )
 }

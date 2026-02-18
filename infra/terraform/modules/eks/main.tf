@@ -135,7 +135,11 @@ resource "aws_eks_node_group" "default" {
   cluster_name    = aws_eks_cluster.this.name
   node_group_name = "${var.name_prefix}-node-group"
   node_role_arn   = aws_iam_role.node.arn
-  subnet_ids      = var.node_subnet_ids
+  subnet_ids = var.node_subnet_ids
+
+  # ec2spot
+  capacity_type  = "SPOT"
+
 
   instance_types = var.node_instance_types
 

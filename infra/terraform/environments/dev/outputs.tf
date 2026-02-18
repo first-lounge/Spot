@@ -28,59 +28,12 @@ output "ecr_repository_urls" {
 }
 
 # =============================================================================
-# ECS
-# =============================================================================
-output "ecs_cluster_name" {
-  description = "ECS 클러스터 이름"
-  value       = module.ecs.cluster_name
-}
-
-output "ecs_service_names" {
-  description = "ECS 서비스 이름 맵"
-  value       = module.ecs.service_names
-}
-
-# =============================================================================
-# ALB
-# =============================================================================
-output "alb_dns" {
-  description = "ALB DNS"
-  value       = module.alb.alb_dns_name
-}
-
-# =============================================================================
-# API Gateway
-# =============================================================================
-output "api_url" {
-  description = "API Gateway URL"
-  value       = module.api_gateway.api_endpoint
-}
-
-# =============================================================================
-# DNS
-# =============================================================================
-output "name_servers" {
-  description = "Route 53 네임서버 (도메인 등록 기관에 설정 필요)"
-  value       = module.dns.name_servers
-}
-
-output "api_custom_domain" {
-  description = "API 커스텀 도메인"
-  value       = module.dns.api_domain
-}
-
-output "certificate_arn" {
-  description = "SSL 인증서 ARN"
-  value       = module.dns.certificate_arn
-}
-
-# =============================================================================
 # WAF
 # =============================================================================
-output "waf_web_acl_arn" {
-  description = "WAF Web ACL ARN"
-  value       = module.waf.web_acl_arn
-}
+# output "waf_web_acl_arn" {
+#   description = "WAF Web ACL ARN"
+#   value       = module.waf.web_acl_arn
+# }
 
 # =============================================================================
 # S3

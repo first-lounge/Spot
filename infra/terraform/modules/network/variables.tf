@@ -41,7 +41,7 @@ variable "nat_instance_type" {
 variable "use_nat_gateway" {
   description = "NAT Gateway 사용 여부 (false면 NAT Instance)"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "single_nat_gateway" {

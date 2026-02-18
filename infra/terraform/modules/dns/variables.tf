@@ -38,3 +38,13 @@ variable "alb_zone_id" {
   type        = string
   default     = ""
 }
+
+variable "associate_to_alb" {
+  type    = bool
+  default = true
+}
+
+variable "alb_name" {
+  description = "Ingress가 생성한 ALB 이름 (Ingress annotation load-balancer-name과 동일)"
+  type        = string
+}

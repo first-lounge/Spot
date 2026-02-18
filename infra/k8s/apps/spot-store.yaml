@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: spot-store
-          image: spot-registry.localhost:5111/spot-store:latest
+          image: 322546275072.dkr.ecr.ap-northeast-2.amazonaws.com/spot-store
           imagePullPolicy: Always
           ports:
             - containerPort: 8083
@@ -35,8 +35,8 @@ spec:
               readOnly: true
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "256Mi"
+              cpu: "75m"
             limits:
               memory: "1Gi"
               cpu: "800m"

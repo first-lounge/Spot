@@ -6,14 +6,14 @@ kind: Kustomization
 resources:
   # Base
   - base/namespace.yaml
-  - base/configmap.yaml
+#  - base/configmap.yaml
   - base/postgres.yaml
   - base/redis.yaml
+  - base/storageclass-gp3.yaml
 
   # Kafka
   - base/kafka/kafka.yaml
   - base/kafka/kafka-connect.yaml
-  - base/kafka/kafka-connect-init.yaml
   - base/kafka/kafka-ui.yaml
 
   # Monitoring & Logging
@@ -47,22 +47,22 @@ configMapGenerator:
   - name: spot-app-config
     namespace: spot
     files:
-      - ../../config/common.yml
-      - ../../config/kafka-topics.yml
-      - ../../config/spot-gateway.yml
-      - ../../config/spot-user.yml
-      - ../../config/spot-store.yml
-      - ../../config/spot-order.yml
-      - ../../config/spot-payment.yml
+      - config/spot-gateway.yml
+      - config/common.yml
+      - config/kafka-topics.yml
+      - config/spot-user.yml
+      - config/spot-store.yml
+      - config/spot-order.yml
+      - config/spot-payment.yml
     options:
       disableNameSuffixHash: true
 
   - name: kafka-connect-init-config
     namespace: spot
     files:
-        - ../../connectors/order-outbox.json
-        - ../../connectors/payment-outbox.json
-        - ../../connectors/register-connectors.sh
+        - connectors/order-outbox.json
+        - connectors/payment-outbox.json
+        - connectors/register-connectors.sh
     options:
       disableNameSuffixHash: true
 
@@ -95,7 +95,7 @@ secretGenerator:
   - name: spot-secrets
     namespace: spot
     envs:
-      - ../../.env
+      - config/.env
     options:
       disableNameSuffixHash: true
 

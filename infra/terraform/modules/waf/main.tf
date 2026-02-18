@@ -3,7 +3,7 @@
 # =============================================================================
 resource "aws_wafv2_web_acl" "main" {
   name        = "${var.name_prefix}-waf"
-  description = "WAF for API Gateway"
+  description = "WAF for ALB (EKS Ingress)"
   scope       = "REGIONAL"
 
   default_action {
@@ -112,15 +112,53 @@ resource "aws_wafv2_web_acl" "main" {
 }
 
 
+# =============================================================================
+# Find ALB created by Ingress
+# =============================================================================
+data "aws_lb" "ingress_alb" {
+  count = var.associate_to_alb ? 1 : 0
+  name  = var.alb_name
+}
+
+resource "aws_wafv2_web_acl_association" "ingress_alb" {
+  count        = var.associate_to_alb ? 1 : 0
+  resource_arn = data.aws_lb.ingress_alb[0].arn
+  web_acl_arn  = aws_wafv2_web_acl.main.arn
+}
+
+
+
+
+
 
 # =============================================================================
-# CloudWatch Log Group for WAF
+# CloudWatch Log Group for WAF logs
+# NOTE: WAF requires the log group name to start with "aws-waf-logs-"
 # =============================================================================
 resource "aws_cloudwatch_log_group" "waf" {
   name              = "aws-waf-logs-${var.name_prefix}"
   retention_in_days = var.log_retention_days
+  tags              = var.common_tags
+}
 
-  tags = var.common_tags
+# =============================================================================
+# Allow WAF to write logs to CloudWatch Logs
+# =============================================================================
+resource "aws_cloudwatch_log_resource_policy" "waf" {
+  policy_name = "aws-waf-logs-${var.name_prefix}"
+
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AWSWAFLoggingPermissions"
+        Effect    = "Allow"
+        Principal = { Service = "wafv2.amazonaws.com" }
+        Action    = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource  = "${aws_cloudwatch_log_group.waf.arn}:*"
+      }
+    ]
+  })
 }
 
 # =============================================================================
@@ -129,4 +167,6 @@ resource "aws_cloudwatch_log_group" "waf" {
 resource "aws_wafv2_web_acl_logging_configuration" "main" {
   log_destination_configs = [aws_cloudwatch_log_group.waf.arn]
   resource_arn            = aws_wafv2_web_acl.main.arn
+
+  depends_on = [aws_cloudwatch_log_resource_policy.waf]
 }

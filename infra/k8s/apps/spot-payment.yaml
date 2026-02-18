@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: spot-payment
-          image: spot-registry.localhost:5111/spot-payment:latest
+          image: 322546275072.dkr.ecr.ap-northeast-2.amazonaws.com/spot-payment
           imagePullPolicy: Always
           ports:
             - containerPort: 8084
@@ -35,8 +35,8 @@ spec:
               readOnly: true
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "256Mi"
+              cpu: "75m"
             limits:
               memory: "1Gi"
               cpu: "800m"
@@ -44,13 +44,13 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8084
-            initialDelaySeconds: 30
+            initialDelaySeconds: 150
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8084
-            initialDelaySeconds: 60
+            initialDelaySeconds: 180
             periodSeconds: 30
       volumes:
         - name: app-config
