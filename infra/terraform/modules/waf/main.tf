@@ -3,7 +3,7 @@
 # =============================================================================
 resource "aws_wafv2_web_acl" "main" {
   name        = "${var.name_prefix}-waf"
-  description = "WAF for ALB (EKS Ingress)"
+  description = "WAF for ALB - EKS Ingress"
   scope       = "REGIONAL"
 
   default_action {

@@ -22,23 +22,23 @@ resources:
   - base/temporal/temporal.yaml
   - base/temporal/temporal-ui.yaml
 
-  # Monitoring & Logging
-  - base/monitoring/loki/loki.yaml
-  - base/monitoring/loki/loki-config.yaml
-  - base/monitoring/monitoring-ingress.yaml
-  - base/monitoring/fluent-bit/fluent-bit.yaml
-  - base/monitoring/fluent-bit/fluent-bit-config.yaml
-
-  # Grafana
-  - base/monitoring/grafana/grafana.yaml
-  - base/monitoring/grafana/grafana-config.yaml
-
-  # Spot Monitoring
-  - base/monitoring/servicemonitors/spot-gateway-servicemonitor.yaml
-  - base/monitoring/servicemonitors/spot-user-servicemonitor.yaml
-  - base/monitoring/servicemonitors/spot-order-servicemonitor.yaml
-  - base/monitoring/servicemonitors/spot-store-servicemonitor.yaml
-  - base/monitoring/servicemonitors/spot-payment-servicemonitor.yaml
+#  # Monitoring & Logging
+#  - base/monitoring/loki/loki.yaml
+#  - base/monitoring/loki/loki-config.yaml
+#  - base/monitoring/monitoring-ingress.yaml
+#  - base/monitoring/fluent-bit/fluent-bit.yaml
+#  - base/monitoring/fluent-bit/fluent-bit-config.yaml
+#
+#  # Grafana
+#  - base/monitoring/grafana/grafana.yaml
+#  - base/monitoring/grafana/grafana-config.yaml
+#
+#  # Spot Monitoring
+#  - base/monitoring/servicemonitors/spot-gateway-servicemonitor.yaml
+#  - base/monitoring/servicemonitors/spot-user-servicemonitor.yaml
+#  - base/monitoring/servicemonitors/spot-order-servicemonitor.yaml
+#  - base/monitoring/servicemonitors/spot-store-servicemonitor.yaml
+#  - base/monitoring/servicemonitors/spot-payment-servicemonitor.yaml
 
   # Spot Apps
   - apps/spot-ingress.yaml
@@ -52,6 +52,7 @@ resources:
 configMapGenerator:
   - name: spot-app-config
     namespace: spot
+    behavior: replace
     files:
       - config/spot-gateway.yml
       - config/common.yml
@@ -72,30 +73,30 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
 
-  - name: grafana-dashboards-spot
-    namespace: monitoring
-    files:
-      - base/monitoring/grafana/dashboards/spot-logs.json
-
-  - name: grafana-dashboards-9578
-    namespace: monitoring
-    files:
-      - base/monitoring/grafana/dashboards/9578.json
-
-  - name: grafana-dashboards-15760
-    namespace: monitoring
-    files:
-      - base/monitoring/grafana/dashboards/15760.json
-
-  - name: grafana-dashboards-15757
-    namespace: monitoring
-    files:
-      - base/monitoring/grafana/dashboards/15757.json
-
-  - name: grafana-dashboards-15661
-    namespace: monitoring
-    files:
-      - base/monitoring/grafana/dashboards/15661.json
+#  - name: grafana-dashboards-spot
+#    namespace: monitoring
+#    files:
+#      - base/monitoring/grafana/dashboards/spot-logs.json
+#
+#  - name: grafana-dashboards-9578
+#    namespace: monitoring
+#    files:
+#      - base/monitoring/grafana/dashboards/9578.json
+#
+#  - name: grafana-dashboards-15760
+#    namespace: monitoring
+#    files:
+#      - base/monitoring/grafana/dashboards/15760.json
+#
+#  - name: grafana-dashboards-15757
+#    namespace: monitoring
+#    files:
+#      - base/monitoring/grafana/dashboards/15757.json
+#
+#  - name: grafana-dashboards-15661
+#    namespace: monitoring
+#    files:
+#      - base/monitoring/grafana/dashboards/15661.json
 
 secretGenerator:
   - name: spot-secrets

@@ -350,7 +350,7 @@ variable "kafka_instance_type" {
 variable "kafka_volume_size" {
   description = "Kafka EBS 볼륨 크기 (GB)"
   type        = number
-  default     = 20
+  default     = 30
 }
 
 variable "kafka_log_retention_hours" {
@@ -384,7 +384,7 @@ variable "alb_controller_chart_version" {
 
 variable "create_alb_record" {
   type    = bool
-  default = false
+  default = true
 }
 variable "eks_public_access_cidrs" {
   description = "CIDRs allowed to access EKS public endpoint"

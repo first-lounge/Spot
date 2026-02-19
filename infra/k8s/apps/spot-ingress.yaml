@@ -9,7 +9,6 @@ metadata:
     alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
     alb.ingress.kubernetes.io/success-codes: "200"  # 헬스 체크 성공 코드
     alb.ingress.kubernetes.io/load-balancer-name: spot-dev-alb # tf위한 이름 고정
-    alb.ingress.kubernetes.io/subnets: subnet-00e1be3889eafda18,subnet-03bfda9c6a9c7a75a
 spec:
   ingressClassName: alb
   rules:
@@ -26,7 +25,7 @@ spec:
                   number: 80
 
       # kafka
-    - host: kafka.localhost
+    - host: kafka.spotorder.org
       http:
         paths:
           - path: /

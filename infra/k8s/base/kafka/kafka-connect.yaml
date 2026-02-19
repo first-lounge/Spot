@@ -2,24 +2,26 @@ apiVersion: kafka.strimzi.io/v1
 kind: KafkaConnect
 metadata:
   name: spot-connect
-  namespace: spot
+  namespace: kafka
   annotations:
     strimzi.io/use-connector-resources: "true"
 spec:
-  version: 4.0.0
-  replicas: 2
+  replicas: 1
   bootstrapServers: spot-cluster-kafka-bootstrap:9092
-  image: spot-registry.localhost:5111/spot-connect-custom:latest
-  
+  image: 322546275072.dkr.ecr.ap-northeast-2.amazonaws.com/spot-kafka-connect:3.4.0
   groupId: spot-connect-group
   configStorageTopic: connect_configs
   offsetStorageTopic: connect_offsets
   statusStorageTopic: connect_status
+
+
   
   config:
-    config.storage.replication.factor: 3
-    offset.storage.replication.factor: 3
-    status.storage.replication.factor: 3
+
+    config.storage.replication.factor: 1
+    offset.storage.replication.factor: 1
+    status.storage.replication.factor: 1
+
     
     key.converter: org.apache.kafka.connect.json.JsonConverter
     value.converter: org.apache.kafka.connect.json.JsonConverter
@@ -57,8 +59,8 @@ spec:
 
   resources:
     requests:
-      cpu: "500m"
-      memory: "512Mi"
+      cpu: "200m"
+      memory: "128Mi"
     limits:
       cpu: "1000m"
       memory: "1Gi"
