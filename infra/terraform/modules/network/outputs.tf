@@ -17,6 +17,7 @@ output "public_subnet_c_id" {
   value = try(aws_subnet.public_c[0].id, null)
 }
 
+
 output "public_subnet_ids" {
   value = compact([
     aws_subnet.public_a.id,
@@ -56,3 +57,10 @@ output "nat_type" {
   description = "NAT 유형 (gateway 또는 instance)"
   value       = var.use_nat_gateway ? "gateway" : "instance"
 }
+
+
+
+# =============================================================================
+# argoCD - peer routing
+# =============================================================================
+

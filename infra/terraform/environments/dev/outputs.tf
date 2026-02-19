@@ -3,7 +3,7 @@
 # =============================================================================
 output "vpc_id" {
   description = "VPC ID"
-  value       = module.network.vpc_id
+  value       = module.network_spot.vpc_id
 }
 
 # =============================================================================
@@ -90,10 +90,9 @@ output "eks_node_security_group_id" {
   value = module.eks.node_security_group_id
 }
 
-output "oidc_issuer_url" {
-  value = try(data.aws_eks_cluster.this.identity[0].oidc[0].issuer, null)
+output "oidc_issuer_url_spot" {
+  value = module.eks.oidc_issuer_url
 }
-
 
 output "irsa_role_arns" {
   value = module.irsa.service_account_role_arns

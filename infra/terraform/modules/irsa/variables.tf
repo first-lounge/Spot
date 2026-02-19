@@ -15,6 +15,7 @@ variable "service_accounts" {
     namespace       = string
     service_account = string
     policy_arn      = optional(string)
+    create_k8s_sa = optional(bool, true)
   }))
   default = {}
 }

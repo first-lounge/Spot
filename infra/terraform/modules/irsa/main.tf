@@ -10,11 +10,17 @@ resource "aws_iam_openid_connect_provider" "this" {
 }
 
 locals {
+  k8s_sas = {
+    for k, v in var.service_accounts : k => v
+    if try(v.create_k8s_sa, true)
+  }
+
   namespaces = toset([
-    for k, v in var.service_accounts : v.namespace
+    for k, v in local.k8s_sas : v.namespace
     if v.namespace != "kube-system" && v.namespace != "default"
   ])
 }
+
 
 resource "aws_iam_role" "service_account" {
   for_each = var.service_accounts
@@ -86,7 +92,10 @@ resource "aws_iam_role_policy_attachment" "managed" {
 }
 
 
-resource "kubernetes_namespace" "this" {
+
+
+
+resource "kubernetes_namespace_v1" "this" {
   for_each = local.namespaces
 
   metadata {
@@ -94,8 +103,11 @@ resource "kubernetes_namespace" "this" {
   }
 }
 
-resource "kubernetes_service_account" "this" {
-  for_each = var.service_accounts
+resource "kubernetes_service_account_v1" "this" {
+  for_each = {
+    for k, v in local.k8s_sas : k => v
+    if v.create_k8s_sa
+  }
 
   metadata {
     name      = each.value.service_account
@@ -105,5 +117,5 @@ resource "kubernetes_service_account" "this" {
     }
   }
 
-  depends_on = [kubernetes_namespace.this]
+  depends_on = [kubernetes_namespace_v1.this]
 }

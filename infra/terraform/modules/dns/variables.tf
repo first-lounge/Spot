@@ -13,7 +13,10 @@ variable "domain_name" {
   description = "도메인 이름 (ex: spotorder.org)"
   type        = string
 }
-
+variable "create_hosted_zone" {
+  type    = bool
+  default = false
+}
 # ALB alias record 생성 여부
 variable "create_alb_record" {
   description = "ALB(Route53 Alias) 레코드 생성 여부"

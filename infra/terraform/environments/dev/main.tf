@@ -4,12 +4,12 @@
 data "aws_caller_identity" "current" {}
 
 # =============================================================================
-# Network
+# Network (SPOT)
 # =============================================================================
-module "network" {
+module "network_spot" {
   source = "../../modules/network"
 
-  name_prefix          = local.name_prefix
+  name_prefix          = "${local.name_prefix}-spot"
   common_tags          = local.common_tags
   vpc_cidr             = var.vpc_cidr
   public_subnet_cidrs  = var.public_subnet_cidrs
@@ -17,6 +17,8 @@ module "network" {
   availability_zones   = var.availability_zones
   nat_instance_type    = var.nat_instance_type
 }
+
+
 
 # =============================================================================
 # Database
@@ -26,9 +28,12 @@ module "database" {
 
   name_prefix       = local.name_prefix
   common_tags       = local.common_tags
-  vpc_id            = module.network.vpc_id
-  vpc_cidr          = module.network.vpc_cidr
-  subnet_ids        = module.network.private_subnet_ids
+  vpc_id            = module.network_spot.vpc_id
+  vpc_cidr          = module.network_spot.vpc_cidr
+  subnet_ids        = module.network_spot.private_subnet_ids
+
+  allowed_security_group_ids = [module.eks.node_security_group_id]
+
   db_name           = var.db_name
   username          = var.db_username
   password          = var.db_password
@@ -36,6 +41,8 @@ module "database" {
   allocated_storage = var.db_allocated_storage
   engine_version    = var.db_engine_version
 }
+
+
 
 # =============================================================================
 # ECR (Multiple Repositories)
@@ -52,27 +59,31 @@ module "ecr" {
 # =============================================================================
 # DNS (Route 53 + ACM)
 # =============================================================================
-# module "dns" {
-#   source = "../../modules/dns"
-#
-#   name_prefix       = local.name_prefix
-#   common_tags       = local.common_tags
-#   domain_name       = var.domain_name
-#   create_api_domain = var.create_api_domain
-#   api_gateway_id    = module.api_gateway.api_id
-# }
+module "dns" {
+  source = "../../modules/dns"
+
+  name_prefix  = local.name_prefix
+  common_tags  = local.common_tags
+  domain_name  = var.domain_name
+
+  create_alb_record = var.create_alb_record
+  alb_name          = "spot-dev-alb"
+  alb_record_name   = "spotorder.org"
+}
+
 
 # =============================================================================
 # WAF (Web Application Firewall)
 # =============================================================================
-# module "waf" {
-#   source = "../../modules/waf"
-#
-#   name_prefix           = local.name_prefix
-#   common_tags           = local.common_tags
-#   api_gateway_stage_arn = module.api_gateway.stage_arn
-#   rate_limit            = var.waf_rate_limit
-# }
+module "waf" {
+  source = "../../modules/waf"
+
+  name_prefix        = local.name_prefix
+  common_tags        = local.common_tags
+  rate_limit         = var.waf_rate_limit
+  log_retention_days = var.waf_log_retention_days
+}
+
 
 # =============================================================================
 # S3 (정적 파일 / 로그 저장)
@@ -96,8 +107,8 @@ module "elasticache" {
 
   name_prefix                = local.name_prefix
   common_tags                = local.common_tags
-  vpc_id                     = module.network.vpc_id
-  subnet_ids                 = module.network.private_subnet_ids
+  vpc_id                     = module.network_spot.vpc_id
+  subnet_ids                 = module.network_spot.private_subnet_ids
   allowed_security_group_ids = [module.eks.node_security_group_id]
   node_type                  = var.redis_node_type
   num_cache_clusters         = var.redis_num_cache_clusters
@@ -112,9 +123,9 @@ module "kafka" {
 
   name_prefix                = local.name_prefix
   common_tags                = local.common_tags
-  vpc_id                     = module.network.vpc_id
-  vpc_cidr                   = module.network.vpc_cidr
-  subnet_id                  = module.network.public_subnet_a_id # NAT 문제로 public 사용
+  vpc_id                     = module.network_spot.vpc_id
+  vpc_cidr                   = module.network_spot.vpc_cidr
+  subnet_id                  = module.network_spot.public_subnet_a_id # NAT 문제로 public 사용
   allowed_security_group_ids = [module.eks.node_security_group_id]
   assign_public_ip           = true
 
@@ -164,27 +175,27 @@ module "monitoring" {
 
 
 # =============================================================================
-# eks
+# eks (SPOT)
 # =============================================================================
 module "eks" {
   source = "../../modules/eks"
 
-  name_prefix = local.name_prefix
+  name_prefix = "${local.name_prefix}-spot"
   common_tags = local.common_tags
 
-  cluster_name    = var.cluster_name
+  cluster_name    = "${var.cluster_name}-spot"
   cluster_version = var.cluster_version
 
-  vpc_id = module.network.vpc_id
+  vpc_id = module.network_spot.vpc_id
 
-  subnet_ids      = module.network.private_subnet_ids
-  node_subnet_ids = module.network.private_subnet_ids
+  subnet_ids      = module.network_spot.private_subnet_ids
+  node_subnet_ids = module.network_spot.private_subnet_ids
 
   endpoint_private_access = true
   endpoint_public_access  = true
+  public_access_cidrs    = var.eks_public_access_cidrs
 
   enable_node_group = true
-
   node_desired_size = 1
   node_min_size     = 1
   node_max_size     = 1
@@ -193,14 +204,10 @@ module "eks" {
 }
 
 
-data "aws_eks_cluster" "this" {
-  name = module.eks.cluster_name
-}
-
 module "irsa" {
   source = "../../modules/irsa"
 
-  name_prefix = local.name_prefix
+  name_prefix = "${local.name_prefix}-spot"
   common_tags = local.common_tags
 
   oidc_issuer_url = module.eks.oidc_issuer_url
@@ -209,11 +216,15 @@ module "irsa" {
     aws_load_balancer_controller = {
       namespace       = "kube-system"
       service_account = "aws-load-balancer-controller"
+      policy_arn      = ""
+      create_k8s_sa   = true
     }
     ebs_csi_driver = {
       namespace       = "kube-system"
       service_account = "ebs-csi-controller-sa"
       policy_arn      = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+      # ebs csi용 k8s sa는 만들지 않기
+      create_k8s_sa   = false
     }
 
   }

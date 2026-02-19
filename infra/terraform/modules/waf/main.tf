@@ -112,22 +112,6 @@ resource "aws_wafv2_web_acl" "main" {
 }
 
 
-# =============================================================================
-# Find ALB created by Ingress
-# =============================================================================
-data "aws_lb" "ingress_alb" {
-  count = var.associate_to_alb ? 1 : 0
-  name  = var.alb_name
-}
-
-resource "aws_wafv2_web_acl_association" "ingress_alb" {
-  count        = var.associate_to_alb ? 1 : 0
-  resource_arn = data.aws_lb.ingress_alb[0].arn
-  web_acl_arn  = aws_wafv2_web_acl.main.arn
-}
-
-
-
 
 
 

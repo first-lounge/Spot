@@ -214,6 +214,13 @@ variable "waf_rate_limit" {
   default     = 2000
 }
 
+variable "waf_log_retention_days" {
+  description = "WAF 로그 보관 일수"
+  type        = number
+  default     = 30
+}
+
+
 # =============================================================================
 # S3 설정
 # =============================================================================
@@ -366,3 +373,21 @@ variable "cluster_version" {
   default = "1.29"
 }
 
+# =============================================================================
+# k8s_bootstrap.tf
+# =============================================================================
+variable "alb_controller_chart_version" {
+  type        = string
+  description = "Helm chart version for aws-load-balancer-controller"
+  default     = "1.7.2"
+}
+
+variable "create_alb_record" {
+  type    = bool
+  default = false
+}
+variable "eks_public_access_cidrs" {
+  description = "CIDRs allowed to access EKS public endpoint"
+  type        = list(string)
+  default     = []
+}

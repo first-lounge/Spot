@@ -1,16 +1,13 @@
 output "zone_id" {
-  description = "Route 53 Hosted Zone ID"
-  value       = aws_route53_zone.main.zone_id
+  value = local.zone_id
 }
 
 output "zone_name" {
-  description = "Route 53 Hosted Zone 이름"
-  value       = aws_route53_zone.main.name
+  value = var.domain_name
 }
 
 output "name_servers" {
-  description = "Route 53 네임서버 목록 (도메인 등록 기관에 설정 필요)"
-  value       = aws_route53_zone.main.name_servers
+  value = var.create_hosted_zone ? aws_route53_zone.main[0].name_servers : null
 }
 
 output "certificate_arn" {

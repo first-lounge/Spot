@@ -2,9 +2,20 @@
 # Route 53 Hosted Zone
 # =============================================================================
 resource "aws_route53_zone" "main" {
-  name = var.domain_name
+  count = var.create_hosted_zone ? 1 : 0
+  name  = var.domain_name
 
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-zone" })
+}
+
+data "aws_route53_zone" "main" {
+  count        = var.create_hosted_zone ? 0 : 1
+  name         = var.domain_name
+  private_zone = false
+}
+
+locals {
+  zone_id = var.create_hosted_zone ? aws_route53_zone.main[0].zone_id : data.aws_route53_zone.main[0].zone_id
 }
 
 # =============================================================================
@@ -34,13 +45,14 @@ resource "aws_route53_record" "acm_validation" {
     }
   }
 
-  zone_id         = aws_route53_zone.main.zone_id
+  zone_id         = local.zone_id
   name            = each.value.name
   type            = each.value.type
   ttl             = 60
   records         = [each.value.record]
   allow_overwrite = true
 }
+
 
 # =============================================================================
 # ACM Certificate Validation
@@ -55,20 +67,22 @@ resource "aws_acm_certificate_validation" "main" {
 # EKS(ALB) Record
 # =============================================================================
 data "aws_lb" "ingress_alb" {
-  name = var.alb_name
+  count = var.create_alb_record ? 1 : 0
+  name  = var.alb_name
 }
 
 resource "aws_route53_record" "alb" {
   count = var.create_alb_record ? 1 : 0
 
-  zone_id = aws_route53_zone.main.zone_id
+  zone_id = local.zone_id
   name    = var.alb_record_name
   type    = "A"
 
   alias {
-    name                   = data.aws_lb.ingress_alb.dns_name
-    zone_id                = data.aws_lb.ingress_alb.zone_id
+    name                   = data.aws_lb.ingress_alb[0].dns_name
+    zone_id                = data.aws_lb.ingress_alb[0].zone_id
     evaluate_target_health = false
   }
 }
+
 

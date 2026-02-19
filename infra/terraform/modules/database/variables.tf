@@ -121,3 +121,9 @@ variable "max_allocated_storage" {
   type        = number
   default     = null
 }
+
+variable "allowed_security_group_ids" {
+  type        = list(string)
+  description = "Security group IDs allowed to access the database"
+  default     = []
+}
