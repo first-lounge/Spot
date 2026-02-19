@@ -6,7 +6,7 @@ metadata:
   labels:
     strimzi.io/cluster: spot-cluster
 spec:
-  replicas: 3
+  replicas: 1 # 3
   roles:
     - broker
     - controller
