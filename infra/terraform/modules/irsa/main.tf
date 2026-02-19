@@ -1,26 +1,12 @@
 data "tls_certificate" "oidc" {
   url = var.oidc_issuer_url
 }
-
 resource "aws_iam_openid_connect_provider" "this" {
   url             = var.oidc_issuer_url
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.oidc.certificates[0].sha1_fingerprint]
   tags            = var.common_tags
 }
-
-locals {
-  k8s_sas = {
-    for k, v in var.service_accounts : k => v
-    if try(v.create_k8s_sa, true)
-  }
-
-  namespaces = toset([
-    for k, v in local.k8s_sas : v.namespace
-    if v.namespace != "kube-system" && v.namespace != "default"
-  ])
-}
-
 
 resource "aws_iam_role" "service_account" {
   for_each = var.service_accounts
@@ -94,28 +80,3 @@ resource "aws_iam_role_policy_attachment" "managed" {
 
 
 
-
-resource "kubernetes_namespace_v1" "this" {
-  for_each = local.namespaces
-
-  metadata {
-    name = each.value
-  }
-}
-
-resource "kubernetes_service_account_v1" "this" {
-  for_each = {
-    for k, v in local.k8s_sas : k => v
-    if v.create_k8s_sa
-  }
-
-  metadata {
-    name      = each.value.service_account
-    namespace = each.value.namespace
-    annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.service_account[each.key].arn
-    }
-  }
-
-  depends_on = [kubernetes_namespace_v1.this]
-}

@@ -175,7 +175,7 @@ module "monitoring" {
 
 
 # =============================================================================
-# eks (SPOT)
+# eks
 # =============================================================================
 module "eks" {
   source = "../../modules/eks"
@@ -211,23 +211,9 @@ module "irsa" {
   common_tags = local.common_tags
 
   oidc_issuer_url = module.eks.oidc_issuer_url
+  service_accounts = local.service_accounts
 
-  service_accounts = {
-    aws_load_balancer_controller = {
-      namespace       = "kube-system"
-      service_account = "aws-load-balancer-controller"
-      policy_arn      = ""
-      create_k8s_sa   = true
-    }
-    ebs_csi_driver = {
-      namespace       = "kube-system"
-      service_account = "ebs-csi-controller-sa"
-      policy_arn      = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-      # ebs csi용 k8s sa는 만들지 않기
-      create_k8s_sa   = false
-    }
 
-  }
 }
 
 module "eks_addons" {
@@ -242,4 +228,30 @@ module "eks_addons" {
   enable_coredns    = true
   enable_kube_proxy = true
   enable_ebs_csi    = true
+
 }
+
+
+module "k8s_bootstrap" {
+  source = "../../modules/k8s-bootstrap"
+
+  providers = {
+    kubernetes = kubernetes
+    helm       = helm
+  }
+
+  cluster_name     = module.eks.cluster_name
+  alb_controller_chart_version = var.alb_controller_chart_version
+
+  service_accounts          = local.service_accounts
+  service_account_role_arns = module.irsa.service_account_role_arns
+  enable_lbc           = true
+  enable_argocd_access = true
+
+  depends_on = [
+    module.eks,
+    module.irsa,
+    module.eks_addons
+  ]
+}
+
