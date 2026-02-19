@@ -7,8 +7,6 @@ resources:
   # Base
   - base/namespace.yaml
   - base/secrets.yaml
-#  - base/postgres.yaml
-#  - base/redis.yaml
 
   # Kafka
   - base/kafka/kafka.yaml
@@ -25,7 +23,6 @@ resources:
   # Monitoring & Logging
   - base/monitoring/loki/loki.yaml
   - base/monitoring/loki/loki-config.yaml
-  - base/monitoring/monitoring-ingress.yaml
   - base/monitoring/fluent-bit/fluent-bit.yaml
   - base/monitoring/fluent-bit/fluent-bit-config.yaml
 

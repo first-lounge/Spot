@@ -6,16 +6,23 @@ ingress:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
-    alb.ingress.kubernetes.io/success-codes: "200"  # 헬스 체크 성공 코드
+    alb.ingress.kubernetes.io/group.name: spot-ingress
+#    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+#    alb.ingress.kubernetes.io/success-codes: "200"  # 헬스 체크 성공 코드
 
   subs:
     - name: www
+      namespace: spot
       serviceName: spot-gateway
     - name: kafka
+      namespace: spot
       serviceName: kafka-ui-svc
     - name: temporal
+      namespace: spot
       serviceName: temporal-ui-svc
+    - name: grafana
+      namespace: monitoring
+      serviceName: grafana-service
 
 # 도메인 (AWS)
 domain: spotorder.org
