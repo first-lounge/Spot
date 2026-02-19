@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLUSTER_NAME="spot-cluster"
-REGISTRY_NAME="spot-registry.localhost"
+REGISTRY_NAME="127.0.0.1"
 REGISTRY_PORT="5111"
 
 # 로컬 레지스트리는 프록시 우회
@@ -89,6 +89,12 @@ create_cluster() {
     kubectl wait --for=condition=ready node --all --timeout=180s
 
     log_info "Cluster created successfully!"
+
+    log_info "Creating Namespaces..."
+
+    kubectl apply -f "$SCRIPT_DIR/infra/k8s/base/namespace.yaml"
+
+    log_info "Creating Namespaces..."
 }
 
 build_and_push_images() {
@@ -126,7 +132,7 @@ build_and_push_images() {
 install_argocd() {
     log_info "Installing ArgoCD..."
 
-    kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+#    kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 
     kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
@@ -143,7 +149,7 @@ install_argocd() {
 install_prometheus() {
     log_info "Installing Prometheus (kube-prometheus-stack) via Helm..."
 
-    kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+#    kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts >/dev/null 2>&1 || true
     helm repo update
@@ -167,8 +173,7 @@ install_strimzi() {
   log_info "Installing Strimzi Kafka Operator via Helm..."
   
   kubectl create namespace strimzi --dry-run=client -o yaml | kubectl apply -f -
-  kubectl create namespace spot --dry-run=client -o yaml | kubectl apply -f -
-  
+
   helm repo add strimzi https://strimzi.io/charts/ >/dev/null 2>&1 || true
   helm repo update
 
@@ -209,7 +214,7 @@ deploy_all() {
 
     log_info "Infrastructure deployed successfully!"
 
-    # 5. Apps 배포 (Helm)
+    # Apps 배포 (Helm)
     log_info "Deploying Apps (Helm)..."
 
     CHART_PATH="$SCRIPT_DIR/infra/spot-apps"
