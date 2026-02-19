@@ -19,7 +19,6 @@ public class PaymentCancelWorkflowImpl implements PaymentCancelWorkflow {
     
     private static final String[] DO_NOT_RETRY_EXCEPTIONS = {
             "com.example.Spot.global.presentation.advice.BillingKeyNotFoundException",
-            "com.example.Spot.global.presentation.advice.ResourceNotFoundException",
             "java.lang.IllegalArgumentException"
     };
 

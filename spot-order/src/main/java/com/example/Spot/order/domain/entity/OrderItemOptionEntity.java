@@ -69,5 +69,9 @@ public class OrderItemOptionEntity extends BaseEntity {
     protected void setOrderItem(OrderItemEntity orderItem) {
         this.orderItem = orderItem;
     }
+
+    public BigDecimal getSubtotal() {
+        return this.optionPrice; // 옵션 하나의 가격
+    }
 }
 

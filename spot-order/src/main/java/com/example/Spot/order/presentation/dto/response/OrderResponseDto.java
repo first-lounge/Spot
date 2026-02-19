@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.example.Spot.order.domain.entity.OrderEntity;
 import com.example.Spot.order.domain.enums.CancelledBy;
 import com.example.Spot.order.domain.enums.OrderStatus;
+import com.example.Spot.order.presentation.dto.request.OrderCreateRequestDto;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -111,6 +112,27 @@ public class OrderResponseDto {
                 .createdAt(dto.getCreatedAt())
                 .orderItems(dto.getOrderItems())
                 .totalAmount(dto.getTotalAmount())
+                .build();
+    }
+    public static OrderResponseDto of(UUID orderId, Integer userId, OrderCreateRequestDto request, OrderContextDto context, BigDecimal totalAmount) {
+        return OrderResponseDto.builder()
+                .id(orderId)
+                .userId(userId)
+                .storeId(request.getStoreId())
+                .storeName(context.getStore().getName())
+                .orderStatus(OrderStatus.PAYMENT_PENDING) // 시작 상태
+                .pickupTime(request.getPickupTime())
+                .needDisposables(request.getNeedDisposables())
+                .request(request.getRequest())
+                .totalAmount(totalAmount)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    public static OrderResponseDto fromId(UUID orderId, OrderStatus status) {
+        return OrderResponseDto.builder()
+                .id(orderId)
+                .orderStatus(status)
                 .build();
     }
 }

@@ -2,10 +2,9 @@ package com.example.Spot.order.application.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -14,15 +13,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.example.Spot.global.feign.MenuClient;
 import com.example.Spot.global.feign.PaymentClient;
 import com.example.Spot.global.feign.StoreClient;
 import com.example.Spot.global.feign.dto.MenuOptionResponse;
 import com.example.Spot.global.feign.dto.MenuResponse;
-import com.example.Spot.global.feign.dto.PaymentCancelRequest;
-import com.example.Spot.global.feign.dto.PaymentResponse;
 import com.example.Spot.global.feign.dto.StoreResponse;
 import com.example.Spot.order.domain.entity.OrderEntity;
 import com.example.Spot.order.domain.entity.OrderItemEntity;
@@ -33,24 +29,24 @@ import com.example.Spot.order.domain.exception.DuplicateOrderException;
 import com.example.Spot.order.domain.exception.InvalidOrderStatusTransitionException;
 import com.example.Spot.order.domain.repository.OrderItemOptionRepository;
 import com.example.Spot.order.domain.repository.OrderRepository;
-import com.example.Spot.order.infrastructure.aop.OrderStatusChange;
 import com.example.Spot.order.infrastructure.aop.OrderValidationContext;
 import com.example.Spot.order.infrastructure.aop.StoreOwnershipRequired;
 import com.example.Spot.order.infrastructure.aop.ValidateStoreAndMenu;
 import com.example.Spot.order.infrastructure.producer.OrderEventProducer;
 import com.example.Spot.order.infrastructure.temporal.config.OrderConstants;
+import com.example.Spot.order.infrastructure.temporal.dto.OrderStatusUpdate;
 import com.example.Spot.order.infrastructure.temporal.workflow.OrderWorkflow;
 import com.example.Spot.order.presentation.dto.request.OrderCreateRequestDto;
 import com.example.Spot.order.presentation.dto.request.OrderItemOptionRequestDto;
 import com.example.Spot.order.presentation.dto.request.OrderItemRequestDto;
+import com.example.Spot.order.presentation.dto.response.OrderContextDto;
 import com.example.Spot.order.presentation.dto.response.OrderResponseDto;
 import com.example.Spot.order.presentation.dto.response.OrderStatsResponseDto;
 
-import io.github.resilience4j.bulkhead.annotation.Bulkhead;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import io.temporal.client.WorkflowClient;
+import io.temporal.client.WorkflowNotFoundException;
 import io.temporal.client.WorkflowOptions;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,6 +62,7 @@ public class OrderServiceImpl implements OrderService {
     private final StoreClient storeClient;
     private final OrderEventProducer orderEventProducer;
     private final WorkflowClient workflowClient;
+    private final MenuClient menuClient;
 
     // ******* //
     // 주문 조회 //
@@ -211,267 +208,110 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     @ValidateStoreAndMenu
     public OrderResponseDto createOrder(OrderCreateRequestDto requestDto, Integer userId) {
-
-        StoreResponse store = OrderValidationContext.getStoreResponse();
-
-        checkDuplicateOrder(userId, store.getId(), requestDto);
-
-        String orderNumber = generateOrderNumber();
-        OrderEntity order = OrderEntity.builder()
-                .storeId(store.getId())
-                .userId(userId)
-                .orderNumber(orderNumber)
-                .pickupTime(requestDto.getPickupTime())
-                .needDisposables(requestDto.getNeedDisposables())
-                .request(requestDto.getRequest())
-                .build();
-
-        for (OrderItemRequestDto itemDto : requestDto.getOrderItems()) {
-            MenuResponse menu = OrderValidationContext.getMenuResponse(itemDto.getMenuId());
-
-            OrderItemEntity orderItem = OrderItemEntity.builder()
-                    .menuId(menu.getId())
-                    .menuName(menu.getName())
-                    .menuPrice(BigDecimal.valueOf(menu.getPrice()))
-                    .quantity(itemDto.getQuantity())
-                    .build();
-
-            for (OrderItemOptionRequestDto optionDto : itemDto.getOptions()) {
-                MenuOptionResponse menuOption = OrderValidationContext.getMenuOptionResponse(optionDto.getMenuOptionId());
-
-                OrderItemOptionEntity orderItemOption = OrderItemOptionEntity.builder()
-                        .menuOptionId(menuOption.getId())
-                        .optionName(menuOption.getName())
-                        .optionDetail(menuOption.getDetail())
-                        .optionPrice(BigDecimal.valueOf(menuOption.getPrice()))
-                        .build();
-
-                orderItem.addOrderItemOption(orderItemOption);
-            }
-
-            order.addOrderItem(orderItem);
-        }
-
-        OrderEntity savedOrder = orderRepository.save(order);
-        OrderResponseDto responseDto = OrderResponseDto.from(savedOrder);
-
-        orderEventProducer.reserveOrderCreated(
-                savedOrder.getId(),
-                userId,
-                responseDto.getTotalAmount().longValue()
-        );
-
+        
+        OrderContextDto contextDto = fetchOrderContext(requestDto);
+        checkDuplicateOrder(userId, contextDto.getStore().getId(), requestDto);
+        UUID orderId = UUID.randomUUID();
+        BigDecimal totalAmount = contextDto.calculateTotalAmount(requestDto);
+        
         OrderWorkflow workflow = workflowClient.newWorkflowStub(OrderWorkflow.class,
                 WorkflowOptions.newBuilder()
-                        .setWorkflowId(savedOrder.getId().toString())
+                        .setWorkflowId(orderId.toString())
                         .setTaskQueue(OrderConstants.ORDER_TASK_QUEUE)
                         .build());
 
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                WorkflowClient.start(workflow::processOrder, savedOrder.getId());
-            }
-        });
         
-        return responseDto;
+        WorkflowClient.start(workflow::processOrder, orderId, userId, requestDto, contextDto);
+        
+        return OrderResponseDto.of(orderId, userId, requestDto, contextDto, totalAmount);
     }
-
 
     // *********** //
     // 주문 상태 변경 //
     // *********** //
     @Override
-    @Transactional
-    @OrderStatusChange("ACCEPT")
     public OrderResponseDto acceptOrder(UUID orderId, Integer estimatedTime) {
-        OrderEntity order = OrderValidationContext.getCurrentOrder();
-        order.acceptOrder(estimatedTime);
-        
-        // 주문 수락 이벤트 발행
-        orderEventProducer.reserveOrderAccepted(order.getUserId(), order.getId(), estimatedTime);
-        sendSignalToWorkflow(orderId, OrderStatus.ACCEPTED);
-        
-        return OrderResponseDto.from(order);
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(OrderWorkflow.class, orderId.toString());
+        workflow.signalStatusChanged(new OrderStatusUpdate(OrderStatus.ACCEPTED, estimatedTime, null, null));
+        return OrderResponseDto.fromId(orderId, OrderStatus.ACCEPTED);
     }
 
     @Override
-    @Transactional
-    @OrderStatusChange("REJECT")
+    @Transactional(readOnly = true)
     public OrderResponseDto rejectOrder(UUID orderId, String reason) {
-        
-        OrderEntity order = OrderValidationContext.getCurrentOrder();
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
         if (order.getOrderStatus() != OrderStatus.PENDING) {
-            throw new InvalidOrderStatusTransitionException(order.getOrderStatus(), OrderStatus.CANCEL_PENDING);
+            throw new InvalidOrderStatusTransitionException(order.getOrderStatus(), OrderStatus.REJECT_PENDING);
         }
         
-        order.initiateCancel(reason, null);
-        orderEventProducer.reserveOrderCancelled(order.getId(), reason);
-        sendSignalToWorkflow(orderId, OrderStatus.CANCEL_PENDING);
-        log.info("주문 거절 처리 시작 (환불 대기): orderId={}, reason={}", orderId, reason);
-        
-        return OrderResponseDto.from(order);
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(OrderWorkflow.class, orderId.toString());
+        workflow.signalStatusChanged(new OrderStatusUpdate(OrderStatus.REJECT_PENDING, null, reason, null));
+        return OrderResponseDto.fromId(orderId, OrderStatus.REJECT_PENDING);
     }
 
     @Override
-    @Transactional
-    @OrderStatusChange("COOKING")
     public OrderResponseDto startCooking(UUID orderId) {
-        
-        OrderEntity order = OrderValidationContext.getCurrentOrder();
-        order.startCooking();
-        sendSignalToWorkflow(orderId, OrderStatus.COOKING);
-        
-        return OrderResponseDto.from(order);
+        sendSignal(orderId, OrderStatus.COOKING);
+        return OrderResponseDto.fromId(orderId, OrderStatus.COOKING);
     }
 
     @Override
-    @Transactional
-    @OrderStatusChange("READY")
     public OrderResponseDto readyForPickup(UUID orderId) {
-        
-        OrderEntity order = OrderValidationContext.getCurrentOrder();
-        order.readyForPickup();
-        sendSignalToWorkflow(orderId, OrderStatus.READY);
-        
-        return OrderResponseDto.from(order);
+        sendSignal(orderId, OrderStatus.READY);
+        return OrderResponseDto.fromId(orderId, OrderStatus.READY);
     }
 
     @Override
-    @Transactional
-    @OrderStatusChange("COMPLETE")
     public OrderResponseDto completeOrder(UUID orderId) {
-        
-        OrderEntity order = OrderValidationContext.getCurrentOrder();
-        order.completeOrder();
-        sendSignalToWorkflow(orderId, OrderStatus.COMPLETED);
-        
-        return OrderResponseDto.from(order);
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(OrderWorkflow.class, orderId.toString());
+        workflow.signalStatusChanged(new OrderStatusUpdate(OrderStatus.COMPLETED, null, null, null));
+        return OrderResponseDto.fromId(orderId, OrderStatus.COMPLETED);
     }
     
     // ******* //
     // 주문 취소 //
     // ******* //
     @Override
-    @Transactional
-    public void completeOrderCancellation(UUID orderId) {
-        OrderEntity order = orderRepository.findByIdWithLock(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
-        
-        if (order.getOrderStatus() == OrderStatus.CANCEL_PENDING) {
-            order.finalizeCancel();
-            log.info("[보상 트랜잭션 완료] 주문 ID {} 가 최종 확정되었습니다.", orderId);
-            sendSignalToWorkflow(orderId, order.getOrderStatus());
-        } else {
-            log.warn("[무시됨] 주문 ID {} 는 현재 취소 대기 상태가 아닙니다. (현재 상태: {})",
-                    orderId, order.getOrderStatus());
-        }
-    }
-
-    @Override
-    @Transactional
     public OrderResponseDto customerCancelOrder(UUID orderId, String reason) {
-        OrderEntity order = orderRepository.findByIdWithLock(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
-
-        order.initiateCancel(reason, CancelledBy.CUSTOMER);
-        // 주문 취소(거절) 이벤트 발행
-        orderEventProducer.reserveOrderCancelled(order.getId(), reason);
-        sendSignalToWorkflow(orderId, OrderStatus.CANCEL_PENDING);
-        log.info("고객에 의한 취소 처리 시작 (환불 대기): orderId={}, reason={}", orderId, reason);
-
-        // 결제 취소 처리 (Payment 서비스 호출) - 비동기 전환으로 인한 주석처리: 추후 삭제 afterDelete
-        // cancelPaymentIfExists(orderId, "고객 주문 취소: " + reason);
-
-        return OrderResponseDto.from(order);
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(OrderWorkflow.class, orderId.toString());
+        workflow.signalStatusChanged(new OrderStatusUpdate(OrderStatus.CANCEL_PENDING, null, reason, CancelledBy.CUSTOMER));
+        log.info("고객 취소 시그널 전송 완료: orderId={}, reason={}", orderId, reason);
+        return OrderResponseDto.fromId(orderId, OrderStatus.CANCEL_PENDING);
     }
 
     @Override
-    @Transactional
     public OrderResponseDto storeCancelOrder(UUID orderId, String reason) {
-        OrderEntity order = orderRepository.findByIdWithLock(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
-
-        order.initiateCancel(reason, CancelledBy.STORE);
-        // 주문 취소(거절) 이벤트 발행
-        orderEventProducer.reserveOrderCancelled(order.getId(), reason);
-        sendSignalToWorkflow(orderId, OrderStatus.CANCEL_PENDING);
-        log.info("가게에 의한 취소 처리 시작 (환불 대기): orderId={}, reason={}", orderId, reason);
-
-        return OrderResponseDto.from(order);
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(OrderWorkflow.class, orderId.toString());
+        workflow.signalStatusChanged(new OrderStatusUpdate(OrderStatus.CANCEL_PENDING, null, reason, CancelledBy.STORE));
+        log.info("가게 취소 시그널 전송 완료: orderId={}, reason={}", orderId, reason);
+        return OrderResponseDto.fromId(orderId, OrderStatus.CANCEL_PENDING);
     }
-
-    @CircuitBreaker(name = "payment_ready_create")
-    @Bulkhead(name = "payment_ready_create", type = Bulkhead.Type.SEMAPHORE)
-    @Retry(name = "payment_ready_create")
-    private void cancelPaymentIfExists(UUID orderId, String cancelReason) {
-        try {
-            // Payment 서비스에서 결제 정보 조회
-            if (!paymentClient.existsActivePaymentByOrderId(orderId)) {
-                log.info("주문 ID {}에 대한 결제 정보가 없습니다. 결제 취소를 건너뜁니다.", orderId);
-                return;
-            }
-
-            PaymentResponse payment = paymentClient.getPaymentByOrderId(orderId);
-
-            log.info("결제 취소 요청 - 결제 ID: {}, 주문 ID: {}, 사유: {}", payment.getId(), orderId, cancelReason);
-
-            // Payment 서비스에 결제 취소 요청
-            PaymentCancelRequest cancelRequest = PaymentCancelRequest.builder()
-                    .cancelReason(cancelReason)
-                    .build();
-            paymentClient.cancelPayment(payment.getId(), cancelRequest);
-
-            log.info("결제 취소 완료 - 결제 ID: {}", payment.getId());
-
-        } catch (Exception e) {
-            log.error("결제 취소 실패 - 주문 ID: {}, 오류: {}", orderId, e.getMessage(), e);
-            throw new RuntimeException("결제 취소 중 오류가 발생했습니다: " + e.getMessage(), e);
-        }
+    
+    @Override
+    public void completeOrderCancellation(UUID orderId) {
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(OrderWorkflow.class, orderId.toString());
+        workflow.signalRefundCompleted();
+        log.info("환불 완료 시그널 전송 성공: orderId={}", orderId);
     }
 
     @Override
-    @Transactional
-    @OrderStatusChange("COMPLETE_PAYMENT")
     public OrderResponseDto completePayment(UUID orderId) {
-        OrderEntity order = orderRepository.findByIdWithLock(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
-        
-        // 멱등성 보장 결제 처리 로직
-        if (order.getOrderStatus() == OrderStatus.PENDING ||
-            order.getOrderStatus().isFinalStatus()) {
-            if (order.getOrderStatus() == OrderStatus.CANCELLED) {
-                log.warn("[주문서비스] 이미 취소된 주문에 결제 성공 이벤트 수신. 환불을 예약합니다. orderId={}", orderId);
-                orderEventProducer.reserveOrderCancelled(orderId, "타임아웃 이후 결제 성공 발생");
-            } else {
-                log.info("[멱등성처리] 이미 처리된 주문입니다. 스킵: orderId={}, status={}", orderId, order.getOrderStatus());
-            }
-            return OrderResponseDto.from(order); 
+        try {
+            OrderWorkflow workflow = workflowClient.newWorkflowStub(OrderWorkflow.class, orderId.toString());
+            workflow.signalStatusChanged(new OrderStatusUpdate(OrderStatus.PENDING, null, null, null));
+            log.info("결제 완료 시그널 전송: orderId={}", orderId);
+        } catch (WorkflowNotFoundException e) {
+            log.warn("이미 종료된 워크플로우입니다. orderId={}", orderId);
         }
-        
-        // 정상 결제 처리 로직
-        log.info("결제 성공 이벤트 수신 - 주문 확정 처리 시작: orderId={}", orderId);
-        order.completePayment();
-        orderEventProducer.reserveOrderPending(order.getStoreId(), order.getId());
-        log.info("결제 처리 및 사장님 알림 이벤트 발행 완료: orderId={}", orderId);
-        sendSignalToWorkflow(orderId, OrderStatus.PENDING);
-        
-        return OrderResponseDto.from(order);
+        return OrderResponseDto.fromId(orderId, OrderStatus.PENDING);
     }
 
     @Override
-    @Transactional
     public OrderResponseDto failPayment(UUID orderId) {
-        OrderEntity order = orderRepository.findByIdWithLock(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
-
-        if (order.getOrderStatus() == OrderStatus.PAYMENT_FAILED || order.getOrderStatus().isFinalStatus()) {
-            log.info("[멱등성 처리] 이미 실패 처리되었거나 최종 상태인 주문입니다. 스킵: orderId={}", orderId);
-            return OrderResponseDto.from(order);
-        }
-
-        order.failPayment();
-        return OrderResponseDto.from(order);
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(OrderWorkflow.class, orderId.toString());
+        workflow.signalStatusChanged(new OrderStatusUpdate(OrderStatus.PAYMENT_FAILED, null, "결제 승인 거절", null));
+        return OrderResponseDto.fromId(orderId, OrderStatus.PAYMENT_FAILED);
     }
 
     private void checkDuplicateOrder(Integer userId, UUID storeId, OrderCreateRequestDto requestDto) {
@@ -498,23 +338,7 @@ public class OrderServiceImpl implements OrderService {
             }
         }
     }
-
-    private String generateOrderNumber() {
-        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String datePattern = "ORDER-" + date + "-%";
-
-        Optional<String> lastOrderNumber = orderRepository.findTopOrderNumberByDatePattern(datePattern);
-
-        int sequence = 1;
-        if (lastOrderNumber.isPresent()) {
-            String lastNumber = lastOrderNumber.get();
-            String lastSeq = lastNumber.substring(lastNumber.lastIndexOf('-') + 1);
-            sequence = Integer.parseInt(lastSeq) + 1;
-        }
-
-        return String.format("ORDER-%s-%04d", date, sequence);
-    }
-
+    
     private LocalDateTime[] getDateRange(LocalDateTime date) {
         LocalDateTime startOfDay = date.toLocalDate().atStartOfDay();
         LocalDateTime endOfDay = date.toLocalDate().atTime(23, 59, 59);
@@ -552,21 +376,40 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
     
-    private void sendSignalToWorkflow(UUID orderId, OrderStatus status) {
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                try {
-                    OrderWorkflow workflow = workflowClient.newWorkflowStub(
-                            OrderWorkflow.class,
-                            orderId.toString()
-                    );
-                    workflow.signalStatusChanged(status);
-                    log.info("워크플로우 시그널 전송 성공: orderId={}, status={}", orderId, status);
-                } catch (Exception e) {
-                    log.error("워크플로우 시그널 전송 실패: orderId={}, status={}", orderId, status, e);
-                }
+    private void sendSignal(UUID orderId, OrderStatus status) {
+        OrderWorkflow workflow = workflowClient.newWorkflowStub(OrderWorkflow.class, orderId.toString());
+        workflow.signalStatusChanged(new OrderStatusUpdate(status, null, null, null));
+        log.info("시그널 전송 완료: orderId={}, status={}", orderId, status);
+    }
+    
+    private OrderContextDto fetchOrderContext(OrderCreateRequestDto requestDto) {
+        StoreResponse store = storeClient.getStoreById(requestDto.getStoreId());
+        if (store == null) {
+            throw new IllegalArgumentException("존재하지 않는 가게입니다.");
+        }
+        
+        Map<UUID, MenuResponse> menuMap = new HashMap<>();
+        Map<UUID, MenuOptionResponse> optionMap = new HashMap<>();
+        
+        for (OrderItemRequestDto itemDto : requestDto.getOrderItems()) {
+            MenuResponse menu = menuClient.getMenuById(itemDto.getMenuId());
+            if (menu == null || menu.isHidden() || menu.isDeleted()) {
+                throw new IllegalArgumentException("판매 불가 메뉴입니다: " + itemDto.getMenuId());
             }
-        });
+            menuMap.put(itemDto.getMenuId(), menu);
+
+            for (OrderItemOptionRequestDto optionDto : itemDto.getOptions()) {
+                MenuOptionResponse option = menuClient.getMenuOptionById(optionDto.getMenuOptionId());
+                if (option == null || option.isDeleted()) {
+                    throw new IllegalArgumentException("판매 불가 옵션입니다.");
+                }
+                optionMap.put(optionDto.getMenuOptionId(), option);
+            }
+        }
+            return OrderContextDto.builder()
+                    .store(store)
+                    .menuMap(menuMap)
+                    .optionMap(optionMap)
+                    .build();
     }
 }

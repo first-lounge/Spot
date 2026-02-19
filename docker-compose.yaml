@@ -5,7 +5,7 @@ services:
   db:
     image: postgres:15-alpine
     container_name: local-postgres_db
-    command: > 
+    command: >
       postgres 
       -c max_connections=300
       -c wal_level=logical
@@ -61,7 +61,7 @@ services:
       - kafka-data-1:/var/lib/kafka/data
     networks:
       - spot-network
-      
+  
   kafka2:
     image: apache/kafka:4.0.0
     container_name: kafka2
@@ -123,7 +123,7 @@ services:
       - kafka-data-3:/var/lib/kafka/data
     networks:
       - spot-network
-        
+  
   connect1: &connect-common
     container_name: connect1
     image: quay.io/debezium/connect:3.4.0.Final
@@ -161,7 +161,7 @@ services:
     container_name: connect2
     ports:
       - "8889:8083"
-      
+  
   connect-init:
     image: alpine:latest
     container_name: connect-init
@@ -194,8 +194,8 @@ services:
       - kafka3
     networks:
       - spot-network
-
-# --- Temporal ---
+  
+  # --- Temporal ---
   temporal:
     container_name: temporal
     image: temporalio/auto-setup:1.29.3
@@ -203,13 +203,20 @@ services:
       - "7233:7233"
     environment:
       - DB=postgres12
-      - POSTGRES_SEEDS=db
+      - POSTGRES_SEEDS=${DB_HOST}
       - DB_PORT=5432
-      - POSTGRES_USER=admin
-      - POSTGRES_PWD=secret
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME}
+      - POSTGRES_PWD=${SPRING_DATASOURCE_PASSWORD}
       - DBNAME=spot_temporal
       - VISIBILITY_DBNAME=spot_visibility
+      - SKIP_DB_CREATE=false
       - SKIP_SCHEMA_SETUP=false
+
+      - POSTGRES_TLS_ENABLED=true
+      - POSTGRES_TLS_DISABLE_HOST_VERIFICATION=true
+      - SQL_TLS_ENABLED=true
+      - SQL_HOST_VERIFICATION=false
+
       - ENABLE_ES=false
       - SKIP_DEFAULT_NAMESPACE_CREATION=false
       - LOG_LEVEL=warn

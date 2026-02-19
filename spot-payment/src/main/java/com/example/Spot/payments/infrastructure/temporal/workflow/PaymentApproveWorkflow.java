@@ -8,5 +8,5 @@ import io.temporal.workflow.WorkflowMethod;
 @WorkflowInterface
 public interface PaymentApproveWorkflow {
     @WorkflowMethod
-    void processApprove(UUID paymentId);
+    void processApprove(UUID orderId);
 }

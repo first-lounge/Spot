@@ -88,4 +88,12 @@ public class OrderItemEntity extends BaseEntity {
     protected void setOrder(OrderEntity order) {
         this.order = order;
     }
+
+    public BigDecimal getTotalPrice() {
+        BigDecimal optionsSum = orderItemOptions.stream()
+                .map(OrderItemOptionEntity::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return this.menuPrice.multiply(BigDecimal.valueOf(this.quantity)).add(optionsSum);
+    }
 }

@@ -1,11 +1,10 @@
 package com.example.Spot.order.domain.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
 
 import com.example.Spot.global.common.BaseEntity;
 import com.example.Spot.order.domain.enums.CancelledBy;
@@ -17,7 +16,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -38,8 +36,6 @@ public class OrderEntity extends BaseEntity {
     // orderItems는 unique key에 포함할 수 없음.
 
     @Id
-    @GeneratedValue
-    @UuidGenerator
     @Column(columnDefinition = "UUID")
     private UUID id;
 
@@ -103,8 +99,9 @@ public class OrderEntity extends BaseEntity {
     private List<OrderItemEntity> orderItems = new ArrayList<>();
 
     @Builder
-    public OrderEntity(UUID storeId, Integer userId, String orderNumber,
-                       String request, boolean needDisposables, LocalDateTime pickupTime) {
+    public OrderEntity(UUID id, UUID storeId, Integer userId, String orderNumber,
+                       String request, boolean needDisposables, LocalDateTime pickupTime,
+                       OrderStatus orderStatus) {
         if (storeId == null) {
             throw new IllegalArgumentException("가게 ID는 필수입니다.");
         }
@@ -117,15 +114,15 @@ public class OrderEntity extends BaseEntity {
         if (pickupTime == null) {
             throw new IllegalArgumentException("픽업 시간은 필수입니다.");
         }
-
+        
+        this.id = id;
         this.storeId = storeId;
         this.userId = userId;
         this.orderNumber = orderNumber;
         this.request = request;
         this.needDisposables = needDisposables;
         this.pickupTime = pickupTime;
-
-        this.orderStatus = OrderStatus.PAYMENT_PENDING;
+        this.orderStatus = orderStatus != null ? orderStatus : OrderStatus.PAYMENT_PENDING;
     }
 
     public void addOrderItem(OrderItemEntity orderItem) {
@@ -186,6 +183,12 @@ public class OrderEntity extends BaseEntity {
         this.cancelledBy = cancelledBy;
     }
 
+    public BigDecimal getTotalAmount() {
+        return orderItems.stream()
+                .map(OrderItemEntity::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     public void startCooking() {
         validateStatusTransition(OrderStatus.COOKING);
         this.orderStatus = OrderStatus.COOKING;
@@ -203,6 +206,13 @@ public class OrderEntity extends BaseEntity {
         this.orderStatus = OrderStatus.COMPLETED;
         this.pickedUpAt = LocalDateTime.now();
     }
+    
+    public void initiateReject(String reason) {
+        validateStatusTransition(OrderStatus.REJECT_PENDING);
+        this.orderStatus = OrderStatus.REJECT_PENDING;
+        this.reason = reason;
+        this.cancelledBy = null; 
+    }
 
     public void initiateCancel(String reason, CancelledBy cancelledBy) {
         validateStatusTransition(OrderStatus.CANCEL_PENDING);
@@ -211,26 +221,22 @@ public class OrderEntity extends BaseEntity {
         this.cancelledBy = cancelledBy;
     }
     
+    public void finalizeReject() {
+        validateStatusTransition(OrderStatus.REJECTED);
+        this.orderStatus = OrderStatus.REJECTED;
+        this.rejectedAt = LocalDateTime.now();
+    }
+
     public void finalizeCancel() {
-        OrderStatus finalStatus = (this.cancelledBy == null)
-                ? OrderStatus.REJECTED
-                : OrderStatus.CANCELLED;
-        
-        validateStatusTransition(finalStatus);
-        
-        this.orderStatus = finalStatus;
-        if (finalStatus == OrderStatus.REJECTED) {
-            this.rejectedAt = LocalDateTime.now();
-        } else {
-            this.cancelledAt = LocalDateTime.now();
-        }
+        validateStatusTransition(OrderStatus.CANCELLED);
+        this.orderStatus = OrderStatus.CANCELLED;
+        this.cancelledAt = LocalDateTime.now();
     }
     
     public void markAsRefundError() {
-        if (this.orderStatus != OrderStatus.CANCEL_PENDING) {
+        if (this.orderStatus != OrderStatus.CANCEL_PENDING && this.orderStatus != OrderStatus.REJECT_PENDING) {
             throw new IllegalStateException("환불 대기 상태가 아닌 주문은 에러 처리를 할 수 없습니다.");
         }
-        
         this.orderStatus = OrderStatus.REFUND_ERROR;
     }
     

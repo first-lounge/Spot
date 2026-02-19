@@ -55,12 +55,11 @@ public class PaymentListener {
             WorkflowOptions options = WorkflowOptions.newBuilder()
                     .setWorkflowId("payment-wf-" + event.getOrderId())
                     .setTaskQueue(PaymentConstants.PAYMENT_TASK_QUEUE)
-                    .setWorkflowIdReusePolicy(WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE)
+                    .setWorkflowIdReusePolicy(WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY) // 2. 정책 완화 추천                    .build();
                     .build();
-
             try {
                 PaymentApproveWorkflow workflow = workflowClient.newWorkflowStub(PaymentApproveWorkflow.class, options);
-                WorkflowClient.start(workflow::processApprove, paymentId);
+                WorkflowClient.start(workflow::processApprove, event.getOrderId());
                 log.info("[결제] 새 워크플로우 시작: orderId={}, paymentId={}", event.getOrderId(), paymentId);
             } catch (WorkflowExecutionAlreadyStarted e) {
                 log.info("[결제] 이미 진행 중인 워크플로우입니다. 스킵: orderId={}", event.getOrderId());
@@ -84,7 +83,7 @@ public class PaymentListener {
             WorkflowOptions options = WorkflowOptions.newBuilder()
                     .setWorkflowId("cancel-wf-" + event.getOrderId())
                     .setTaskQueue(PaymentConstants.PAYMENT_TASK_QUEUE)
-                    .setWorkflowIdReusePolicy(WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE)
+                    .setWorkflowIdReusePolicy(WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY)
                     .build();
             
             try {

@@ -23,11 +23,17 @@ spec:
             - name: DB
               value: postgres12
             - name: POSTGRES_SEEDS
-              value: host.k3d.internal
+              valueFrom:
+                secretKeyRef:
+                  name: spot-secrets
+                  key: DB_HOST
             - name: DB_PORT
               value: "5432"
             - name: POSTGRES_USER
-              value: "admin"
+              valueFrom:
+                secretKeyRef:
+                  name: spot-secrets
+                  key: SPRING_DATASOURCE_USERNAME
             - name: POSTGRES_PWD
               valueFrom:
                 secretKeyRef:
@@ -37,7 +43,17 @@ spec:
               value: "spot_temporal"
             - name: VISIBILITY_DBNAME
               value: "spot_visibility"
+            - name: SKIP_DB_CREATE
+              value: "false"
             - name: SKIP_SCHEMA_SETUP
+              value: "false"
+            - name: POSTGRES_TLS_ENABLED
+              value: "true"
+            - name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION
+              value: "true"
+            - name: SQL_TLS_ENABLED
+              value: "true"
+            - name: SQL_HOST_VERIFICATION
               value: "false"
             - name: ENABLE_ES
               value: "false"
@@ -65,3 +81,4 @@ spec:
   ports:
     - port: 7233
       targetPort: 7233
+
