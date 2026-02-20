@@ -9,11 +9,6 @@ variable "common_tags" {
   default     = {}
 }
 
-variable "api_gateway_stage_arn" {
-  description = "API Gateway Stage ARN"
-  type        = string
-  default     = ""
-}
 
 variable "rate_limit" {
   description = "5분당 최대 요청 수 (Rate Limiting)"
@@ -25,4 +20,9 @@ variable "log_retention_days" {
   description = "WAF 로그 보관 일수"
   type        = number
   default     = 30
+}
+
+variable "alb_name" {
+  type    = string
+  default = "spot-dev-alb"
 }

@@ -6,6 +6,18 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = ">= 4.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.25"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.12"
+    }
     # postgresql = {
     #   source  = "cyrilgdn/postgresql"
     #   version = "~> 1.21"
@@ -42,3 +54,23 @@ provider "aws" {
 #   name  = "users"  # var.services["user"].environment_vars["DB_SCHEMA"] 값과 일치해야 함
 #   owner = var.db_username
 # }
+
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_name
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_ca)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_ca)
+    token                  = data.aws_eks_cluster_auth.this.token
+  }
+}
+
+

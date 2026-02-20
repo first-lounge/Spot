@@ -3,7 +3,7 @@
 # =============================================================================
 output "vpc_id" {
   description = "VPC ID"
-  value       = module.network.vpc_id
+  value       = module.network_spot.vpc_id
 }
 
 # =============================================================================
@@ -28,59 +28,12 @@ output "ecr_repository_urls" {
 }
 
 # =============================================================================
-# ECS
-# =============================================================================
-output "ecs_cluster_name" {
-  description = "ECS 클러스터 이름"
-  value       = module.ecs.cluster_name
-}
-
-output "ecs_service_names" {
-  description = "ECS 서비스 이름 맵"
-  value       = module.ecs.service_names
-}
-
-# =============================================================================
-# ALB
-# =============================================================================
-output "alb_dns" {
-  description = "ALB DNS"
-  value       = module.alb.alb_dns_name
-}
-
-# =============================================================================
-# API Gateway
-# =============================================================================
-output "api_url" {
-  description = "API Gateway URL"
-  value       = module.api_gateway.api_endpoint
-}
-
-# =============================================================================
-# DNS
-# =============================================================================
-output "name_servers" {
-  description = "Route 53 네임서버 (도메인 등록 기관에 설정 필요)"
-  value       = module.dns.name_servers
-}
-
-output "api_custom_domain" {
-  description = "API 커스텀 도메인"
-  value       = module.dns.api_domain
-}
-
-output "certificate_arn" {
-  description = "SSL 인증서 ARN"
-  value       = module.dns.certificate_arn
-}
-
-# =============================================================================
 # WAF
 # =============================================================================
-output "waf_web_acl_arn" {
-  description = "WAF Web ACL ARN"
-  value       = module.waf.web_acl_arn
-}
+# output "waf_web_acl_arn" {
+#   description = "WAF Web ACL ARN"
+#   value       = module.waf.web_acl_arn
+# }
 
 # =============================================================================
 # S3
@@ -114,4 +67,33 @@ output "redis_connection_string" {
 output "sns_alerts_topic_arn" {
   description = "알람 알림 SNS Topic ARN"
   value       = module.monitoring.sns_topic_arn
+}
+
+
+# =============================================================================
+# eks
+# =============================================================================
+
+output "eks_cluster_name" {
+  value = module.eks.cluster_name
+}
+
+output "eks_cluster_endpoint" {
+  value = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_ca" {
+  value = module.eks.cluster_ca
+}
+
+output "eks_node_security_group_id" {
+  value = module.eks.node_security_group_id
+}
+
+output "oidc_issuer_url_spot" {
+  value = module.eks.oidc_issuer_url
+}
+
+output "irsa_role_arns" {
+  value = module.irsa.service_account_role_arns
 }

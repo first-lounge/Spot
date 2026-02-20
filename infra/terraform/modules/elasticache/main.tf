@@ -1,7 +1,7 @@
 # =============================================================================
 # ElastiCache Redis - 캐시 및 세션 저장소
 # =============================================================================
-
+#
 # -----------------------------------------------------------------------------
 # Subnet Group
 # -----------------------------------------------------------------------------
@@ -12,16 +12,16 @@ resource "aws_elasticache_subnet_group" "redis" {
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-redis-subnet" })
 }
 
-# -----------------------------------------------------------------------------
-# Security Group
-# -----------------------------------------------------------------------------
+# # -----------------------------------------------------------------------------
+# # Security Group
+# # -----------------------------------------------------------------------------
 resource "aws_security_group" "redis" {
   name        = "${var.name_prefix}-redis-sg"
   description = "Security group for ElastiCache Redis"
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "Redis from ECS"
+    description     = "Redis from EKS nodes"
     from_port       = 6379
     to_port         = 6379
     protocol        = "tcp"

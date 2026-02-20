@@ -2,11 +2,11 @@ apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: kafka-nodes
-  namespace: spot
+  namespace: kafka
   labels:
     strimzi.io/cluster: spot-cluster
 spec:
-  replicas: 1 # 3
+  replicas: 1
   roles:
     - broker
     - controller
@@ -19,7 +19,7 @@ spec:
         deleteClaim: true
   resources:
     requests:
-      memory: 512Mi
+      memory: 128Mi
       cpu: 250m
     limits:
       memory: 1Gi

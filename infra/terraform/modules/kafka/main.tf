@@ -1,23 +1,27 @@
 # =============================================================================
 # Kafka EC2 Module (KRaft Mode - Single/Multi Broker)
 # =============================================================================
-
 locals {
   kafka_port    = 9092
   kraft_port    = 9093
   internal_port = 9094
 
-  # 브로커 배치: AZ-a에 1개, AZ-c에 2개
-  brokers = var.broker_count > 1 ? {
+  effective_subnet_ids = length(var.subnet_ids) > 0 ? var.subnet_ids : (var.subnet_id != null ? [var.subnet_id] : [])
+  single_subnet        = length(local.effective_subnet_ids) <= 1
+
+  brokers = var.broker_count > 1 ? (
+    local.single_subnet ? {
+    "1" = { subnet_index = 0, az_suffix = "a" }
+    "2" = { subnet_index = 0, az_suffix = "a" }
+    "3" = { subnet_index = 0, az_suffix = "a" }
+  } : {
     "1" = { subnet_index = 0, az_suffix = "a" }
     "2" = { subnet_index = 1, az_suffix = "c" }
     "3" = { subnet_index = 1, az_suffix = "c" }
-  } : {
+  }
+  ) : {
     "1" = { subnet_index = 0, az_suffix = "a" }
   }
-
-  # 사용할 서브넷 결정
-  effective_subnet_ids = length(var.subnet_ids) > 0 ? var.subnet_ids : (var.subnet_id != null ? [var.subnet_id] : [])
 }
 
 # =============================================================================
@@ -27,7 +31,7 @@ resource "aws_security_group" "kafka" {
   name   = "${var.name_prefix}-kafka-sg"
   vpc_id = var.vpc_id
 
-  # Kafka 클라이언트 포트 (ECS에서 접근)
+  # Kafka 클라이언트 포트 (EKS에서 접근)
   ingress {
     from_port       = local.kafka_port
     to_port         = local.kafka_port
@@ -149,12 +153,12 @@ resource "aws_instance" "kafka" {
     volume_size           = var.volume_size
     iops                  = 3000
     throughput            = 125
-    delete_on_termination = var.broker_count == 1  # prod에서는 데이터 보존
+    delete_on_termination = var.delete_on_termination
     encrypted             = true
   }
 
   user_data = base64encode(templatefile(
-    var.broker_count > 1 ? "${path.module}/user-data-cluster.sh" : "${path.module}/user-data.sh",
+      var.broker_count > 1 ? "${path.module}/user-data-cluster.sh" : "${path.module}/user-data.sh",
     {
       kafka_version       = var.kafka_version
       kafka_cluster_id    = var.cluster_id
@@ -180,13 +184,14 @@ resource "aws_instance" "kafka" {
   }
 }
 
+
 # =============================================================================
 # Route53 Private DNS (서비스 디스커버리용)
 # =============================================================================
 resource "aws_route53_zone" "kafka" {
   count = var.create_private_dns ? 1 : 0
 
-  name = "kafka.internal"
+  name = "${var.name_prefix}.kafka.internal"
 
   vpc {
     vpc_id = var.vpc_id
@@ -195,7 +200,6 @@ resource "aws_route53_zone" "kafka" {
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-kafka-zone" })
 }
 
-# 개별 브로커 DNS 레코드
 resource "aws_route53_record" "kafka_brokers" {
   for_each = var.create_private_dns ? local.brokers : {}
 
@@ -206,7 +210,6 @@ resource "aws_route53_record" "kafka_brokers" {
   records = [aws_instance.kafka[each.key].private_ip]
 }
 
-# 클러스터 부트스트랩 레코드 (모든 브로커 IP)
 resource "aws_route53_record" "kafka_bootstrap" {
   count = var.create_private_dns ? 1 : 0
 

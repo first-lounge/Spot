@@ -4,12 +4,12 @@
 data "aws_caller_identity" "current" {}
 
 # =============================================================================
-# Network
+# Network (SPOT)
 # =============================================================================
-module "network" {
+module "network_spot" {
   source = "../../modules/network"
 
-  name_prefix          = local.name_prefix
+  name_prefix          = "${local.name_prefix}-spot"
   common_tags          = local.common_tags
   vpc_cidr             = var.vpc_cidr
   public_subnet_cidrs  = var.public_subnet_cidrs
@@ -17,6 +17,8 @@ module "network" {
   availability_zones   = var.availability_zones
   nat_instance_type    = var.nat_instance_type
 }
+
+
 
 # =============================================================================
 # Database
@@ -26,9 +28,12 @@ module "database" {
 
   name_prefix       = local.name_prefix
   common_tags       = local.common_tags
-  vpc_id            = module.network.vpc_id
-  vpc_cidr          = module.network.vpc_cidr
-  subnet_ids        = module.network.private_subnet_ids
+  vpc_id            = module.network_spot.vpc_id
+  vpc_cidr          = module.network_spot.vpc_cidr
+  subnet_ids        = module.network_spot.private_subnet_ids
+
+  allowed_security_group_ids = [module.eks.node_security_group_id]
+
   db_name           = var.db_name
   username          = var.db_username
   password          = var.db_password
@@ -36,6 +41,8 @@ module "database" {
   allocated_storage = var.db_allocated_storage
   engine_version    = var.db_engine_version
 }
+
+
 
 # =============================================================================
 # ECR (Multiple Repositories)
@@ -50,111 +57,20 @@ module "ecr" {
 }
 
 # =============================================================================
-# ALB (Gateway Pass-through)
-# =============================================================================
-module "alb" {
-  source = "../../modules/alb"
-
-  name_prefix = local.name_prefix
-  common_tags = local.common_tags
-  vpc_id      = module.network.vpc_id
-  vpc_cidr    = module.network.vpc_cidr
-  subnet_ids  = module.network.private_subnet_ids
-
-  # Gateway만 ALB에 연결 - 모든 트래픽이 Spring Gateway로 전달됨
-  services = {
-    "gateway" = {
-      container_port    = var.services["gateway"].container_port
-      health_check_path = var.services["gateway"].health_check_path
-      path_patterns     = ["/*"]
-      priority          = 1
-    }
-  }
-}
-
-# =============================================================================
-# ECS (Multiple Services with Service Connect)
-# =============================================================================
-module "ecs" {
-  source = "../../modules/ecs"
-
-  project               = var.project
-  environment           = var.environment
-  name_prefix           = local.name_prefix
-  common_tags           = local.common_tags
-  region                = var.region
-  vpc_id                = module.network.vpc_id
-  subnet_ids            = [module.network.public_subnet_a_id] # NAT 문제로 public 사용
-  ecr_repository_urls   = module.ecr.repository_urls
-  alb_security_group_id = module.alb.security_group_id
-  target_group_arns     = module.alb.target_group_arns
-  alb_listener_arn      = module.alb.listener_arn
-  assign_public_ip      = true # NAT 문제로 public IP 사용
-
-  services               = var.services
-  enable_service_connect = var.enable_service_connect
-  standby_mode           = var.standby_mode
-
-  # Database 연결 정보
-  db_endpoint = module.database.endpoint
-  db_name     = var.db_name
-  db_username = var.db_username
-
-  # Redis 연결 정보
-  redis_endpoint = module.elasticache.redis_endpoint
-
-  # Kafka 연결 정보
-  kafka_bootstrap_servers = module.kafka.bootstrap_servers
-
-  # Parameter Store ARNs (민감 정보 주입)
-  parameter_arns = {
-    db_password     = module.parameters.db_password_arn
-    jwt_secret      = module.parameters.jwt_secret_arn
-    mail_password   = module.parameters.mail_password_arn
-    toss_secret_key = module.parameters.toss_secret_key_arn
-  }
-
-  # JWT 설정 (비민감 정보)
-  jwt_expire_ms             = var.jwt_expire_ms
-  refresh_token_expire_days = var.refresh_token_expire_days
-
-  # Mail 설정 (비민감 정보)
-  mail_username = var.mail_username
-
-  # Toss 결제 설정 (비민감 정보)
-  toss_customer_key = var.toss_customer_key
-
-  # 서비스 설정
-  service_active_regions = var.service_active_regions
-
-  depends_on = [module.parameters]
-}
-
-# =============================================================================
-# API Gateway
-# =============================================================================
-module "api_gateway" {
-  source = "../../modules/api-gateway"
-
-  name_prefix           = local.name_prefix
-  common_tags           = local.common_tags
-  subnet_ids            = module.network.private_subnet_ids
-  ecs_security_group_id = module.ecs.security_group_id
-  alb_listener_arn      = module.alb.listener_arn
-}
-
-# =============================================================================
 # DNS (Route 53 + ACM)
 # =============================================================================
 module "dns" {
   source = "../../modules/dns"
 
-  name_prefix       = local.name_prefix
-  common_tags       = local.common_tags
-  domain_name       = var.domain_name
-  create_api_domain = var.create_api_domain
-  api_gateway_id    = module.api_gateway.api_id
+  name_prefix  = local.name_prefix
+  common_tags  = local.common_tags
+  domain_name  = var.domain_name
+
+  create_alb_record = var.create_alb_record
+  alb_name          = "spot-dev-alb"
+  alb_record_name   = "spotorder.org"
 }
+
 
 # =============================================================================
 # WAF (Web Application Firewall)
@@ -162,11 +78,12 @@ module "dns" {
 module "waf" {
   source = "../../modules/waf"
 
-  name_prefix           = local.name_prefix
-  common_tags           = local.common_tags
-  api_gateway_stage_arn = module.api_gateway.stage_arn
-  rate_limit            = var.waf_rate_limit
+  name_prefix        = local.name_prefix
+  common_tags        = local.common_tags
+  rate_limit         = var.waf_rate_limit
+  log_retention_days = var.waf_log_retention_days
 }
+
 
 # =============================================================================
 # S3 (정적 파일 / 로그 저장)
@@ -190,9 +107,9 @@ module "elasticache" {
 
   name_prefix                = local.name_prefix
   common_tags                = local.common_tags
-  vpc_id                     = module.network.vpc_id
-  subnet_ids                 = module.network.private_subnet_ids
-  allowed_security_group_ids = [module.ecs.security_group_id]
+  vpc_id                     = module.network_spot.vpc_id
+  subnet_ids                 = module.network_spot.private_subnet_ids
+  allowed_security_group_ids = [module.eks.node_security_group_id]
   node_type                  = var.redis_node_type
   num_cache_clusters         = var.redis_num_cache_clusters
   engine_version             = var.redis_engine_version
@@ -206,10 +123,10 @@ module "kafka" {
 
   name_prefix                = local.name_prefix
   common_tags                = local.common_tags
-  vpc_id                     = module.network.vpc_id
-  vpc_cidr                   = module.network.vpc_cidr
-  subnet_id                  = module.network.public_subnet_a_id # NAT 문제로 public 사용
-  allowed_security_group_ids = [module.ecs.security_group_id]
+  vpc_id                     = module.network_spot.vpc_id
+  vpc_cidr                   = module.network_spot.vpc_cidr
+  subnet_id                  = module.network_spot.public_subnet_a_id # NAT 문제로 public 사용
+  allowed_security_group_ids = [module.eks.node_security_group_id]
   assign_public_ip           = true
 
   instance_type       = var.kafka_instance_type
@@ -249,16 +166,92 @@ module "monitoring" {
   common_tags = local.common_tags
   alert_email = var.alert_email
 
-  # ECS 모니터링 (대표 서비스)
-  ecs_cluster_name = module.ecs.cluster_name
-  ecs_service_name = module.ecs.service_names["user"]
-
   # RDS 모니터링
   rds_instance_id = module.database.instance_id
 
-  # ALB 모니터링
-  alb_arn_suffix = module.alb.arn_suffix
-
-  # Redis 모니터링 (선택)
+  # Redis 모니터링
   redis_cluster_id = "${local.name_prefix}-redis-001"
 }
+
+
+# =============================================================================
+# eks
+# =============================================================================
+module "eks" {
+  source = "../../modules/eks"
+
+  name_prefix = "${local.name_prefix}-spot"
+  common_tags = local.common_tags
+
+  cluster_name    = "${var.cluster_name}-spot"
+  cluster_version = var.cluster_version
+
+  vpc_id = module.network_spot.vpc_id
+
+  subnet_ids      = module.network_spot.private_subnet_ids
+  node_subnet_ids = module.network_spot.private_subnet_ids
+
+  endpoint_private_access = true
+  endpoint_public_access  = true
+  public_access_cidrs    = var.eks_public_access_cidrs
+
+  enable_node_group = true
+  node_desired_size = 1
+  node_min_size     = 1
+  node_max_size     = 1
+
+  enable_node_ssm = true
+}
+
+
+module "irsa" {
+  source = "../../modules/irsa"
+
+  name_prefix = "${local.name_prefix}-spot"
+  common_tags = local.common_tags
+
+  oidc_issuer_url = module.eks.oidc_issuer_url
+  service_accounts = local.service_accounts
+
+
+}
+
+module "eks_addons" {
+  source = "../../modules/eks-addons"
+
+  common_tags           = local.common_tags
+  cluster_name          = module.eks.cluster_name
+  ebs_csi_irsa_role_arn = module.irsa.service_account_role_arns["ebs_csi_driver"]
+
+
+  enable_vpc_cni    = true
+  enable_coredns    = true
+  enable_kube_proxy = true
+  enable_ebs_csi    = true
+
+}
+
+
+module "k8s_bootstrap" {
+  source = "../../modules/k8s-bootstrap"
+
+  providers = {
+    kubernetes = kubernetes
+    helm       = helm
+  }
+
+  cluster_name     = module.eks.cluster_name
+  alb_controller_chart_version = var.alb_controller_chart_version
+
+  service_accounts          = local.service_accounts
+  service_account_role_arns = module.irsa.service_account_role_arns
+  enable_lbc           = true
+  enable_argocd_access = true
+
+  depends_on = [
+    module.eks,
+    module.irsa,
+    module.eks_addons
+  ]
+}
+

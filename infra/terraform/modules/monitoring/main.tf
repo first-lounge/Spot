@@ -21,7 +21,12 @@ resource "aws_sns_topic_subscription" "email" {
 # -----------------------------------------------------------------------------
 # ECS Alarms
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# ECS Alarms (Optional)
+# -----------------------------------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
+  count = var.enable_ecs_alarms ? 1 : 0
+
   alarm_name          = "${var.name_prefix}-ecs-cpu-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -43,6 +48,8 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
+  count = var.enable_ecs_alarms ? 1 : 0
+
   alarm_name          = "${var.name_prefix}-ecs-memory-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -62,6 +69,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
 
   tags = var.common_tags
 }
+
 
 # -----------------------------------------------------------------------------
 # RDS Alarms
@@ -127,9 +135,11 @@ resource "aws_cloudwatch_metric_alarm" "rds_storage_low" {
 }
 
 # -----------------------------------------------------------------------------
-# ALB Alarms
+# ALB Alarms (Optional)
 # -----------------------------------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "alb_5xx_errors" {
+  count = var.enable_alb_alarms ? 1 : 0
+
   alarm_name          = "${var.name_prefix}-alb-5xx-errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -151,6 +161,8 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx_errors" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "alb_response_time" {
+  count = var.enable_alb_alarms ? 1 : 0
+
   alarm_name          = "${var.name_prefix}-alb-response-time"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -169,6 +181,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_response_time" {
 
   tags = var.common_tags
 }
+
 
 # -----------------------------------------------------------------------------
 # ElastiCache (Redis) Alarms

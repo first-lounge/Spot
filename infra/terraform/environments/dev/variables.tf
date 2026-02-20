@@ -33,6 +33,7 @@ variable "public_subnet_cidrs" {
   type        = map(string)
   default = {
     "a" = "10.0.1.0/24"
+    "c" = "10.0.2.0/24"
   }
 }
 
@@ -122,8 +123,8 @@ variable "services" {
       desired_count     = 1
       health_check_path = "/actuator/health"
       # 모든 트래픽을 Gateway로 몰아주기 위해 /* 패턴 사용
-      path_patterns     = ["/*"]
-      priority          = 1   # 가장 높은 우선순위
+      path_patterns = ["/*"]
+      priority      = 1 # 가장 높은 우선순위
       environment_vars = {
         SERVICE_NAME = "spot-gateway"
       }
@@ -213,6 +214,13 @@ variable "waf_rate_limit" {
   default     = 2000
 }
 
+variable "waf_log_retention_days" {
+  description = "WAF 로그 보관 일수"
+  type        = number
+  default     = 30
+}
+
+
 # =============================================================================
 # S3 설정
 # =============================================================================
@@ -265,6 +273,7 @@ variable "jwt_secret" {
   description = "JWT 시크릿 키"
   type        = string
   sensitive   = true
+  default     = "jmXDQDnLqV+lOaPKMR06v4+RQ7aj2cj8LR+zgPOlz/GS989tptPtAmIpyaZHrsLOPqKoVtPus28YeXZTL8O8nw=="
 }
 
 variable "jwt_expire_ms" {
@@ -341,11 +350,44 @@ variable "kafka_instance_type" {
 variable "kafka_volume_size" {
   description = "Kafka EBS 볼륨 크기 (GB)"
   type        = number
-  default     = 20
+  default     = 30
 }
 
 variable "kafka_log_retention_hours" {
   description = "Kafka 메시지 보관 시간"
   type        = number
   default     = 168 # 7일
+}
+
+
+# =============================================================================
+# eks 설정
+# =============================================================================
+variable "cluster_name" {
+  type    = string
+  default = "spot-cluster-test"
+}
+
+variable "cluster_version" {
+  type    = string
+  default = "1.29"
+}
+
+# =============================================================================
+# k8s_bootstrap.tf
+# =============================================================================
+variable "alb_controller_chart_version" {
+  type        = string
+  description = "Helm chart version for aws-load-balancer-controller"
+  default     = "1.7.2"
+}
+
+variable "create_alb_record" {
+  type    = bool
+  default = true
+}
+variable "eks_public_access_cidrs" {
+  description = "CIDRs allowed to access EKS public endpoint"
+  type        = list(string)
+  default     = []
 }

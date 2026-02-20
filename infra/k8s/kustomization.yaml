@@ -6,7 +6,9 @@ kind: Kustomization
 resources:
   # Base
   - base/namespace.yaml
-  - base/secrets.yaml
+  - base/configmap.yaml
+#  - base/postgres.yaml
+#  - base/redis.yaml
 
   # Kafka
   - base/kafka/kafka.yaml
@@ -20,70 +22,90 @@ resources:
   - base/temporal/temporal.yaml
   - base/temporal/temporal-ui.yaml
 
-  # Monitoring & Logging
-  - base/monitoring/loki/loki.yaml
-  - base/monitoring/loki/loki-config.yaml
-  - base/monitoring/fluent-bit/fluent-bit.yaml
-  - base/monitoring/fluent-bit/fluent-bit-config.yaml
+#  # Monitoring & Logging
+#  - base/monitoring/loki/loki.yaml
+#  - base/monitoring/loki/loki-config.yaml
+#  - base/monitoring/monitoring-ingress.yaml
+#  - base/monitoring/fluent-bit/fluent-bit.yaml
+#  - base/monitoring/fluent-bit/fluent-bit-config.yaml
+#
+#  # Grafana
+#  - base/monitoring/grafana/grafana.yaml
+#  - base/monitoring/grafana/grafana-config.yaml
+#
+#  # Spot Monitoring
+#  - base/monitoring/servicemonitors/spot-gateway-servicemonitor.yaml
+#  - base/monitoring/servicemonitors/spot-user-servicemonitor.yaml
+#  - base/monitoring/servicemonitors/spot-order-servicemonitor.yaml
+#  - base/monitoring/servicemonitors/spot-store-servicemonitor.yaml
+#  - base/monitoring/servicemonitors/spot-payment-servicemonitor.yaml
 
-  # Grafana
-  - base/monitoring/grafana/grafana.yaml
-  - base/monitoring/grafana/grafana-config.yaml
-
-  # Spot Monitoring
-  - base/monitoring/servicemonitors/spot-gateway-servicemonitor.yaml
-  - base/monitoring/servicemonitors/spot-user-servicemonitor.yaml
-  - base/monitoring/servicemonitors/spot-order-servicemonitor.yaml
-  - base/monitoring/servicemonitors/spot-store-servicemonitor.yaml
-  - base/monitoring/servicemonitors/spot-payment-servicemonitor.yaml
+  # Spot Apps
+  - apps/spot-ingress.yaml
+  - apps/spot-gateway.yaml
+  - apps/spot-user.yaml
+  - apps/spot-store.yaml
+  - apps/spot-order.yaml
+  - apps/spot-payment.yaml
 
 # config 디렉토리의 yml 파일들을 ConfigMap으로 생성
 configMapGenerator:
   - name: spot-app-config
     namespace: spot
+    behavior: replace
     files:
-      - ../../config/common.yml
-      - ../../config/kafka-topics.yml
-      - ../../config/spot-gateway.yml
-      - ../../config/spot-user.yml
-      - ../../config/spot-store.yml
-      - ../../config/spot-order.yml
-      - ../../config/spot-payment.yml
+      - config/spot-gateway.yml
+      - config/common.yml
+      - config/kafka-topics.yml
+      - config/spot-user.yml
+      - config/spot-store.yml
+      - config/spot-order.yml
+      - config/spot-payment.yml
     options:
       disableNameSuffixHash: true
 
-  - name: grafana-dashboards-spot
-    namespace: monitoring
+  - name: kafka-connect-init-config
+    namespace: spot
     files:
-      - base/monitoring/grafana/dashboards/spot-logs.json
+        - connectors/order-outbox.json
+        - connectors/payment-outbox.json
+        - connectors/register-connectors.sh
+    options:
+      disableNameSuffixHash: true
 
-  - name: grafana-dashboards-9578
-    namespace: monitoring
-    files:
-      - base/monitoring/grafana/dashboards/9578.json
-
-  - name: grafana-dashboards-15760
-    namespace: monitoring
-    files:
-      - base/monitoring/grafana/dashboards/15760.json
-
-  - name: grafana-dashboards-15757
-    namespace: monitoring
-    files:
-      - base/monitoring/grafana/dashboards/15757.json
-
-  - name: grafana-dashboards-15661
-    namespace: monitoring
-    files:
-      - base/monitoring/grafana/dashboards/15661.json
+#  - name: grafana-dashboards-spot
+#    namespace: monitoring
+#    files:
+#      - base/monitoring/grafana/dashboards/spot-logs.json
+#
+#  - name: grafana-dashboards-9578
+#    namespace: monitoring
+#    files:
+#      - base/monitoring/grafana/dashboards/9578.json
+#
+#  - name: grafana-dashboards-15760
+#    namespace: monitoring
+#    files:
+#      - base/monitoring/grafana/dashboards/15760.json
+#
+#  - name: grafana-dashboards-15757
+#    namespace: monitoring
+#    files:
+#      - base/monitoring/grafana/dashboards/15757.json
+#
+#  - name: grafana-dashboards-15661
+#    namespace: monitoring
+#    files:
+#      - base/monitoring/grafana/dashboards/15661.json
 
 secretGenerator:
   - name: spot-secrets
     namespace: spot
     envs:
-      - ../../.env
+      - config/.env
     options:
       disableNameSuffixHash: true
+
 
 generatorOptions:
   disableNameSuffixHash: true

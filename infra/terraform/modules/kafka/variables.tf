@@ -110,3 +110,9 @@ variable "create_private_dns" {
   type        = bool
   default     = false
 }
+
+
+variable "delete_on_termination" {
+  type    = bool
+  default = true
+}

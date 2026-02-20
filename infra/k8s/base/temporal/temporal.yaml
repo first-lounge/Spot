@@ -20,14 +20,10 @@ spec:
           ports:
             - containerPort: 7233
           env:
-            # DB 연결 정보
             - name: DB
               value: postgres12
             - name: POSTGRES_SEEDS
-              valueFrom:
-                secretKeyRef:
-                  name: spot-secrets
-                  key: DB_HOST
+              value: spot-dev-db.cj6iq2cow597.ap-northeast-2.rds.amazonaws.com
             - name: DB_PORT
               value: "5432"
             - name: POSTGRES_USER
@@ -40,39 +36,31 @@ spec:
                 secretKeyRef:
                   name: spot-secrets
                   key: SPRING_DATASOURCE_PASSWORD
-
             - name: DBNAME
               value: "spot_temporal"
             - name: VISIBILITY_DBNAME
               value: "spot_visibility"
+
             - name: SKIP_DB_CREATE
               value: "false"
             - name: SKIP_SCHEMA_SETUP
               value: "false"
-            - name: ENABLE_ES
-              value: "false"
-            - name: SKIP_DEFAULT_NAMESPACE_CREATION
-              value: "false"
-            - name: LOG_LEVEL
-              value: "warn"
 
-#            # RDS 연결
-#            - name: POSTGRES_TLS_ENABLED
-#              value: "true"
-#            - name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION
-#              value: "true"
-#            - name: SQL_TLS_ENABLED
-#              value: "true"
-#            - name: SQL_HOST_VERIFICATION
-#              value: "false"
-
+            - name: POSTGRES_TLS_ENABLED
+              value: "true"
+            - name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION
+              value: "true"
+            - name: SQL_TLS_ENABLED
+              value: "true"
+            - name: SQL_HOST_VERIFICATION
+              value: "false"
           resources:
             requests:
               memory: "256Mi"
               cpu: "250m"
             limits:
-              memory: "1Gi"
-              cpu: "750m"
+              memory: "512Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -86,4 +74,3 @@ spec:
   ports:
     - port: 7233
       targetPort: 7233
-
