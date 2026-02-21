@@ -41,7 +41,7 @@ spec:
     producer.compression.type: "lz4"
     producer.linger.ms: "20"
     producer.batch.size: "65536"
-
+    heartbeat.interval.ms: "10000"  # 증가하는 lag 용량을 막기 위해 추가
 ---
 
 apiVersion: kafka.strimzi.io/v1
@@ -86,3 +86,4 @@ spec:
     producer.compression.type: "lz4"
     producer.linger.ms: "20"
     producer.batch.size: "65536"
+    heartbeat.interval.ms: "10000"  # 증가하는 lag 용량을 막기 위해 추가
