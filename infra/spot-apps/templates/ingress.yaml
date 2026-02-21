@@ -1,30 +1,31 @@
 {{- range .Values.ingress.subs }}
+{{- $sub := . }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .name }}-ingress
-  namespace: {{ .namespace }}
+  name: {{ $sub.name }}-ingress
+  namespace: {{ $sub.namespace }}
   annotations:
   {{- range $key, $value := $.Values.ingress.annotations }}
-  {{- if ne $key "alb.ingress.kubernetes.io/healthcheck-path" }}
+    {{- /* ALB healthcheck-path일 때만 sub에 정의된 경로로 덮어쓰기 */ -}}
+    {{- if eq $key "alb.ingress.kubernetes.io/healthcheck-path" }}
+    {{ $key }}: {{ $sub.healthPath | default "/" | quote }}
+    {{- else }}
     {{ $key }}: {{ $value | quote }}
+    {{- end }}
   {{- end }}
-  {{- end }}
-    alb.ingress.kubernetes.io/healthcheck-path: {{ .healthPath | default "/" | quote }}
-    alb.ingress.kubernetes.io/group.name: spot-ingress
 spec:
   ingressClassName: {{ $.Values.ingress.className }}
   rules:
-    # 도메인(Spot, Kafka, Temporal, Grafana)
-    - host: {{ .name }}.{{ $.Values.domain }}
+    - host: {{ $sub.name }}.{{ $.Values.domain }}
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: {{ .serviceName }}
+                name: {{ $sub.serviceName }}
                 port:
                   number: 80
 {{- end}}
