@@ -8,7 +8,9 @@ ingress:
     alb.ingress.kubernetes.io/group.name: null
     alb.ingress.kubernetes.io/healthcheck-path: null
     alb.ingress.kubernetes.io/success-codes: null
-    alb.ingress.kubernetes.io/load-balancer-name: null
+    alb.ingress.kubernetes.io/listen-ports: null
+    alb.ingress.kubernetes.io/ssl-redirect: null
+    alb.ingress.kubernetes.io/certificate-arn: null
 
 # domain
 domain: localhost
