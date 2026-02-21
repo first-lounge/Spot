@@ -14,7 +14,7 @@ spring:
     threads:
       virtual:
         enabled: true
-        
+
 feign:
   user:
     url: ${FEIGN_USER_URL:http://spot-user:8081}

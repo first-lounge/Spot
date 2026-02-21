@@ -14,7 +14,7 @@ spring:
     threads:
       virtual:
         enabled: true
-        
+
 feign:
   user:
     url: ${FEIGN_USER_URL:http://spot-user:8081}
@@ -28,7 +28,7 @@ feign:
         connectTimeout: 100
         readTimeout: 500
         loggerLevel: BASIC
-        
+
 
 
 resilience4j:

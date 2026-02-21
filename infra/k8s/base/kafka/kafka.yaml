@@ -1,12 +1,25 @@
 apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
-  name: spot-cluster
-  namespace: kafka
+  name: kafka-cluster
+  #  namespace: spot
+  namespace: infra
 spec:
   kafka:
     version: 4.0.0
     metadataVersion: "3.7-IV4"
+    template:
+      pod:
+        enableServiceLinks: false
+        affinity: # 특정 노드에 생성되도록 지정
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: In
+                      values:
+                        - ip-10-0-20-53.ap-northeast-2.compute.internal
     listeners:
       - name: plain
         port: 9092
@@ -18,14 +31,13 @@ spec:
         tls: false
     config:
       process.roles: "broker,controller"
-      offsets.topic.replication.factor: 1
-      transaction.state.log.replication.factor: 1
-      transaction.state.log.min.isr: 1
-      default.replication.factor: 1
-      min.insync.replicas: 1
+      offsets.topic.replication.factor: 1 # 3
+      transaction.state.log.replication.factor: 1 # 3
+      transaction.state.log.min.isr: 1  # 2
+      default.replication.factor: 1 # 3
+      min.insync.replicas: 1  # 2
       auto.create.topics.enable: "true"
       num.partitions: 3
   entityOperator:
     topicOperator: {}
     userOperator: {}
-

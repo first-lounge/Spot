@@ -2,26 +2,25 @@ apiVersion: kafka.strimzi.io/v1
 kind: KafkaConnect
 metadata:
   name: spot-connect
-  namespace: kafka
+  namespace: infra
   annotations:
     strimzi.io/use-connector-resources: "true"
 spec:
-  replicas: 1
-  bootstrapServers: spot-cluster-kafka-bootstrap:9092
+  version: 4.0.0
+  replicas: 1 # 2
+  bootstrapServers: kafka-cluster-kafka-bootstrap.infra.svc.cluster.local:9092
+#  image: spot-registry.localhost:5111/spot-connect-custom:latest
   image: 322546275072.dkr.ecr.ap-northeast-2.amazonaws.com/spot-kafka-connect:3.4.0
+
   groupId: spot-connect-group
   configStorageTopic: connect_configs
   offsetStorageTopic: connect_offsets
   statusStorageTopic: connect_status
-
-
   
   config:
-
-    config.storage.replication.factor: 1
-    offset.storage.replication.factor: 1
-    status.storage.replication.factor: 1
-
+    config.storage.replication.factor: 1  # 3
+    offset.storage.replication.factor: 1  # 3
+    status.storage.replication.factor: 1  # 3
     
     key.converter: org.apache.kafka.connect.json.JsonConverter
     value.converter: org.apache.kafka.connect.json.JsonConverter
@@ -34,6 +33,15 @@ spec:
   template:
     pod:
       enableServiceLinks: false
+      affinity: # 특정 노드에 생성되도록 지정
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - ip-10-0-20-53.ap-northeast-2.compute.internal
     connectContainer:
       env:
         - name: DB_HOST
@@ -59,8 +67,8 @@ spec:
 
   resources:
     requests:
-      cpu: "200m"
-      memory: "128Mi"
+      cpu: "250m"
+      memory: "512Mi"
     limits:
-      cpu: "1000m"
-      memory: "1Gi"
+      cpu: "750m"
+      memory: "2Gi"

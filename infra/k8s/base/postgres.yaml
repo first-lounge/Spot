@@ -34,9 +34,15 @@ spec:
             - containerPort: 5432
           env:
             - name: POSTGRES_DB
-              value: "myapp_db"
+              valueFrom:
+                secretKeyRef:
+                  name: spot-secrets
+                  key: DB_NAME
             - name: POSTGRES_USER
-              value: "admin"
+              valueFrom:
+                secretKeyRef:
+                  name: spot-secrets
+                  key: SPRING_DATASOURCE_USERNAME
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:

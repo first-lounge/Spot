@@ -6,9 +6,13 @@ metadata:
   name: {{ .name }}-ingress
   namespace: {{ .namespace }}
   annotations:
-    {{- range $key, $value := $.Values.ingress.annotations }}
+  {{- range $key, $value := $.Values.ingress.annotations }}
+  {{- if ne $key "alb.ingress.kubernetes.io/healthcheck-path" }}
     {{ $key }}: {{ $value | quote }}
-    {{- end }}
+  {{- end }}
+  {{- end }}
+    alb.ingress.kubernetes.io/healthcheck-path: {{ .healthPath | default "/" | quote }}
+    alb.ingress.kubernetes.io/group.name: spot-ingress
 spec:
   ingressClassName: {{ $.Values.ingress.className }}
   rules:

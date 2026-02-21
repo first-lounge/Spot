@@ -2,7 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka-ui
-  namespace: kafka
+  #  namespace: spot
+  namespace: infra
 spec:
   replicas: 1
   selector:
@@ -13,25 +14,30 @@ spec:
       labels:
         app: kafka-ui
     spec:
+      affinity: # 특정 노드에 생성되도록 지정
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - ip-10-0-20-53.ap-northeast-2.compute.internal
       containers:
         - name: kafka-ui
           image: provectuslabs/kafka-ui:latest
           ports:
             - containerPort: 8080
-          resources:
-            requests:
-              memory: "75Mi"
-              cpu: "100m"
           env:
             - name: KAFKA_CLUSTERS_0_NAME
-              value: spot-cluster
+              value: kafka-cluster
             - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
-              value: 'spot-cluster-kafka-bootstrap:9092'
+              value: 'kafka-cluster-kafka-bootstrap.infra.svc.cluster.local:9092'
             
             - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME
               value: "spot-connect"
             - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS
-              value: "http://spot-connect-connect-api.spot.svc:8083"
+              value: "http://spot-connect-connect-api.infra.svc:8083"
             - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_TYPE
               value: "kafka-connect"
 
@@ -39,12 +45,19 @@ spec:
               value: WARN
             - name: LOGGING_LEVEL_COM_PROVECTUS
               value: WARN
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: kafka-ui-svc
-  namespace: spot
+  namespace: infra
 spec:
   type: ClusterIP
   selector:

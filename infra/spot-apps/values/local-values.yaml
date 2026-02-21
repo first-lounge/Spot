@@ -6,6 +6,9 @@ ingress:
     alb.ingress.kubernetes.io/scheme: null
     alb.ingress.kubernetes.io/target-type: null
     alb.ingress.kubernetes.io/group.name: null
+    alb.ingress.kubernetes.io/healthcheck-path: null
+    alb.ingress.kubernetes.io/success-codes: null
+    alb.ingress.kubernetes.io/load-balancer-name: null
 
 # domain
 domain: localhost

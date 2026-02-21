@@ -17,11 +17,14 @@ spec:
     spec:
       containers:
         - name: spot-gateway
+#          image: spot-registry.localhost:5111/spot-gateway:latest
           image: 322546275072.dkr.ecr.ap-northeast-2.amazonaws.com/spot-gateway:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
+            - name: SERVER_PORT
+              value: "8080"
             - name: SPRING_PROFILES_ACTIVE
               value: "k8s"
             - name: LOGGING_CONFIG
@@ -35,11 +38,11 @@ spec:
               readOnly: true
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "75m"
+              cpu: "250m"
+              memory: "512Mi"
             limits:
-              memory: "1Gi"
               cpu: "800m"
+              memory: "1Gi"
           readinessProbe:
             httpGet:
               path: /actuator/health

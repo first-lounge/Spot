@@ -5,24 +5,31 @@ ingress:
 
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/group.name: spot-ingress
-#    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
-#    alb.ingress.kubernetes.io/success-codes: "200"  # 헬스 체크 성공 코드
+    alb.ingress.kubernetes.io/target-type: ip # IP 모드
+    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+    alb.ingress.kubernetes.io/success-codes: "200"  # 헬스 체크 성공 코드
+#    alb.ingress.kubernetes.io/load-balancer-name: spot-dev-alb # tf위한 이름 고정
 
   subs:
     - name: www
       namespace: spot
       serviceName: spot-gateway
+      healthPath: /actuator/health
+
     - name: kafka
-      namespace: spot
+      namespace: infra
       serviceName: kafka-ui-svc
+      healthPath: /
+
     - name: temporal
-      namespace: spot
+      namespace: infra
       serviceName: temporal-ui-svc
+      healthPath: /
+
     - name: grafana
       namespace: monitoring
       serviceName: grafana-service
+      healthPath: "/api/health"
 
 # 도메인 (AWS)
 domain: spotorder.org
@@ -37,7 +44,7 @@ global:
   # 리소스 제한
   requests:
     cpu: "250m"
-    memory: "512Mi"
+    memory: "256Mi"
   limits:
     cpu: "800m"
     memory: "1Gi"

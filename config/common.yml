@@ -17,7 +17,7 @@ spring:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
-  
+
   temporal:
     connection:
       target: ${SPRING_TEMPORAL_CONNECTION_TARGET:temporal:7233}
@@ -79,7 +79,7 @@ toss:
     customerKey: ${spring.toss.customerKey:${TOSS_CUSTOMER_KEY}}
     secretKey: ${spring.toss.secretKey:${TOSS_SECRET_KEY}}
     timeout: 10
-    
+
 management:
   endpoints:
     web:
