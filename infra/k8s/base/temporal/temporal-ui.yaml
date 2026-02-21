@@ -20,9 +20,13 @@ spec:
             - containerPort: 8080
           env:
             - name: TEMPORAL_ADDRESS
-              value: "temporal:7233"
+              valueFrom:
+                secretKeyRef:
+                  name: spot-secrets
+                  key: SPRING_TEMPORAL_CONNECTION_TARGET
             - name: TEMPORAL_CORS_ALLOW_ORIGINS
               value: "*"
+
           resources:
             requests:
               memory: "128Mi"
