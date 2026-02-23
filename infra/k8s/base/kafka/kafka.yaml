@@ -11,15 +11,12 @@ spec:
     template:
       pod:
         enableServiceLinks: false
-        affinity: # 특정 노드에 생성되도록 지정
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: In
-                      values:
-                        - ip-10-0-20-53.ap-northeast-2.compute.internal
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: kafka-metrics-config
+          key: kafka-metrics-config.yaml
     listeners:
       - name: plain
         port: 9092
@@ -41,3 +38,13 @@ spec:
   entityOperator:
     topicOperator: {}
     userOperator: {}
+  kafkaExporter:
+    topicRegex: ".*"
+    groupRegex: ".*"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi

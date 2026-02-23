@@ -10,15 +10,15 @@ spec:
   replicas: 1 # 3
   template:
     pod:
-      affinity: # 특정 노드에 생성되도록 지정
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: kubernetes.io/hostname
-                    operator: In
-                    values:
-                      - ip-10-0-20-53.ap-northeast-2.compute.internal
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    strimzi.io/cluster: kafka-cluster
+                topologyKey: "kubernetes.io/hostname"
   roles:
     - broker
     - controller
@@ -31,8 +31,8 @@ spec:
         deleteClaim: true
   resources:
     requests:
-      memory: 512Mi
-      cpu: 250m
-    limits:
-      memory: 1Gi
       cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 750m
+      memory: 1Gi

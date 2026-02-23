@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rds-relay
+  namespace: spot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rds-relay
+  template:
+    metadata:
+      labels:
+        app: rds-relay
+    spec:
+      containers:
+        - name: relay
+          image: alpine/socat
+          command: ["socat", "TCP-LISTEN:5432,fork,reuseaddr", "TCP:spot-dev-db.cj6iq2cow597.ap-northeast-2.rds.amazonaws.com:5432"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rds-tunnel
+  namespace: spot
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: rds-relay
