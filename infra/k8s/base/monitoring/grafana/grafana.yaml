@@ -43,18 +43,34 @@ spec:
         - name: grafana-dashboards-spot
           configMap:
             name: grafana-dashboards-spot
+
         - name: grafana-dashboards-9578
           configMap:
             name: grafana-dashboards-9578
+
         - name: grafana-dashboards-15661
           configMap:
             name: grafana-dashboards-15661
+
         - name: grafana-dashboards-15757
           configMap:
             name: grafana-dashboards-15757
+
         - name: grafana-dashboards-15760
           configMap:
             name: grafana-dashboards-15760
+
+        - name: grafana-dashboards-kafka-broker
+          configMap:
+            name: grafana-dashboards-kafka-broker
+
+        - name: grafana-dashboards-kafka-exporter
+          configMap:
+            name: grafana-dashboards-kafka-exporter
+
+        - name: grafana-dashboards-temporal
+          configMap:
+            name: grafana-dashboards-temporal
 
 
       containers:
@@ -117,6 +133,20 @@ spec:
               subPath: 15661.json
               readOnly: true
 
+            - name: grafana-dashboards-kafka-broker
+              mountPath: /var/lib/grafana/dashboards/kafka-broker.json
+              subPath: kafka-broker.json
+              readOnly: true
+
+            - name: grafana-dashboards-kafka-exporter
+              mountPath: /var/lib/grafana/dashboards/kafka-exporter.json
+              subPath: kafka-exporter.json
+              readOnly: true
+
+            - name: grafana-dashboards-temporal
+              mountPath: /var/lib/grafana/dashboards/temporal.json
+              subPath: temporal.json
+              readOnly: true
 
 ---
 apiVersion: v1

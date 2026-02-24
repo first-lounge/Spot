@@ -8,6 +8,7 @@ alertmanager:
 prometheus:
   prometheusSpec:
     serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
 
     # retention 설정 (튜닝 가능)
     retention: 10d

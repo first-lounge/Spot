@@ -4,10 +4,10 @@ kind: Kustomization
 # namespace: spot 제거 - 각 리소스가 자체 네임스페이스 유지
 
 resources:
-#  # Base
-  - base/namespace.yaml
-#  - base/secrets.yaml
-#
+  # Base
+#  - base/namespace.yaml
+  - base/rds-relay.yaml
+
   # Kafka
   - base/kafka/kafka.yaml
   - base/kafka/kafka-nodepool.yaml
@@ -36,6 +36,9 @@ resources:
   - base/monitoring/servicemonitors/spot-order-servicemonitor.yaml
   - base/monitoring/servicemonitors/spot-store-servicemonitor.yaml
   - base/monitoring/servicemonitors/spot-payment-servicemonitor.yaml
+  - base/monitoring/servicemonitors/kafka-broker-podmonitor.yaml
+  - base/monitoring/servicemonitors/kafka-exporter-servicemonitor.yaml
+  - base/monitoring/servicemonitors/temporal-servicemonitor.yaml
 
 # config 디렉토리의 yml 파일들을 ConfigMap으로 생성
 configMapGenerator:
@@ -58,6 +61,11 @@ configMapGenerator:
       - config/spot-payment.yml
     options:
       disableNameSuffixHash: true
+
+  - name: kafka-metrics-config
+    namespace: infra
+    files:
+      - base/monitoring/prometheus/kafka-metrics-config.yaml
 
   - name: grafana-dashboards-spot
     namespace: monitoring
@@ -84,6 +92,21 @@ configMapGenerator:
     files:
       - base/monitoring/grafana/dashboards/15661.json
 
+  - name: grafana-dashboards-kafka-broker
+    namespace: monitoring
+    files:
+      - base/monitoring/grafana/dashboards/kafka-broker.json
+
+  - name: grafana-dashboards-temporal
+    namespace: monitoring
+    files:
+      - base/monitoring/grafana/dashboards/temporal.json
+
+  - name: grafana-dashboards-kafka-exporter
+    namespace: monitoring
+    files:
+      - base/monitoring/grafana/dashboards/kafka-exporter.json
+
 secretGenerator:
   - name: spot-secrets
     namespace: spot
@@ -92,6 +115,7 @@ secretGenerator:
       - config/.env
     options:
       disableNameSuffixHash: true
+
   - name: spot-secrets
     namespace: infra
     envs:

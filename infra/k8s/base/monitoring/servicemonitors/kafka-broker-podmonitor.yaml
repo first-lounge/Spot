@@ -1,18 +1,18 @@
 apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+kind: PodMonitor
 metadata:
-  name: spot-gateway
+  name: kafka-broker
   namespace: monitoring
   labels:
     release: prom
 spec:
   namespaceSelector:
     matchNames:
-      - spot
+      - infra
   selector:
     matchLabels:
-      app: spot-gateway
-  endpoints:
-    - targetPort: 8080
-      path: /actuator/prometheus
-
+      strimzi.io/component-type: kafka
+  podMetricsEndpoints:
+    - port: tcp-prometheus
+      path: /metrics
+      interval: 15s

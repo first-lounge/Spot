@@ -19,7 +19,13 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 7233
+            - containerPort: 9090
+              name: metrics
           env:
+            # 모니터링 연결 정보
+            - name: PROMETHEUS_ENDPOINT
+              value: "0.0.0.0:9090"
+
             # DB 연결 정보
             - name: DB
               value: postgres12
@@ -79,11 +85,16 @@ kind: Service
 metadata:
   name: temporal
   namespace: infra
+  labels:
+    app: temporal
 spec:
   type: ClusterIP
   selector:
     app: temporal
   ports:
-    - port: 7233
+    - name: grpc
+      port: 7233
       targetPort: 7233
-
+    - name: metrics
+      port: 9090
+      targetPort: 9090
