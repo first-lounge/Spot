@@ -15,6 +15,13 @@ metadata:
     {{ $key }}: {{ $value | quote }}
     {{- end }}
   {{- end }}
+
+{{/*  {{- /* ArgoCD */ -}}*/}}
+{{/*  {{- if $sub.annotations }}*/}}
+{{/*  {{- range $key, $value := $sub.annotations }}*/}}
+{{/*    {{ $key }}: {{ $value | quote }}*/}}
+{{/*  {{- end }}*/}}
+{{/*  {{- end }}*/}}
 spec:
   ingressClassName: {{ $.Values.ingress.className }}
   rules:

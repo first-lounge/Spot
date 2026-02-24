@@ -37,6 +37,15 @@ ingress:
       serviceName: grafana-service
       healthPath: "/api/health"
 
+#    - name: argo
+#      namespace: argocd
+#      groupName: spot-ingress
+#      serviceName: argocd-server
+#      healthPath: /
+#      annotations:
+#        alb.ingress.kubernetes.io/backend-protocol: "HTTPS"
+#        alb.ingress.kubernetes.io/healthcheck-protocol: "HTTPS"
+
 # 도메인 (AWS)
 domain: spotorder.org
 
