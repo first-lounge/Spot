@@ -132,8 +132,6 @@ build_and_push_images() {
 install_argocd() {
     log_info "Installing ArgoCD..."
 
-#    kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-
     kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
     log_info "Waiting for ArgoCD to be ready..."
@@ -148,8 +146,6 @@ install_argocd() {
 
 install_prometheus() {
     log_info "Installing Prometheus (kube-prometheus-stack) via Helm..."
-
-#    kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts >/dev/null 2>&1 || true
     helm repo update
