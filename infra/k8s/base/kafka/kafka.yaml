@@ -2,7 +2,6 @@ apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: kafka-cluster
-  #  namespace: spot
   namespace: infra
 spec:
   kafka:

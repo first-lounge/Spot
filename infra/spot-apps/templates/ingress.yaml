@@ -16,7 +16,7 @@ metadata:
     {{- end }}
   {{- end }}
 
-{{/*  {{- /* ArgoCD */ -}}*/}}
+  {{- /* ArgoCD */ -}}
 {{/*  {{- if $sub.annotations }}*/}}
 {{/*  {{- range $key, $value := $sub.annotations }}*/}}
 {{/*    {{ $key }}: {{ $value | quote }}*/}}
