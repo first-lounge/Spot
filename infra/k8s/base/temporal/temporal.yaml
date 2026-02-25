@@ -62,15 +62,15 @@ spec:
             - name: LOG_LEVEL
               value: "warn"
 
-            # RDS 연결
-            - name: POSTGRES_TLS_ENABLED
-              value: "true"
-            - name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION
-              value: "true"
-            - name: SQL_TLS_ENABLED
-              value: "true"
-            - name: SQL_HOST_VERIFICATION
-              value: "false"
+#            # RDS 연결
+#            - name: POSTGRES_TLS_ENABLED
+#              value: "true"
+#            - name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION
+#              value: "true"
+#            - name: SQL_TLS_ENABLED
+#              value: "true"
+#            - name: SQL_HOST_VERIFICATION
+#              value: "false"
 
           resources:
             requests:

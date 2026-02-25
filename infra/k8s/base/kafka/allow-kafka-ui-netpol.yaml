@@ -2,7 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-kafka-ui-to-connect
-#  namespace: spot
   namespace: infra
 spec:
   podSelector:

@@ -175,7 +175,7 @@ install_strimzi() {
 
   helm upgrade --install strimzi-operator strimzi/strimzi-kafka-operator \
     -n strimzi \
-    --set watchNamespaces={spot} \
+    --set watchNamespaces={infra} \
     --wait
   
   log_info "Strimzi Operator installed successfully!"
@@ -196,17 +196,17 @@ deploy_all() {
 #    kubectl wait --for=condition=available deployment/redis -n spot --timeout=180s
     
     log_info "Waiting for Kafka Cluster (KRaft)..."
-    kubectl wait --for=condition=Ready kafka/spot-cluster -n spot --timeout=300s
+    kubectl wait --for=condition=Ready kafka/kafka-cluster -n infra --timeout=300s
 
     log_info "Waiting for Kafka Connect..."
-    kubectl wait --for=condition=Ready kafkaconnect/spot-connect -n spot --timeout=300s
+    kubectl wait --for=condition=Ready kafkaconnect/spot-connect -n infra --timeout=300s
 
     log_info "Waiting for Kafka UI..."
-    kubectl wait --for=condition=available deployment/kafka-ui -n spot --timeout=180s
+    kubectl wait --for=condition=available deployment/kafka-ui -n infra --timeout=180s
   
     log_info "Waiting for Temporal..."
-    kubectl wait --for=condition=available deployment/temporal -n spot --timeout=180s
-    kubectl wait --for=condition=available deployment/temporal-ui -n spot --timeout=180s
+    kubectl wait --for=condition=available deployment/temporal -n infra --timeout=180s
+    kubectl wait --for=condition=available deployment/temporal-ui -n infra --timeout=180s
 
     log_info "Infrastructure deployed successfully!"
 
@@ -283,7 +283,7 @@ main() {
     cleanup_existing
     create_cluster
     build_and_push_images
-    install_argocd
+#    install_argocd
     install_prometheus
     install_strimzi
     deploy_all

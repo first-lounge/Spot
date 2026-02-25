@@ -5,8 +5,8 @@ kind: Kustomization
 
 resources:
   # Base
-#  - base/namespace.yaml
-  - base/rds-relay.yaml
+#  # RDS 접속용 pod
+#  - base/rds-relay.yaml
 
   # Kafka
   - base/kafka/kafka.yaml
