@@ -106,6 +106,11 @@ case "$TEST_TYPE" in
   spike)
     SCRIPT="${SCRIPT_DIR}/tests/spike.js"
     ;;
+  order-smoke|order-load|order-stress|order-spike)
+      ORDER_TYPE="${TEST_TYPE#order-}"
+      SCRIPT="${SCRIPT_DIR}/tests/order-only.js"
+      TEST_TYPE="order-only"
+      ;;
   *)
     if [ -f "$TEST_TYPE" ]; then
       SCRIPT="$TEST_TYPE"
@@ -159,6 +164,7 @@ k6 run \
   --out json="${JSON_LOG}" \
   --summary-export="${SUMMARY_LOG}" \
   -e BASE_URL="${BASE_URL}" \
+  -e TEST_TYPE="${ORDER_TYPE:-smoke}" \
   -e STORE_ID="${STORE_ID}" \
   -e MENU_ID="${MENU_ID}" \
   -e TEST_MODE="${TEST_MODE}" \
