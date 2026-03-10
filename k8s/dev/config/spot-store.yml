@@ -1,0 +1,73 @@
+server:
+  port: 8083
+
+feign:
+  user:
+    url: ${FEIGN_USER_URL:http://spot-user:8081}
+  order:
+    url: ${FEIGN_ORDER_URL:http://spot-order:8082}
+  client:
+    config:
+      spot-user:
+        connectTimeout: 100
+        readTimeout: 400
+        loggerLevel: BASIC
+      spot-order:
+        connectTimeout: 100
+        readTimeout: 400
+        loggerLevel: BASIC
+
+
+resilience4j:
+  retry:
+    instances:
+      user_validate_activeUser:
+        maxAttempts: 1
+        waitDuration: 0ms
+
+  circuitbreaker:
+    configs:
+      cb_failureRate_short:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - java.io.IOException
+          - java.net.SocketTimeoutException
+          - feign.RetryableException
+          - feign.FeignException
+    instances:
+      user_validate_activeUser:
+        baseConfig: cb_failureRate_short
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - metrics
+          - prometheus
+
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    root: INFO
+    com.example.Spot: INFO
+    feign.Logger: DEBUG
+    io.github.resilience4j.circuitbreaker: DEBUG
+    io.github.resilience4j.retry: DEBUG
+    io.github.resilience4j.bulkhead: DEBUG
