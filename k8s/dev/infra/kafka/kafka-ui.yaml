@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ui-svc
+  namespace: infra
+spec:
+  type: ClusterIP
+  selector:
+    app: kafka-ui
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-ui
+  namespace: infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-ui
+  template:
+    metadata:
+      labels:
+        app: kafka-ui
+    spec:
+      containers:
+        - name: kafka-ui
+          image: provectuslabs/kafka-ui:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_CLUSTERS_0_NAME
+              value: kafka-cluster
+            - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
+              value: 'kafka-0.kafka-headless.infra.svc.cluster.local:29092'
+            
+            - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME
+              value: "spot-connect"
+            - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS
+              value: "http://spot-connect-svc.infra.svc.cluster.local:8083"
+            - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_TYPE
+              value: "kafka-connect"
+
+            - name: LOGGING_LEVEL_ROOT
+              value: WARN
+            - name: LOGGING_LEVEL_COM_PROVECTUS
+              value: WARN
+              
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
