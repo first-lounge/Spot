@@ -1,0 +1,162 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+#  # AWS용
+#  storageClassName: gp3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-deploy
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      securityContext: # PVC 접근 권한을 위한 설정
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
+      volumes:
+        - name: grafana-pv-storage
+          persistentVolumeClaim:
+            claimName: grafana-pvc
+        - name: grafana-config-vol
+          configMap:
+            name: grafana-config
+
+        # - name: grafana-dashboards-spot
+        #   configMap:
+        #     name: grafana-dashboards-spot
+
+        - name: grafana-dashboards-9578
+          configMap:
+            name: grafana-dashboards-9578
+
+        - name: grafana-dashboards-15661
+          configMap:
+            name: grafana-dashboards-15661
+
+        - name: grafana-dashboards-15757
+          configMap:
+            name: grafana-dashboards-15757
+
+        - name: grafana-dashboards-15760
+          configMap:
+            name: grafana-dashboards-15760
+
+        # - name: grafana-dashboards-kafka-broker
+        #   configMap:
+        #     name: grafana-dashboards-kafka-broker
+
+        # - name: grafana-dashboards-kafka-exporter
+        #   configMap:
+        #     name: grafana-dashboards-kafka-exporter
+
+        # - name: grafana-dashboards-temporal
+        #   configMap:
+        #     name: grafana-dashboards-temporal
+
+      containers:
+        - name: grafana
+          image: grafana/grafana:10.4.3
+          env:
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: 'true'
+            - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+              value: 'Admin'
+          envFrom:
+            - secretRef:
+                name: monitoring-secrets
+                optional: true
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: '250m'
+              memory: '512Mi'
+            limits:
+              cpu: '500m'
+              memory: '750Mi'
+          volumeMounts:
+            - name: grafana-pv-storage
+              mountPath: /var/lib/grafana
+            - name: grafana-config-vol
+              mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+              subPath: datasources.yaml
+              readOnly: true
+
+            - name: grafana-config-vol
+              mountPath: /etc/grafana/provisioning/dashboards/dashboards.yaml
+              subPath: dashboards.yaml
+              readOnly: true
+
+            # - name: grafana-dashboards-spot
+            #   mountPath: /var/lib/grafana/dashboards/spot-logs.json
+            #   subPath: spot-logs.json
+            #   readOnly: true
+
+            - name: grafana-dashboards-9578
+              mountPath: /var/lib/grafana/dashboards/9578.json
+              subPath: 9578.json
+              readOnly: true
+
+            - name: grafana-dashboards-15760
+              mountPath: /var/lib/grafana/dashboards/15760.json
+              subPath: 15760.json
+              readOnly: true
+
+            - name: grafana-dashboards-15757
+              mountPath: /var/lib/grafana/dashboards/15757.json
+              subPath: 15757.json
+              readOnly: true
+
+            - name: grafana-dashboards-15661
+              mountPath: /var/lib/grafana/dashboards/15661.json
+              subPath: 15661.json
+              readOnly: true
+
+            # - name: grafana-dashboards-kafka-broker
+            #   mountPath: /var/lib/grafana/dashboards/kafka-broker.json
+            #   subPath: kafka-broker.json
+            #   readOnly: true
+
+            # - name: grafana-dashboards-kafka-exporter
+            #   mountPath: /var/lib/grafana/dashboards/kafka-exporter.json
+            #   subPath: kafka-exporter.json
+            #   readOnly: true
+
+            # - name: grafana-dashboards-temporal
+            #   mountPath: /var/lib/grafana/dashboards/temporal.json
+            #   subPath: temporal.json
+            #   readOnly: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: grafana
+  ports:
+    - port: 80
+      targetPort: 3000
