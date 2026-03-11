@@ -18,12 +18,12 @@ ports:
 registries:
   create:
     name: spot-registry.localhost
-    host: "0.0.0.0"
-    hostPort: "5111"
+    host: '0.0.0.0'
+    hostPort: '5111'
 options:
   k3d:
     wait: true
-    timeout: "120s"
+    timeout: '120s'
   k3s:
     extraArgs:
       - arg: --disable=traefik
