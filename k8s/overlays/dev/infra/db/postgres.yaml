@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres-headless
-  namespace: spot
+  namespace: infra
 spec:
   clusterIP: None # Headless service로 설정하여 StatefulSet과 함께 사용
   selector:
@@ -15,7 +15,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
-  namespace: spot
+  namespace: infra
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
