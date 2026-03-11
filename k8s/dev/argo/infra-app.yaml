@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/first-lounge/Spot.git
-    targetRevision: HEAD
+    targetRevision: feat/2-argocd
     path: k8s/dev/infra
   destination:
     server: https://kubernetes.default.svc
