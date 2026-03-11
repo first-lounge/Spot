@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spot-connect-svc
+  namespace: infra
+spec:
+  type: ClusterIP
+  selector:
+    app: spot-connect
+  ports:
+  - port: 8083
+    targetPort: 8083
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spot-connect
+  namespace: infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spot-connect
+  template:
+    metadata:
+      labels:
+        app: spot-connect
+    spec:
+      containers:
+        - name: spot-connect
+          image: quay.io/debezium/connect:3.4.0.Final
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+          env:
+            # 기본 설정
+            - name: CONNECT_CONFIG_PROVIDERS
+              value: 'env'
+            - name: CONNECT_CONFIG_PROVIDERS_ENV_CLASS
+              value: 'org.apache.kafka.common.config.provider.EnvVarConfigProvider'
+            - name: BOOTSTRAP_SERVERS
+              value: 'kafka-0.kafka-headless.infra.svc.cluster.local:29092'
+            - name: GROUP_ID
+              value: 'spot-connect-group'
+
+            - name: CONFIG_STORAGE_TOPIC
+              value: 'connect_configs'
+            - name: OFFSET_STORAGE_TOPIC
+              value: 'connect_offsets'
+            - name: STATUS_STORAGE_TOPIC
+              value: 'connect_status'
+            - name: CONFIG_STORAGE_REPLICATION_FACTOR
+              value: '1'
+            - name: OFFSET_STORAGE_REPLICATION_FACTOR
+              value: '1'
+            - name: STATUS_STORAGE_REPLICATION_FACTOR
+              value: '1'
+
+            - name: KEY_CONVERTER
+              value: 'org.apache.kafka.connect.json.JsonConverter'
+            - name: VALUE_CONVERTER
+              value: 'org.apache.kafka.connect.json.JsonConverter'
+            - name: CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE
+              value: 'false'
+            - name: CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE
+              value: 'false'
+
+            # 로그 레벨 설정
+            - name: LOGGING_LEVEL
+              value: 'WARN'
+            - name: CONNECT_LOG4j_LOGGERS
+              value: 'org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR'
+
+          resources:
+            requests:
+              cpu: '250m'
+              memory: '512Mi'
+            limits:
+              cpu: '750m'
+              memory: '2Gi'

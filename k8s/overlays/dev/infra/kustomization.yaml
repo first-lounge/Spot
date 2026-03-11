@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# 이 파일이 생성하는 모든 자원을 'infra' 네임스페이스로 강제 지정
+namespace: infra
+
+resources:
+  - ../../../base
+  - db/postgres.yaml
+  - db/redis.yaml
+  - kafka 
+  - temporal/temporal.yaml
+  - temporal/temporal-ui.yaml
