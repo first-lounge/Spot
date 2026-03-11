@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+# configMap 파일 생성
+configMapGenerator:
+  - name: spot-app-config
+    files:
+      - common-config/common.yml
+      - common-config/kafka-topics.yml
+      - common-config/spot-gateway.yml
+      - common-config/spot-user.yml
+      - common-config/spot-store.yml
+      - common-config/spot-order.yml
+      - common-config/spot-payment.yml
+
+# secret 파일 생성
+secretGenerator:
+  - name: spot-secrets
+    envs:
+      - common-config/.env
+    options:
+      disableNameSuffixHash: true
