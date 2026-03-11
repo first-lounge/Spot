@@ -39,6 +39,9 @@ options:
       - arg: --disable=traefik
         nodeFilters:
           - server:*
+      - arg: --resolv-conf=/etc/resolv.conf
+        nodeFilters:
+          - server:*
   kubeconfig:
     updateDefaultKubeconfig: true
     switchCurrentContext: true
