@@ -12,9 +12,9 @@ kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argop
 echo "⏳ ArgoCD 서버 기동 대기 중..."
 kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
 
-if [ -f "$BASE_DIR/../argo/argocd-server-svc.yaml" ]; then
+if [ -f "$BASE_DIR/../overlays/dev/argo/argocd-server-svc.yaml" ]; then
     echo "🌐 ArgoCD Service 배포 중..."
-    kubectl apply -f "$BASE_DIR/../argo/argocd-server-svc.yaml"
+    kubectl apply -f "$BASE_DIR/../overlays/dev/argo/argocd-server-svc.yaml"
 fi
 
 echo "🎉 ArgoCD의 배포가 완료되었습니다!"
