@@ -16,6 +16,8 @@ kind: StatefulSet
 metadata:
   name: postgres
   namespace: spot
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   serviceName: 'postgres-headless'
   replicas: 1
@@ -67,10 +69,18 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          
+            # DB 연결 상태 확인
+            livenessProbe:
+              exec:
+                command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+              initialDelaySeconds: 5
+              periodSeconds: 5
 
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
+
   volumeClaimTemplates:
     - metadata:
         name: postgres-storage
