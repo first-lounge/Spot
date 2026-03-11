@@ -1,8 +1,24 @@
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-ui-svc
+  namespace: infra
+spec:
+  type: ClusterIP
+  selector:
+    app: temporal-ui
+  ports:
+    - port: 80
+      targetPort: 8080
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: temporal-ui
   namespace: infra
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
 spec:
   replicas: 1
   selector:
@@ -35,17 +51,11 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
----
-# Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: temporal-ui-svc
-  namespace: infra
-spec:
-  type: ClusterIP
-  selector:
-    app: temporal-ui
-  ports:
-    - port: 80
-      targetPort: 8080
+
+            # temporal ui 연결 상태 확인
+            readinessProbe:
+              httpGet:
+                  path: /
+                  port: 8080
+              initialDelaySeconds: 10
+              periodSeconds: 5

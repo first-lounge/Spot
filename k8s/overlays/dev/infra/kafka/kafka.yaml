@@ -20,6 +20,8 @@ kind: StatefulSet
 metadata:
   name: kafka
   namespace: infra
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   serviceName: 'kafka-headless'
   replicas: 1
@@ -89,10 +91,18 @@ spec:
             limits:
               cpu: '500m'
               memory: '1Gi'
+
+            # kafka 연결 상태 확인
+            readinessProbe:
+              tcpSocket:
+                port: 29092
+              initialDelaySeconds: 60
+              periodSeconds: 10
           
           volumeMounts:
             - name: kafka-storage
               mountPath: /var/lib/kafka/data
+
   volumeClaimTemplates:
     - metadata:
         name: kafka-storage

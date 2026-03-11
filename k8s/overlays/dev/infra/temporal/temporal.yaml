@@ -1,8 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal
+  namespace: infra
+  labels:
+    app: temporal
+spec:
+  type: ClusterIP
+  selector:
+    app: temporal
+  ports:
+    - name: grpc
+      port: 7233
+      targetPort: 7233
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: temporal
   namespace: infra
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
 spec:
   replicas: 1
   selector:
@@ -79,22 +100,10 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "750m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: temporal
-  namespace: infra
-  labels:
-    app: temporal
-spec:
-  type: ClusterIP
-  selector:
-    app: temporal
-  ports:
-    - name: grpc
-      port: 7233
-      targetPort: 7233
-    - name: metrics
-      port: 9090
-      targetPort: 9090
+
+            # temporal 연결 상태 확인
+            readinessProbe:
+              tcpSocket:
+                  port: 7233
+              initialDelaySeconds: 60
+              periodSeconds: 10

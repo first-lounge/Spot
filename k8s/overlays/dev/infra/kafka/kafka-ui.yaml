@@ -16,6 +16,8 @@ kind: Deployment
 metadata:
   name: kafka-ui
   namespace: infra
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
 spec:
   replicas: 1
   selector:
@@ -57,3 +59,11 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
+
+            # kafka ui 연결 상태 확인
+            readinessProbe:
+              httpGet:
+                  path: /
+                  port: 8080
+              initialDelaySeconds: 10
+              periodSeconds: 5
