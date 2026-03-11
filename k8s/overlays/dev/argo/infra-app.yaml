@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/first-lounge/Spot.git
     targetRevision: feat/2-argocd
-    path: k8s/dev/infra
+    path: k8s/overlays/dev/infra
   destination:
     server: https://kubernetes.default.svc
     namespace: infra
