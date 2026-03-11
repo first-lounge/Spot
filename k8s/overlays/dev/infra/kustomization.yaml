@@ -5,7 +5,6 @@ kind: Kustomization
 namespace: infra
 
 resources:
-  - ../../../base
   - db/postgres.yaml
   - db/redis.yaml
   - kafka 

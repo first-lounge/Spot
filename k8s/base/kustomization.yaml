@@ -1,7 +1,29 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# 만약 base에 아무 내용이 없더라도 파일 자체는 존재해야 에러가 안 납니다.
-resources:
-  - common-config
-  - spot-apps
+generatorOptions:
+  disableNameSuffixHash: true
+
+# config 디렉토리의 yml 파일들을 ConfigMap으로 생성
+configMapGenerator:
+  - name: spot-app-config
+    namespace: spot
+    files:
+      - common-config/spot-gateway.yml
+      - common-config/common.yml
+      - common-config/kafka-topics.yml
+      - common-config/spot-user.yml
+      - common-config/spot-store.yml
+      - common-config/spot-order.yml
+      - common-config/spot-payment.yml
+
+secretGenerator:
+  - name: spot-secrets
+    namespace: spot
+    envs:
+      - common-config/.env
+
+  - name: spot-secrets
+    namespace: infra
+    envs:
+      - common-config/.env
