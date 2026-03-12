@@ -1,20 +1,6 @@
-# [1] Ingress 공통 설정 (기본값: AWS ALB)
+# [1] Ingress 공통 설정
 ingress:
   enabled: true
-  className: "alb"
-
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip # IP 모드
-    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
-    alb.ingress.kubernetes.io/success-codes: "200"  # 헬스 체크 성공 코드
-    alb.ingress.kubernetes.io/group.name: spot-ingress
-
-    # HTTPS/HTTP 설정
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:322546275072:certificate/9de3b66e-e361-43f9-bb92-14bc4d677cbf"
-#    alb.ingress.kubernetes.io/load-balancer-name: spot-dev-alb # tf위한 이름 고정
 
   subs:
     - name: www
@@ -46,15 +32,15 @@ ingress:
 #        alb.ingress.kubernetes.io/backend-protocol: "HTTPS"
 #        alb.ingress.kubernetes.io/healthcheck-protocol: "HTTPS"
 
-# 도메인 (AWS)
-domain: spotorder.org
-
 # [2] Deployment 공통 설정 (Global)
 global:
   name: spot
-  repository: 322546275072.dkr.ecr.ap-northeast-2.amazonaws.com
-  imagePullPolicy: Always
+  namespace: spot
   replicas: 1
+  
+  # 이미지
+  imageTag: "v0.1.0"
+  imagePullPolicy: Always
 
   # 리소스 제한
   requests:
@@ -104,13 +90,17 @@ apps:
 env:
   activeProfile: "k8s"
   loggingConfig: "classpath:logback-spring.xml"
-  postgres:
-    - db: POSTGRES_DB
-      value: "myapp_db"
-    - user: POSTGRES_USER
-      value: "admin"
-
-# [5] config
-config:
   secretName: spot-secrets
-  configMapName: spot-app-config
+  
+  db:
+    - name: POSTGRES_DB
+      key: DB_NAME 
+  
+    - name: POSTGRES_USER
+      key: SPRING_DATASOURCE_USERNAME 
+
+    - name: POSTGRES_PASSWORD
+      key: SPRING_DATASOURCE_PASSWORD
+
+# [5] configMap
+configMap: spot-app-config

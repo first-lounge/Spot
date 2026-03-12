@@ -22,6 +22,7 @@ metadata:
 {{/*    {{ $key }}: {{ $value | quote }}*/}}
 {{/*  {{- end }}*/}}
 {{/*  {{- end }}*/}}
+
 spec:
   ingressClassName: {{ $.Values.ingress.className }}
   rules:
@@ -34,5 +35,5 @@ spec:
               service:
                 name: {{ $sub.serviceName }}
                 port:
-                  number: 80
+                  number: {{ $sub.servicePort | default 80 }}
 {{- end}}

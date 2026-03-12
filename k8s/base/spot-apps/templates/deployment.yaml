@@ -4,6 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $val.name }}
+  namespace: {{ $.Values.global.namespace }}
   labels:
     app: {{ $val.name }}
 spec:
@@ -18,7 +19,7 @@ spec:
     spec:
       containers:
         - name: {{ $val.name }}
-          image: {{ $.Values.global.repository }}/{{ $val.name }}:latest
+          image: {{ $.Values.global.repository }}/{{ $val.name }}:{{ $.Values.global.imageTag }}
           imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
           ports:
             - containerPort: {{ $val.targetPort | default $val.port }}
@@ -27,9 +28,14 @@ spec:
               value: {{ $.Values.env.activeProfile }}
             - name: LOGGING_CONFIG
               value: {{ $.Values.env.loggingConfig }}
-          envFrom:
-            - secretRef:
-                name: {{ $.Values.config.secretName }}
+              
+            {{- range $.Values.env.db }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.env.secretName }}
+                  key: {{ .key }}    
+            {{- end }}
 
           # 리소스 설정
           resources:
@@ -77,5 +83,5 @@ spec:
       volumes:
         - name: app-config
           configMap:
-            name: {{ $.Values.config.configMapName }}
+            name: {{ $.Values.configMap }}
   {{- end }}
