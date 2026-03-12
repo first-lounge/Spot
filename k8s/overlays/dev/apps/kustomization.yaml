@@ -4,6 +4,6 @@ kind: Kustomization
 helmCharts:
   - name: spot-apps
     releaseName: spot-apps-dev
-    version: v1
     repo: ../../../base
     valuesFile: values-dev.yaml
+    version: v0.1.0
