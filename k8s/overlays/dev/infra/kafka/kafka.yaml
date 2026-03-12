@@ -92,12 +92,12 @@ spec:
               cpu: '500m'
               memory: '1Gi'
 
-            # kafka 연결 상태 확인
-            readinessProbe:
-              tcpSocket:
-                port: 29092
-              initialDelaySeconds: 60
-              periodSeconds: 10
+          # kafka 연결 상태 확인
+          readinessProbe:
+            tcpSocket:
+              port: 29092
+            initialDelaySeconds: 60
+            periodSeconds: 10
           
           volumeMounts:
             - name: kafka-storage

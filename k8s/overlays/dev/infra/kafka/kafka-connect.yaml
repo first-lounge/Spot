@@ -81,10 +81,10 @@ spec:
               cpu: '750m'
               memory: '2Gi'
 
-            # kafka connect 연결 상태 확인
-            readinessProbe:
-              httpGet:
-                  path: /
-                  port: 8083
-              initialDelaySeconds: 60
-              periodSeconds: 10
+          # kafka connect 연결 상태 확인
+          readinessProbe:
+            httpGet:
+                path: /
+                port: 8083
+            initialDelaySeconds: 60
+            periodSeconds: 10

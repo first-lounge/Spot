@@ -70,12 +70,12 @@ spec:
               cpu: 500m
               memory: 512Mi
           
-            # DB 연결 상태 확인
-            readinessProbe:
-              exec:
-                command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
-              initialDelaySeconds: 10
-              periodSeconds: 5
+          # DB 연결 상태 확인
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
 
           volumeMounts:
             - name: postgres-storage

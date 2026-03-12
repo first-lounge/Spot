@@ -101,9 +101,9 @@ spec:
               memory: "1Gi"
               cpu: "750m"
 
-            # temporal 연결 상태 확인
-            readinessProbe:
-              tcpSocket:
-                  port: 7233
-              initialDelaySeconds: 60
-              periodSeconds: 10
+          # temporal 연결 상태 확인
+          readinessProbe:
+            tcpSocket:
+                port: 7233
+            initialDelaySeconds: 60
+            periodSeconds: 10

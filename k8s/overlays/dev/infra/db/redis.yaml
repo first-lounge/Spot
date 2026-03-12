@@ -40,9 +40,9 @@ spec:
               memory: "128Mi"
               cpu: "200m"
 
-            # redis 연결 상태 확인
-            readinessProbe:
-              exec:
-                  command: ["redis-cli", "ping"]
-              initialDelaySeconds: 10
-              periodSeconds: 5
+          # redis 연결 상태 확인
+          readinessProbe:
+            exec:
+                command: ["redis-cli", "ping"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
