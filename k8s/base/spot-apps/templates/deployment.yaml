@@ -28,7 +28,8 @@ spec:
               value: {{ $.Values.env.activeProfile }}
             - name: LOGGING_CONFIG
               value: {{ $.Values.env.loggingConfig }}
-              
+            
+            # DB 설정
             {{- range $.Values.env.db }}
             - name: {{ .name }}
               valueFrom:
