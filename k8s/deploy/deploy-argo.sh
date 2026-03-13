@@ -34,11 +34,11 @@ log_info "ArgoCD 설치 및 배포를 시작합니다..."
 
 kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-log_info "⏳ ArgoCD 서버 기동 대기 중..."
+log_info "ArgoCD 서버 기동 대기 중..."
 kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
 
 if [ -f "$ARGO_SVC_FILE" ]; then
-    log_info "🌐 ArgoCD Service 배포 중..."
+    log_info "ArgoCD Service 배포 중..."
     kubectl apply -f "$ARGO_SVC_FILE"
 else
     log_error "ArgoCD Service 매니페스트가 없습니다. 파일 경로를 확인해주세요: $ARGO_SVC_FILE"
