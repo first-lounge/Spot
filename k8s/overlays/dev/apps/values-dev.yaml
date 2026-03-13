@@ -5,10 +5,10 @@ ingress:
 
   annotations:
     kubernetes.io/ingress.class: nginx
-    
+
 # 도메인 (local)
 domain: localhost
 
 # [2] Deployment 설정
 global:
-  repository: spot-registry.localhost:5111
+  repository: spot-registry.localhost:5000
