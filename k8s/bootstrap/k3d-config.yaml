@@ -8,7 +8,7 @@ agents: 2
 image: rancher/k3s:v1.30.14-k3s2
 
 kubeAPI:
-  hostPort: '${API_PORT}'
+  hostPort: "${API_PORT}"
 
 ports:
   - port: 80:80
@@ -24,13 +24,13 @@ ports:
 registries:
   create:
     name: spot-registry.localhost
-    host: '0.0.0.0'
-    hostPort: '5111'
+    host: "0.0.0.0"
+    hostPort: "5000"
 
 options:
   k3d:
     wait: true
-    timeout: '120s'
+    timeout: "120s"
   k3s:
     extraArgs:
       - arg: --tls-san=${PUBLIC_IP}

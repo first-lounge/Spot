@@ -61,9 +61,9 @@ fi
 log_info "레지스트리 설정 파일 생성 중..."
 cat <<EOF > "$REGISTRY_FILE"
 mirrors:
-  "spot-registry.localhost:5111":
+  "spot-registry.localhost:5000":
     endpoint:
-      - "http://host.k3d.internal:5111"
+      - "http://k3d-spot-registry.localhost:5000"
 EOF
 
 # 6. 클러스터 생성
@@ -76,7 +76,7 @@ kubectl wait --for=condition=ready node --all --timeout=180s
 
 # 8. 초기 세팅 네임스페이스 생성
 log_info "네임스페이스 생성을 시작합니다..."
-for ns in argocd ingress-nginx; do
+for ns in argocd ingress-nginx infra monitoring spot; do
     kubectl create namespace "$ns" --dry-run=client -o yaml | kubectl apply -f -
 done
 
