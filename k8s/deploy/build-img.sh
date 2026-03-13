@@ -4,7 +4,7 @@ set -euo pipefail
 # 변수 설정
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REGISTRY_NAME="spot-registry.localhost"
-REGISTRY_PORT="5111"
+REGISTRY_PORT="5000"
 
 # Colors for output
 RED='\033[1;31m'
@@ -38,7 +38,7 @@ if ! nc -z localhost "$REGISTRY_PORT" 2>/dev/null; then
     ssh -f -N -L ${REGISTRY_PORT}:localhost:${REGISTRY_PORT} mini-pc
     log_info "SSH 터널링 성공!"
 else
-    log_warn "이미 5111 포트가 사용 중입니다."
+    log_warn "이미 5000 포트가 사용 중입니다."
 fi
 
 log_info "로컬 도커 레지스트리로 이미지 빌드를 시작합니다..."
