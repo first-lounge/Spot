@@ -1,0 +1,39 @@
+{{- range .Values.ingress.subs }}
+{{- $sub := . }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $sub.name }}-ingress
+  namespace: {{ $sub.namespace }}
+  annotations:
+  {{- range $key, $value := $.Values.ingress.annotations }}
+    {{- /* ALB healthcheck-path일 때만 sub에 정의된 경로로 덮어쓰기 */ -}}
+    {{- if eq $key "alb.ingress.kubernetes.io/healthcheck-path" }}
+    {{ $key }}: {{ $sub.healthPath | default "/" | quote }}
+    {{- else }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+
+  {{- /* ArgoCD */ -}}
+{{/*  {{- if $sub.annotations }}*/}}
+{{/*  {{- range $key, $value := $sub.annotations }}*/}}
+{{/*    {{ $key }}: {{ $value | quote }}*/}}
+{{/*  {{- end }}*/}}
+{{/*  {{- end }}*/}}
+
+spec:
+  ingressClassName: {{ $.Values.ingress.className }}
+  rules:
+    - host: {{ $sub.name }}.{{ $.Values.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $sub.serviceName }}
+                port:
+                  number: {{ $sub.servicePort | default 80 }}
+{{- end}}

@@ -1,0 +1,96 @@
+# [1] Ingress 공통 설정
+ingress:
+  enabled: true
+
+  subs:
+    - name: www
+      namespace: spot
+      serviceName: spot-gateway
+      healthPath: /actuator/health
+
+    - name: kafka
+      namespace: infra
+      serviceName: kafka-ui-svc
+      healthPath: /
+
+    - name: temporal
+      namespace: infra
+      serviceName: temporal-ui-svc
+      healthPath: /
+
+    - name: grafana
+      namespace: monitoring
+      serviceName: grafana-service
+      healthPath: "/api/health"
+
+#    - name: argo
+#      namespace: argocd
+#      groupName: spot-ingress
+#      serviceName: argocd-server
+#      healthPath: /
+#      annotations:
+#        alb.ingress.kubernetes.io/backend-protocol: "HTTPS"
+#        alb.ingress.kubernetes.io/healthcheck-protocol: "HTTPS"
+
+# [2] Deployment 공통 설정 (Global)
+global:
+  name: spot
+  namespace: spot
+  replicas: 1
+
+  # 이미지
+  imageTag: latest # "v0.1.0"
+  imagePullPolicy: Always
+
+  # 리소스 제한
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+  limits:
+    cpu: "800m"
+    memory: "1Gi"
+
+  # 헬스 체크
+  path: /actuator/health
+
+  readiness:
+    initial: 90
+    period: 10
+  liveness:
+    initial: 120
+    period: 30
+
+# [3] app 목록
+apps:
+  gateway:
+    name: spot-gateway
+    port: 80
+    targetPort: 8080
+    timeoutSeconds: 5
+    failureThreshold: 5
+    successThreshold: 1
+
+  user:
+    name: spot-user
+    port: 8081
+
+  store:
+    name: spot-store
+    port: 8083
+
+  order:
+    name: spot-order
+    port: 8082
+
+  payment:
+    name: spot-payment
+    port: 8084
+
+# [4] env
+env:
+  activeProfile: "k8s"
+  loggingConfig: "classpath:logback-spring.xml"
+  secretName: spot-secrets
+
+# [5] configMap
+configMap: spot-app-config

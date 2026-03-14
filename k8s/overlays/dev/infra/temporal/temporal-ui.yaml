@@ -1,0 +1,61 @@
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-ui-svc
+  namespace: infra
+spec:
+  type: ClusterIP
+  selector:
+    app: temporal-ui
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-ui
+  namespace: infra
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temporal-ui
+  template:
+    metadata:
+      labels:
+        app: temporal-ui
+    spec:
+      containers:
+        - name: temporal-ui
+          image: temporalio/ui:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TEMPORAL_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: spot-secrets
+                  key: SPRING_TEMPORAL_CONNECTION_TARGET
+            - name: TEMPORAL_CORS_ALLOW_ORIGINS
+              value: "*"
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          # temporal ui 연결 상태 확인
+          readinessProbe:
+            httpGet:
+                path: /
+                port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
