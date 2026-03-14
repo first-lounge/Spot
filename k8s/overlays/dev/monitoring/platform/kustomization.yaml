@@ -22,3 +22,4 @@ helmCharts:
     releaseName: prom
     namespace: monitoring
     valuesFile: prometheus/values.yaml
+    includeCRDs: true
