@@ -63,7 +63,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: loki-service
+  name: loki-svc
   namespace: monitoring
 spec:
   type: ClusterIP
