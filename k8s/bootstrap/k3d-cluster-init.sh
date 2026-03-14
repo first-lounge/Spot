@@ -52,7 +52,6 @@ docker rm -f "$REGISTRY_NAME" &> /dev/null || true
 # 5. 클러스터 생성
 log_info "클러스터 생성을 시작합니다..."
 CONFIG_FILE="$BASE_DIR/k3d-config.yaml"
-REGISTRY_FILE="$BASE_DIR/registries.yaml"
 
 if [ ! -f "$CONFIG_FILE" ]; then
     log_error "설정 파일이 존재하지 않습니다: $CONFIG_FILE"; exit 1
