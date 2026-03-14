@@ -37,9 +37,9 @@ global:
   name: spot
   namespace: spot
   replicas: 1
-  
+
   # 이미지
-  imageTag: "v0.1.0"
+  imageTag: latest # "v0.1.0"
   imagePullPolicy: Always
 
   # 리소스 제한
@@ -91,13 +91,13 @@ env:
   activeProfile: "k8s"
   loggingConfig: "classpath:logback-spring.xml"
   secretName: spot-secrets
-  
+
   db:
     - name: POSTGRES_DB
-      key: DB_NAME 
-  
+      key: DB_NAME
+
     - name: POSTGRES_USER
-      key: SPRING_DATASOURCE_USERNAME 
+      key: SPRING_DATASOURCE_USERNAME
 
     - name: POSTGRES_PASSWORD
       key: SPRING_DATASOURCE_PASSWORD
