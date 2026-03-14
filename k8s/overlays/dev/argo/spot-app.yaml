@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/first-lounge/Spot.git
-    targetRevision: feat/2-argocd
+    targetRevision: dev
     path: k8s/spot-apps
     helm:
       valueFiles:
