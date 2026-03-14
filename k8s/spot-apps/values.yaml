@@ -92,15 +92,5 @@ env:
   loggingConfig: "classpath:logback-spring.xml"
   secretName: spot-secrets
 
-  db:
-    - name: POSTGRES_DB
-      key: DB_NAME
-
-    - name: POSTGRES_USER
-      key: SPRING_DATASOURCE_USERNAME
-
-    - name: POSTGRES_PASSWORD
-      key: SPRING_DATASOURCE_PASSWORD
-
 # [5] configMap
 configMap: spot-app-config

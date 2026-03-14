@@ -29,14 +29,10 @@ spec:
             - name: LOGGING_CONFIG
               value: {{ $.Values.env.loggingConfig }}
             
-            # DB 설정
-            {{- range $.Values.env.db }}
-            - name: {{ .name }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $.Values.env.secretName }}
-                  key: {{ .key }}    
-            {{- end }}
+            # 어플리케이션 환경 변수
+          envFrom:
+            - secretRef:
+                name: {{ $.Values.env.secretName}}
 
           # 리소스 설정
           resources:
