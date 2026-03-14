@@ -1,14 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: monitoring-app
+  name: monitoring-configs
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: default
   source:
     repoURL: https://github.com/first-lounge/Spot.git
     targetRevision: fix/3-monitoring
-    path: k8s/overlays/dev/monitoring
+    path: k8s/overlays/dev/monitoring/configs
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
@@ -18,5 +20,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - SkipDryRunOnMissingResource=true
-      - ServerSideApply=true

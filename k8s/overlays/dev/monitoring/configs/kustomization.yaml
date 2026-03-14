@@ -1,0 +1,61 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+resources:
+  - servicemonitors/kafka-broker-podmonitor.yaml
+  - servicemonitors/kafka-exporter-servicemonitor.yaml
+  - servicemonitors/spot-gateway-servicemonitor.yaml
+  - servicemonitors/spot-order-servicemonitor.yaml
+  - servicemonitors/spot-payment-servicemonitor.yaml
+  - servicemonitors/spot-store-servicemonitor.yaml
+  - servicemonitors/spot-user-servicemonitor.yaml
+  - servicemonitors/temporal-servicemonitor.yaml
+
+configMapGenerator:
+  - name: kafka-metrics-config
+    namespace: infra
+    files:
+      - prometheus/kafka-metrics-config.yaml
+
+  - name: grafana-dashboards-9578
+    namespace: monitoring
+    files:
+      - grafana/dashboards/9578.json
+
+  - name: grafana-dashboards-15661
+    namespace: monitoring
+    files:
+      - grafana/dashboards/15661.json
+
+  - name: grafana-dashboards-15757
+    namespace: monitoring
+    files:
+      - grafana/dashboards/15757.json
+
+  - name: grafana-dashboards-15760
+    namespace: monitoring
+    files:
+      - grafana/dashboards/15760.json
+
+  - name: grafana-dashboards-kafka-broker
+    namespace: monitoring
+    files:
+      - grafana/dashboards/kafka-broker.json
+
+  - name: grafana-dashboards-kafka-exporter
+    namespace: monitoring
+    files:
+      - grafana/dashboards/kafka-exporter.json
+
+  - name: grafana-dashboards-spot
+    namespace: monitoring
+    files:
+      - grafana/dashboards/spot-logs.json
+
+  - name: grafana-dashboards-temporal
+    namespace: monitoring
+    files:
+      - grafana/dashboards/temporal.json

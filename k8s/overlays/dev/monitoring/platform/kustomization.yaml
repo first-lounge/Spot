@@ -12,11 +12,9 @@ resources:
   - fluent-bit/fluent-bit.yaml
   - fluent-bit/fluent-bit-config.yaml
 
-  # servicemonitors
-  - servicemonitors
-
   # grafana
-  - grafana
+  - grafana/grafana.yaml
+  - grafana/grafana-config.yaml
 
 helmCharts:
   - name: kube-prometheus-stack
@@ -24,13 +22,3 @@ helmCharts:
     releaseName: prom
     namespace: monitoring
     valuesFile: prometheus/values.yaml
-
-generatorOptions:
-  disableNameSuffixHash: true
-
-# ConfigMap으로 config 파일들 생성
-configMapGenerator:
-  - name: kafka-metrics-config
-    namespace: infra
-    files:
-      - prometheus/kafka-metrics-config.yaml
