@@ -47,7 +47,7 @@ log_info "k3d 클러스터($CLUSTER_NAME) 구축을 시작합니다..."
 # 4. 기존 클러스터 존재 여부 확인 및 삭제
 log_info "기존 클러스터 및 레지스트리 정리 중..."
 k3d cluster delete "$CLUSTER_NAME" &> /dev/null || true
-docker rm -f "k3d-$REGISTRY_NAME" &> /dev/null || true
+docker rm -f "$REGISTRY_NAME" &> /dev/null || true
 
 # 5. 클러스터 생성
 log_info "클러스터 생성을 시작합니다..."
@@ -58,17 +58,9 @@ if [ ! -f "$CONFIG_FILE" ]; then
     log_error "설정 파일이 존재하지 않습니다: $CONFIG_FILE"; exit 1
 fi
 
-log_info "레지스트리 설정 파일 생성 중..."
-cat <<EOF > "$REGISTRY_FILE"
-mirrors:
-  "spot-registry.localhost:5000":
-    endpoint:
-      - "http://k3d-spot-registry.localhost:5000"
-EOF
-
 # 6. 클러스터 생성
 export PUBLIC_IP API_PORT
-cat "$CONFIG_FILE" | envsubst | k3d cluster create --config - --registry-config "$REGISTRY_FILE"
+cat "$CONFIG_FILE" | envsubst | k3d cluster create --config -
 
 # 7. 완료 대기 및 확인
 log_info "노드 준비 대기 중..."

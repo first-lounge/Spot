@@ -11,4 +11,4 @@ domain: localhost
 
 # [2] Deployment 설정
 global:
-  repository: spot-registry.localhost:5000
+  repository: k3d-spot-registry.localhost:5000
