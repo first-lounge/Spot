@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis
+  name: redis-svc
   namespace: infra
 spec:
   selector:
@@ -43,6 +43,6 @@ spec:
           # redis 연결 상태 확인
           readinessProbe:
             exec:
-                command: ["redis-cli", "ping"]
+              command: ["redis-cli", "ping"]
             initialDelaySeconds: 10
             periodSeconds: 5
