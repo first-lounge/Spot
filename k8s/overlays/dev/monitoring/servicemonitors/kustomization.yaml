@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - kafka-broker-podmonitor.yaml
+  - kafka-exporter-servicemonitor.yaml
+  - spot-gateway-servicemonitor.yaml
+  - spot-order-servicemonitor.yaml
+  - spot-payment-servicemonitor.yaml
+  - spot-store-servicemonitor.yaml
+  - spot-user-servicemonitor.yaml
+  - temporal-servicemonitor.yaml

@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/first-lounge/Spot.git
+    targetRevision: fix/3-monitoring
+    path: k8s/overlays/dev/monitoring
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
