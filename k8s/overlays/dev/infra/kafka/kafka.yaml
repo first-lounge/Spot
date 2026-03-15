@@ -44,13 +44,12 @@ spec:
       # Init Container: JMX Exporter JAR 파일을 준비
       initContainers:
         - name: fetch-jmx-exporter
-          image: bitnami/jmx-exporter:1.0.1
+          image: alpine:latest
           command:
-            [
-              "cp",
-              "/opt/bitnami/jmx-exporter/jmx_prometheus_javaagent.jar",
-              "/jmx-exporter/jmx_prometheus_javaagent.jar",
-            ]
+            - "wget"
+            - "-O"
+            - "/jmx-exporter/jmx_prometheus_javaagent.jar"
+            - "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar"
           volumeMounts:
             - name: jmx-exporter-jar
               mountPath: /jmx-exporter
