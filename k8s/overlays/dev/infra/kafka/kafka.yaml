@@ -23,7 +23,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  serviceName: 'kafka-headless'
+  serviceName: "kafka-headless"
   replicas: 1
   selector:
     matchLabels:
@@ -33,6 +33,28 @@ spec:
       labels:
         app: kafka
     spec:
+      # 에이전트 JAR 파일을 공유하기 위한 임시 볼륨 및 설정 마운트
+      volumes:
+        - name: jmx-exporter-jar
+          emptyDir: {}
+        - name: metrics-config-vol
+          configMap:
+            name: kafka-metrics-config
+
+      # Init Container: JMX Exporter JAR 파일을 준비
+      initContainers:
+        - name: fetch-jmx-exporter
+          image: bitnami/jmx-exporter:1.0.1
+          command:
+            [
+              "cp",
+              "/opt/bitnami/jmx-exporter/jmx_prometheus_javaagent.jar",
+              "/jmx-exporter/jmx_prometheus_javaagent.jar",
+            ]
+          volumeMounts:
+            - name: jmx-exporter-jar
+              mountPath: /jmx-exporter
+
       enableServiceLinks: false
       containers:
         - name: kafka
@@ -41,56 +63,60 @@ spec:
           ports:
             - containerPort: 9092
             - containerPort: 29092
+            - name: metrics
+              containerPort: 7071
           env:
             # 기본 설정
             - name: KAFKA_NODE_ID
-              value: '1'
+              value: "1"
             - name: KAFKA_PROCESS_ROLES
-              value: 'broker,controller'
+              value: "broker,controller"
             - name: KAFKA_CONTROLLER_QUORUM_VOTERS
-              value: '1@localhost:19093'
+              value: "1@localhost:19093"
+            - name: KAFKA_OPTS
+              value: "-javaagent:/usr/share/java/jmx_prometheus_javaagent.jar=7071:/etc/kafka-monitoring/kafka-metrics-config.yaml"
 
             # 리스너 설정
             - name: KAFKA_LISTENERS
-              value: 'INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:19093'
+              value: "INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:19093"
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: 'INTERNAL://kafka-0.kafka-headless.infra.svc.cluster.local:29092,EXTERNAL://kafka:9092'
+              value: "INTERNAL://kafka-0.kafka-headless.infra.svc.cluster.local:29092,EXTERNAL://kafka:9092"
             - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
-              value: 'INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT'
+              value: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
             - name: KAFKA_INTER_BROKER_LISTENER_NAME
-              value: 'INTERNAL'
+              value: "INTERNAL"
             - name: KAFKA_CONTROLLER_LISTENER_NAMES
-              value: 'CONTROLLER'
+              value: "CONTROLLER"
             - name: CLUSTER_ID
-              value: 'J9Xz7kQPRYyK8VkqH3mW5A'
+              value: "J9Xz7kQPRYyK8VkqH3mW5A"
 
             # topic 및 replication 설정
             - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
-              value: '1'
+              value: "1"
             - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
-              value: '1'
+              value: "1"
             - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
-              value: '1'
+              value: "1"
             - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
-              value: 'true'
+              value: "true"
             - name: KAFKA_NUM_PARTITIONS
-              value: '3'
+              value: "3"
 
             # 자원 및 로그 설정
             - name: KAFKA_HEAP_OPTS
-              value: '-Xmx512M -Xms512M'
+              value: "-Xmx512M -Xms512M"
             - name: KAFKA_LOG4J_ROOT_LOGLEVEL
-              value: 'WARN'
+              value: "WARN"
             - name: KAFKA_LOG_DIRS
-              value: '/var/lib/kafka/data'
+              value: "/var/lib/kafka/data"
 
           resources:
             requests:
-              cpu: '250m'
-              memory: '512Mi'
+              cpu: "250m"
+              memory: "512Mi"
             limits:
-              cpu: '500m'
-              memory: '1Gi'
+              cpu: "500m"
+              memory: "1Gi"
 
           # kafka 연결 상태 확인
           readinessProbe:
@@ -98,16 +124,22 @@ spec:
               port: 29092
             initialDelaySeconds: 60
             periodSeconds: 10
-          
+
           volumeMounts:
             - name: kafka-storage
               mountPath: /var/lib/kafka/data
+            - name: jmx-exporter-jar
+              mountPath: /usr/share/java/jmx_prometheus_javaagent.jar
+              subPath: jmx_prometheus_javaagent.jar
+            - name: metrics-config-vol
+              mountPath: /etc/kafka-monitoring/kafka-metrics-config.yaml
+              subPath: kafka-metrics-config.yaml
 
   volumeClaimTemplates:
     - metadata:
         name: kafka-storage
       spec:
-        accessModes: ['ReadWriteOnce']
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: 10Gi
