@@ -19,6 +19,8 @@ metadata:
   namespace: monitoring
   labels:
     app: grafana
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
 spec:
   replicas: 1
   selector:
@@ -41,9 +43,9 @@ spec:
           configMap:
             name: grafana-config
 
-        # - name: grafana-dashboards-spot
-        #   configMap:
-        #     name: grafana-dashboards-spot
+        - name: grafana-dashboards-spot
+          configMap:
+            name: grafana-dashboards-spot
 
         - name: grafana-dashboards-9578
           configMap:
@@ -61,26 +63,26 @@ spec:
           configMap:
             name: grafana-dashboards-15760
 
-        # - name: grafana-dashboards-kafka-broker
-        #   configMap:
-        #     name: grafana-dashboards-kafka-broker
+        - name: grafana-dashboards-kafka-broker
+          configMap:
+            name: grafana-dashboards-kafka-broker
 
-        # - name: grafana-dashboards-kafka-exporter
-        #   configMap:
-        #     name: grafana-dashboards-kafka-exporter
+        - name: grafana-dashboards-kafka-exporter
+          configMap:
+            name: grafana-dashboards-kafka-exporter
 
-        # - name: grafana-dashboards-temporal
-        #   configMap:
-        #     name: grafana-dashboards-temporal
+        - name: grafana-dashboards-temporal
+          configMap:
+            name: grafana-dashboards-temporal
 
       containers:
         - name: grafana
           image: grafana/grafana:10.4.3
           env:
             - name: GF_AUTH_ANONYMOUS_ENABLED
-              value: 'true'
+              value: "true"
             - name: GF_AUTH_ANONYMOUS_ORG_ROLE
-              value: 'Admin'
+              value: "Admin"
           envFrom:
             - secretRef:
                 name: monitoring-secrets
@@ -89,11 +91,11 @@ spec:
             - containerPort: 3000
           resources:
             requests:
-              cpu: '250m'
-              memory: '512Mi'
+              cpu: "250m"
+              memory: "512Mi"
             limits:
-              cpu: '500m'
-              memory: '750Mi'
+              cpu: "500m"
+              memory: "750Mi"
           volumeMounts:
             - name: grafana-pv-storage
               mountPath: /var/lib/grafana
@@ -107,10 +109,10 @@ spec:
               subPath: dashboards.yaml
               readOnly: true
 
-            # - name: grafana-dashboards-spot
-            #   mountPath: /var/lib/grafana/dashboards/spot-logs.json
-            #   subPath: spot-logs.json
-            #   readOnly: true
+            - name: grafana-dashboards-spot
+              mountPath: /var/lib/grafana/dashboards/spot-logs.json
+              subPath: spot-logs.json
+              readOnly: true
 
             - name: grafana-dashboards-9578
               mountPath: /var/lib/grafana/dashboards/9578.json
@@ -132,26 +134,26 @@ spec:
               subPath: 15661.json
               readOnly: true
 
-            # - name: grafana-dashboards-kafka-broker
-            #   mountPath: /var/lib/grafana/dashboards/kafka-broker.json
-            #   subPath: kafka-broker.json
-            #   readOnly: true
+            - name: grafana-dashboards-kafka-broker
+              mountPath: /var/lib/grafana/dashboards/kafka-broker.json
+              subPath: kafka-broker.json
+              readOnly: true
 
-            # - name: grafana-dashboards-kafka-exporter
-            #   mountPath: /var/lib/grafana/dashboards/kafka-exporter.json
-            #   subPath: kafka-exporter.json
-            #   readOnly: true
+            - name: grafana-dashboards-kafka-exporter
+              mountPath: /var/lib/grafana/dashboards/kafka-exporter.json
+              subPath: kafka-exporter.json
+              readOnly: true
 
-            # - name: grafana-dashboards-temporal
-            #   mountPath: /var/lib/grafana/dashboards/temporal.json
-            #   subPath: temporal.json
-            #   readOnly: true
+            - name: grafana-dashboards-temporal
+              mountPath: /var/lib/grafana/dashboards/temporal.json
+              subPath: temporal.json
+              readOnly: true
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: grafana-service
+  name: grafana-svc
   namespace: monitoring
 spec:
   type: ClusterIP

@@ -1,0 +1,49 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+
+resources:
+  # Loki
+  - loki/loki.yaml
+  - loki/loki-config.yaml
+
+  # fluent-bit
+  - fluent-bit/fluent-bit.yaml
+  - fluent-bit/fluent-bit-config.yaml
+
+  # grafana
+  - grafana/grafana.yaml
+  - grafana/grafana-config.yaml
+
+configMapGenerator:
+  - name: grafana-dashboards-9578
+    files:
+      - grafana/dashboards/9578.json
+
+  - name: grafana-dashboards-15661
+    files:
+      - grafana/dashboards/15661.json
+
+  - name: grafana-dashboards-15757
+    files:
+      - grafana/dashboards/15757.json
+
+  - name: grafana-dashboards-15760
+    files:
+      - grafana/dashboards/15760.json
+
+  - name: grafana-dashboards-kafka-broker
+    files:
+      - grafana/dashboards/kafka-broker.json
+
+  - name: grafana-dashboards-kafka-exporter
+    files:
+      - grafana/dashboards/kafka-exporter.json
+
+  - name: grafana-dashboards-spot
+    files:
+      - grafana/dashboards/spot-logs.json
+
+  - name: grafana-dashboards-temporal
+    files:
+      - grafana/dashboards/temporal.json
