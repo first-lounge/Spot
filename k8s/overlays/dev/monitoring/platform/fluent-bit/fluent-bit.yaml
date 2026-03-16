@@ -106,5 +106,3 @@ spec:
           hostPath:
             path: /var/lib/fluent-bit
             type: DirectoryOrCreate
-
----
