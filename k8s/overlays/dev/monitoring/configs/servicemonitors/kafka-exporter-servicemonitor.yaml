@@ -12,7 +12,7 @@ spec:
   selector:
     matchLabels:
       app: kafka-exporter
-  podMetricsEndpoints:
+  endpoints:
     - port: metrics
       path: /metrics
       interval: 15s
