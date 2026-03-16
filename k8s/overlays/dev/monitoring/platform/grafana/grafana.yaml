@@ -65,9 +65,9 @@ spec:
           configMap:
             name: grafana-dashboards-9578
 
-        - name: dashboards-K8S
+        - name: dashboards-k8s
           configMap:
-            name: dashboards-K8S
+            name: dashboards-k8s
 
         - name: dashboards-infra
           configMap:
@@ -122,7 +122,7 @@ spec:
               readOnly: true
 
             # K8S Dashboards
-            - name: dashboards-K8S
+            - name: dashboards-k8s
               mountPath: /var/lib/grafana/dashboards/k8s
               readOnly: true
 

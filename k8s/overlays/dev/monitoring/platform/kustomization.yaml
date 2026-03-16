@@ -17,7 +17,7 @@ resources:
 configMapGenerator:
   - name: grafana-config
     files:
-      - datasources.yaml=grafana/datasources.yaml
+      - grafana/datasources.yaml
       - dashboards.yaml=grafana/dashboards-provider.yaml
 
   # Prometheus - alertmanager
@@ -25,7 +25,7 @@ configMapGenerator:
     files:
       - alertmanager.json=grafana/dashboards/9578.json
 
-  - name: dashboards-K8S
+  - name: dashboards-k8s
     files:
       - k8s-dashboard.json=grafana/dashboards/15661.json # K8S Dashboard
       - k8s-total.json=grafana/dashboards/15757.json # Kubernetes / Views / Global
