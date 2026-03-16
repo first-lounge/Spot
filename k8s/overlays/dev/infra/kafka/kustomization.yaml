@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - connector-register.yaml
   - kafka-connect.yaml
+  - kafka-exporter.yaml
   - kafka-ui.yaml
   - kafka.yaml
 
@@ -15,5 +16,5 @@ configMapGenerator:
   - name: connector-init
     files:
       - connectors/order-outbox.json
-      - connectors/payment-outbox.json  
+      - connectors/payment-outbox.json
       - connectors/register-connectors.sh
