@@ -13,8 +13,6 @@ resources:
 
   # grafana
   - grafana/grafana.yaml
-  - grafana/datasources.yaml
-  - grafana/dashboards-provider.yaml
 
 configMapGenerator:
   - name: grafana-config
