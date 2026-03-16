@@ -20,7 +20,7 @@ ingress:
 
     - name: grafana
       namespace: monitoring
-      serviceName: grafana-service
+      serviceName: grafana-svc
       healthPath: "/api/health"
 
 #    - name: argo
