@@ -13,37 +13,33 @@ resources:
 
   # grafana
   - grafana/grafana.yaml
-  - grafana/grafana-config.yaml
+  - grafana/datasources.yaml
+  - grafana/dashboards-provider.yaml
 
 configMapGenerator:
+  - name: grafana-config
+    files:
+      - datasources.yaml=grafana/datasources.yaml
+      - dashboards.yaml=grafana/dashboards-provider.yaml
+
+  # Prometheus - alertmanager
   - name: grafana-dashboards-9578
     files:
-      - grafana/dashboards/9578.json
+      - alertmanager.json=grafana/dashboards/9578.json
 
-  - name: grafana-dashboards-15661
+  - name: dashboards-K8S
     files:
-      - grafana/dashboards/15661.json
+      - k8s-dashboard.json=grafana/dashboards/15661.json # K8S Dashboard
+      - k8s-total.json=grafana/dashboards/15757.json # Kubernetes / Views / Global
+      - k8s-pods.json=grafana/dashboards/15760.json # Kubernetes / Views / Pods
 
-  - name: grafana-dashboards-15757
+  - name: dashboards-infra
     files:
-      - grafana/dashboards/15757.json
+      - grafana/dashboards/kafka-broker.json # Kafka Broker
+      - grafana/dashboards/kafka-exporter.json # Kafka Exporter
+      - grafana/dashboards/temporal.json # Temporal
 
-  - name: grafana-dashboards-15760
-    files:
-      - grafana/dashboards/15760.json
-
-  - name: grafana-dashboards-kafka-broker
-    files:
-      - grafana/dashboards/kafka-broker.json
-
-  - name: grafana-dashboards-kafka-exporter
-    files:
-      - grafana/dashboards/kafka-exporter.json
-
+  # Spot App Logs
   - name: grafana-dashboards-spot
     files:
       - grafana/dashboards/spot-logs.json
-
-  - name: grafana-dashboards-temporal
-    files:
-      - grafana/dashboards/temporal.json

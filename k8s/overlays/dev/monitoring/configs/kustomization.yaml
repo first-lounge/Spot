@@ -1,12 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-generatorOptions:
-  disableNameSuffixHash: true
-
 resources:
-  - servicemonitors/kafka-broker-podmonitor.yaml
-  - servicemonitors/kafka-exporter-servicemonitor.yaml
+  # - servicemonitors/kafka-broker-podmonitor.yaml
+  # - servicemonitors/kafka-exporter-servicemonitor.yaml
+  - servicemonitors/kafka-broker-servicemonitor.yaml
   - servicemonitors/spot-gateway-servicemonitor.yaml
   - servicemonitors/spot-order-servicemonitor.yaml
   - servicemonitors/spot-payment-servicemonitor.yaml
