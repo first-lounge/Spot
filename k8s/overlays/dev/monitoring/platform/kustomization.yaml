@@ -40,4 +40,4 @@ configMapGenerator:
   # Spot App Logs
   - name: grafana-dashboards-spot
     files:
-      - grafana/dashboards/spot-logs.json
+      - spot-logs.json=grafana/dashboards/spot-logs.json
