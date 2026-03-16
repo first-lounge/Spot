@@ -19,7 +19,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
-  serviceName: 'postgres-headless'
+  serviceName: "postgres-headless"
   replicas: 1
   selector:
     matchLabels:
@@ -32,15 +32,15 @@ spec:
       containers:
         - name: postgres
           image: postgres:15-alpine
-          args: 
-            - '-c'
-            - 'max_connections=300'
-            - '-c' 
-            - 'wal_level=logical'
-            - '-c'
-            - 'max_replication_slots=10'
-            - '-c'
-            - 'max_wal_senders=10'
+          args:
+            - "-c"
+            - "max_connections=300"
+            - "-c"
+            - "wal_level=logical"
+            - "-c"
+            - "max_replication_slots=10"
+            - "-c"
+            - "max_wal_senders=10"
           ports:
             - containerPort: 5432
           env:
@@ -69,12 +69,15 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
-          
+
           # DB 연결 상태 확인
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
-            initialDelaySeconds: 10
+              command:
+                - "/bin/sh"
+                - "-c"
+                - "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+            initialDelaySeconds: 15
             periodSeconds: 5
 
           volumeMounts:
@@ -85,7 +88,7 @@ spec:
     - metadata:
         name: postgres-storage
       spec:
-        accessModes: ['ReadWriteOnce']
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: 1Gi
