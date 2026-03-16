@@ -1,5 +1,5 @@
 apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
+kind: ServiceMonitor
 metadata:
   name: kafka-exporter
   namespace: monitoring
@@ -11,9 +11,8 @@ spec:
       - infra
   selector:
     matchLabels:
-      strimzi.io/cluster: kafka-cluster
-      strimzi.io/name: kafka-cluster-kafka-exporter
+      app: kafka-exporter
   podMetricsEndpoints:
-    - port: tcp-prometheus
+    - port: metrics
       path: /metrics
       interval: 15s
