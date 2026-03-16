@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: kafka-headless
   namespace: infra
+  labels:
+    app: kafka
 spec:
   clusterIP: None # Headless service로 설정하여 StatefulSet과 함께 사용
   selector:
