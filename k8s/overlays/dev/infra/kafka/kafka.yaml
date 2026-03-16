@@ -14,6 +14,9 @@ spec:
     - name: internal
       port: 29092
       targetPort: 29092
+    - name: metrics
+      port: 7071
+      targetPort: 7071
 ---
 apiVersion: apps/v1
 kind: StatefulSet
