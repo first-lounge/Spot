@@ -51,10 +51,10 @@ if [ -f "${CONFIG_FILE}" ]; then
   MENU_ID=$(grep "menu_id" "${CONFIG_FILE}" | sed 's/.*: *"\([^"]*\)".*/\1/' | head -1)
 
   # Set defaults if not found
-  BASE_URL="${BASE_URL:-http://localhost:8080}"
+  BASE_URL="${BASE_URL:-http://www.localhost:30080}"
 else
   echo "Warning: config.yaml not found. Using defaults."
-  BASE_URL="${BASE_URL:-http://localhost:8080}"
+  BASE_URL="${BASE_URL:-http://www.localhost:30080}"
 fi
 
 # ==========================================
