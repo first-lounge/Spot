@@ -17,3 +17,5 @@ configMapGenerator:
     namespace: infra
     files:
       - prometheus/kafka-metrics-config.yaml
+    options:
+      disableNameSuffixHash: true
