@@ -46,8 +46,8 @@ const profiles = {
             { duration: '10s', target: 0 },
         ],
         thresholds: {
-            'order_create_errors':   ['rate<0.01'],       // 오류율 1% 미만
-            'order_create_duration': ['p(95)<2000'],      // 95%ile 2초 이내
+            'order_create_errors':   ['rate==0.0'],       // 오류율 0%
+            'order_create_duration': ['p(95)<1000'],      // 95%ile 2초 이내
         },
     },
 
@@ -57,13 +57,13 @@ const profiles = {
      */
     load: {
         stages: [
-            { duration: '1m',  target: 10 },   // 램프업
-            { duration: '3m',  target: 10 },   // 유지
+            { duration: '1m',  target: 50 },   // 램프업
+            { duration: '3m',  target: 50 },   // 유지
             { duration: '1m',  target: 0  },   // 램프다운
         ],
         thresholds: {
-            'order_create_errors':   ['rate<0.05'],                       // 오류율 5% 미만
-            'order_create_duration': ['p(95)<1500', 'p(99)<3000'],       // 95%ile 1.5초, 99%ile 3초 이내
+            'order_create_errors':   ['rate<=0.01'],                       // 오류율 1% 미만
+            'order_create_duration': ['p(95)<1000', 'p(99)<3000'],       // 95%ile 1초, 99%ile 3초 이내
         },
     },
 
@@ -78,12 +78,12 @@ const profiles = {
             { duration: '1m',  target: 60  },
             { duration: '1m',  target: 80  },
             { duration: '1m',  target: 100 },
-            { duration: '2m',  target: 100 },  // 최대 부하 유지
+            { duration: '5m',  target: 100 },  // 최대 부하 유지
             { duration: '1m',  target: 0   },  // 복구 확인
         ],
         thresholds: {
-            'order_create_errors':   ['rate<0.1'],        // 오류율 10% 미만
-            'order_create_duration': ['p(95)<5000'],      // 95%ile 5초 이내
+            'order_create_errors':   ['rate<0.2'],        // 터질 때까지 보므로 에러율 제한만 느슨하게 둠
+            // 'order_create_duration': ['p(95)<5000'],      // 95%ile 5초 이내
         },
     },
 
@@ -101,8 +101,8 @@ const profiles = {
             { duration: '10s', target: 0   },
         ],
         thresholds: {
-            'order_create_errors':   ['rate<0.15'],       // 스파이크 구간 오류율 15% 허용
-            'order_create_duration': ['p(95)<10000'],     // 95%ile 10초 이내
+            'order_create_errors':   ['rate<0.10'],       // 스파이크 구간 오류율 10% 허용
+            'order_create_duration': ['p(95)<5000'],     // 95%ile 10초 이내
         },
     },
 };
@@ -181,7 +181,7 @@ export function orderScenario(data) {
         const menuPrice = selectedMenu.price || 0;
         const quantity  = Math.floor(Math.random() * 3) + 1;
 
-        thinkTime(1); // 사용자가 메뉴 고르는 시간
+        thinkTime(3); // 사용자가 메뉴 고르는 시간
 
         // 3. 주문 생성
         const orderResult = createOrder(accessToken, { storeId, menuId, quantity });
@@ -202,7 +202,7 @@ export function orderScenario(data) {
             console.log(`[Order OK] id=${orderId}, store=${storeId}, menu=${menuId}, qty=${quantity}`);
         }
 
-        thinkTime(1);
+        thinkTime(2);
     });
 }
 
