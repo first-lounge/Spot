@@ -47,8 +47,8 @@ global:
     cpu: "250m"
     memory: "256Mi"
   limits:
-    cpu: "800m"
-    memory: "1Gi"
+    cpu: "1000m"
+    memory: "1024Mi"
 
   # 헬스 체크
   path: /actuator/health

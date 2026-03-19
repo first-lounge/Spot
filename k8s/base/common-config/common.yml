@@ -10,8 +10,10 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:secret}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 3
-      minimum-idle: 1
+      maximum-pool-size: 30
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
 
   data:
     redis:
@@ -43,9 +45,9 @@ spring:
   mvc:
     cors:
       mappings:
-        '[/**]':
+        "[/**]":
           allowedOriginPatterns:
-            - '*'
+            - "*"
           allowedMethods:
             - GET
             - POST
@@ -53,7 +55,7 @@ spring:
             - DELETE
             - OPTIONS
           allowedHeaders:
-            - '*'
+            - "*"
           exposedHeaders:
             - Authorization
           allowCredentials: true
