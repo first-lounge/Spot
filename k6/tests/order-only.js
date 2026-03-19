@@ -41,13 +41,12 @@ const profiles = {
      */
     smoke: {
         stages: [
-            { duration: '10s', target: 1 },
-            { duration: '20s', target: 1 },
+            { duration: '30s', target: 5 },
             { duration: '10s', target: 0 },
         ],
         thresholds: {
-            'order_create_errors':   ['rate==0.0'],       // 오류율 0%
-            'order_create_duration': ['p(95)<1000'],      // 95%ile 2초 이내
+            'order_create_errors':   ['rate==0.0'],       
+            'order_create_duration': ['p(95)<1000'],      
         },
     },
 
@@ -58,12 +57,12 @@ const profiles = {
     load: {
         stages: [
             { duration: '1m',  target: 50 },   // 램프업
-            { duration: '3m',  target: 50 },   // 유지
+            { duration: '5m',  target: 50 },   // 유지
             { duration: '1m',  target: 0  },   // 램프다운
         ],
         thresholds: {
             'order_create_errors':   ['rate<=0.01'],                       // 오류율 1% 미만
-            'order_create_duration': ['p(95)<1000', 'p(99)<3000'],       // 95%ile 1초, 99%ile 3초 이내
+            'order_create_duration': ['p(95)<1000', 'p(99)<1500'],       // 95%ile 1초, 99%ile 1.5초 이내
         },
     },
 
@@ -82,7 +81,7 @@ const profiles = {
             { duration: '1m',  target: 0   },  // 복구 확인
         ],
         thresholds: {
-            'order_create_errors':   ['rate<0.2'],        // 터질 때까지 보므로 에러율 제한만 느슨하게 둠
+            'order_create_errors':   ['rate<0.20'],        // 터질 때까지 보므로 에러율 제한만 느슨하게 둠
             // 'order_create_duration': ['p(95)<5000'],      // 95%ile 5초 이내
         },
     },
@@ -95,9 +94,9 @@ const profiles = {
         stages: [
             { duration: '10s', target: 5   },  // 평상시
             { duration: '10s', target: 100 },  // 스파이크 급상승
-            { duration: '30s', target: 100 },  // 스파이크 유지
+            { duration: '1m', target: 100 },  // 스파이크 유지
             { duration: '10s', target: 5   },  // 급하강
-            { duration: '30s', target: 5   },  // 복구 확인
+            { duration: '1m', target: 5   },  // 복구 확인
             { duration: '10s', target: 0   },
         ],
         thresholds: {
