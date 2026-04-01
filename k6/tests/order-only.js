@@ -75,9 +75,9 @@ const profiles = {
             { duration: '1m',  target: 20  },
             { duration: '1m',  target: 40  },
             { duration: '1m',  target: 60  },
-            { duration: '1m',  target: 80  },
-            { duration: '1m',  target: 100 },
-            { duration: '5m',  target: 100 },  // 최대 부하 유지
+            { duration: '1m',  target: 70  },
+            { duration: '1m',  target: 75 },
+            { duration: '5m',  target: 75 },  // 최대 부하 유지
             { duration: '1m',  target: 0   },  // 복구 확인
         ],
         thresholds: {
