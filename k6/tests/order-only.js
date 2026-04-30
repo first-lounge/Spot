@@ -45,8 +45,8 @@ const profiles = {
             { duration: '10s', target: 0 },
         ],
         thresholds: {
-            'order_create_errors':   ['rate==0.0'],       
-            'order_create_duration': ['p(95)<1000'],      
+            'order_create_errors':   ['rate==0.0'],       // 오류율 0%
+            'order_create_duration': ['p(95)<1000'],      // 95%ile 1초 이내
         },
     },
 
