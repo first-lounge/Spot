@@ -14,7 +14,7 @@ spec:
       helm:
         releaseName: prom
         valueFiles:
-          - $values/k8s/overlays/dev/monitoring/platform/prometheus/values.yaml
+          - $values/k8s/overlays/local/monitoring/platform/prometheus/values.yaml
     - repoURL: "https://github.com/first-lounge/Spot.git"
       targetRevision: dev
       ref: values

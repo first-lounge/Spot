@@ -11,7 +11,7 @@ spec:
     path: k8s/spot-apps
     helm:
       valueFiles:
-        - ../overlays/dev/apps/values-local.yaml
+        - ../overlays/local/apps/values-local.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: spot
