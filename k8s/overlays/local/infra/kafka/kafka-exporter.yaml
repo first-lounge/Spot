@@ -18,6 +18,8 @@ kind: Deployment
 metadata:
   name: kafka-exporter
   namespace: infra
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   replicas: 1
   selector:
@@ -32,7 +34,7 @@ spec:
         - name: kafka-exporter
           image: danielqsj/kafka-exporter:latest
           args:
-            - "--kafka.server=kafka-headless.infra.svc.cluster.local:9092"
+            - "--kafka.server=kafka-headless.infra.svc.cluster.local:29092"
           ports:
             - name: metrics
               containerPort: 9308

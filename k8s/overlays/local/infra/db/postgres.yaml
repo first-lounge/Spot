@@ -36,11 +36,11 @@ spec:
             - "-c"
             - "max_connections=300"
             - "-c"
-            - "wal_level=logical"
+            - "wal_level=logical" # CDC를 위한 핵심 설정
             - "-c"
-            - "max_replication_slots=10"
+            - "max_replication_slots=10" # 커넥터가 사용할 슬롯 수
             - "-c"
-            - "max_wal_senders=10"
+            - "max_wal_senders=10" # 복제 프로세스 허용 수
           ports:
             - containerPort: 5432
           env:

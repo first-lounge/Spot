@@ -22,7 +22,8 @@ log_info() {
 # 1. 변수 설정
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KUSTOMIZATION_DIR="$BASE_DIR/../base"
-ARGO_SVC_FILE="$BASE_DIR/../overlays/dev/argo/argocd-server-svc.yaml"
+ENV=${1:-local} # 기본값 local
+ARGO_SVC_FILE="$BASE_DIR/../overlays/${ENV}/argo/argocd-server-svc.yaml"
 
 # 2. 네임스페이스 및 configMap 생성
 log_info "네임스페이스와 ConfigMap 생성을 시작합니다..."
