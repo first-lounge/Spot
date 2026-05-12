@@ -48,19 +48,18 @@ public class TossPaymentClient implements PaymentGateway {
       Integer timeout) {
     String url = baseUrl + "/v1/billing/" + billingKey;
 
-    Map<String, Object> requestBody =
-        Map.of(
-            "amount", amount,
-            "orderId", orderId,
-            "orderName", orderName,
-            "customerKey", customerKey);
+    Map<String, Object> requestBody = Map.of(
+        "amount", amount,
+        "orderId", orderId,
+        "orderName", orderName,
+        "customerKey", customerKey);
 
     HttpHeaders headers = createHeaders();
     HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
     try {
-      ResponseEntity<TossPaymentResponse> response =
-          restTemplate.postForEntity(url, request, TossPaymentResponse.class);
+      ResponseEntity<TossPaymentResponse> response = restTemplate.postForEntity(url, request,
+          TossPaymentResponse.class);
 
       return response.getBody();
     } catch (HttpClientErrorException e) {
@@ -88,8 +87,8 @@ public class TossPaymentClient implements PaymentGateway {
     HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
     try {
-      ResponseEntity<TossPaymentResponse> response =
-          restTemplate.postForEntity(url, request, TossPaymentResponse.class);
+      ResponseEntity<TossPaymentResponse> response = restTemplate.postForEntity(url, request,
+          TossPaymentResponse.class);
       return response.getBody();
     } catch (HttpClientErrorException e) {
       throw new RuntimeException("[TossPayment] 결제 취소 실패: " + e.getMessage());
@@ -104,17 +103,16 @@ public class TossPaymentClient implements PaymentGateway {
       String paymentKey, Long cancelAmount, String cancelReason) {
     String url = baseUrl + "/v1/payments/" + paymentKey + "/cancel";
 
-    Map<String, Object> requestBody =
-        Map.of(
-            "cancelAmount", cancelAmount,
-            "cancelReason", cancelReason);
+    Map<String, Object> requestBody = Map.of(
+        "cancelAmount", cancelAmount,
+        "cancelReason", cancelReason);
 
     HttpHeaders headers = createHeaders();
     HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
     try {
-      ResponseEntity<TossPaymentResponse> response =
-          restTemplate.postForEntity(url, request, TossPaymentResponse.class);
+      ResponseEntity<TossPaymentResponse> response = restTemplate.postForEntity(url, request,
+          TossPaymentResponse.class);
       return response.getBody();
     } catch (HttpClientErrorException e) {
       throw new RuntimeException("[TossPayment] 결제 부분 취소 실패: " + e.getMessage());
@@ -133,15 +131,14 @@ public class TossPaymentClient implements PaymentGateway {
 
     Map<String, Object> requestBody = Map.of(
         "authKey", authKey,
-        "customerKey", customerKey
-    );
+        "customerKey", customerKey);
 
     HttpHeaders headers = createHeaders();
     HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
     try {
-      ResponseEntity<TossPaymentResponse> response =
-          restTemplate.postForEntity(url, request, TossPaymentResponse.class);
+      ResponseEntity<TossPaymentResponse> response = restTemplate.postForEntity(url, request,
+          TossPaymentResponse.class);
       return response.getBody();
 
     } catch (HttpClientErrorException e) {
@@ -153,8 +150,8 @@ public class TossPaymentClient implements PaymentGateway {
   private HttpHeaders createHeaders() {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-//    String testKey = secretKey + "_INVALID";
-//    headers.setBasicAuth(testKey, "");
+    // String testKey = secretKey + "_INVALID";
+    // headers.setBasicAuth(testKey, "");
     headers.setBasicAuth(secretKey, "");
     return headers;
   }
