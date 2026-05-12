@@ -281,15 +281,15 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor Actor as Customer / Owner / System
+    actor Client as "Customer / Owner / System"
     participant SVC as OrderServiceImpl
     participant Temporal as OrderWorkflow
     participant Activity as OrderActivity
     participant DB as PostgreSQL
-    participant Payment as Payment Service
+    participant Payment as "Payment Service"
     participant Kafka as Kafka
 
-    Actor->>SVC: cancelOrder(orderId, reason, cancelledBy)
+    Client->>SVC: cancelOrder(orderId, reason, cancelledBy)
     SVC->>Temporal: signalStatusChanged(CANCEL_PENDING)
     Temporal->>Activity: updateOrderStatusInDb(CANCEL_PENDING)
     Activity->>DB: 상태 업데이트
