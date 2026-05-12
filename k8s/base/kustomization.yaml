@@ -23,7 +23,7 @@ secretGenerator:
     envs:
       - common-config/.env
 
-  - name: spot-secrets
+  - name: infra-secrets
     namespace: infra
     envs:
       - common-config/.env
