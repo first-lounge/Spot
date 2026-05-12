@@ -53,19 +53,19 @@ spec:
             - name: POSTGRES_SEEDS
               valueFrom:
                 secretKeyRef:
-                  name: spot-secrets
+                  name: infra-secrets
                   key: DB_HOST
             - name: DB_PORT
               value: "5432"
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: spot-secrets
+                  name: infra-secrets
                   key: SPRING_DATASOURCE_USERNAME
             - name: POSTGRES_PWD
               valueFrom:
                 secretKeyRef:
-                  name: spot-secrets
+                  name: infra-secrets
                   key: SPRING_DATASOURCE_PASSWORD
 
             - name: DBNAME
@@ -83,15 +83,15 @@ spec:
             - name: LOG_LEVEL
               value: "warn"
 
-#            # RDS 연결
-#            - name: POSTGRES_TLS_ENABLED
-#              value: "true"
-#            - name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION
-#              value: "true"
-#            - name: SQL_TLS_ENABLED
-#              value: "true"
-#            - name: SQL_HOST_VERIFICATION
-#              value: "false"
+          #            # RDS 연결
+          #            - name: POSTGRES_TLS_ENABLED
+          #              value: "true"
+          #            - name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION
+          #              value: "true"
+          #            - name: SQL_TLS_ENABLED
+          #              value: "true"
+          #            - name: SQL_HOST_VERIFICATION
+          #              value: "false"
 
           resources:
             requests:
@@ -104,6 +104,6 @@ spec:
           # temporal 연결 상태 확인
           readinessProbe:
             tcpSocket:
-                port: 7233
+              port: 7233
             initialDelaySeconds: 60
             periodSeconds: 10

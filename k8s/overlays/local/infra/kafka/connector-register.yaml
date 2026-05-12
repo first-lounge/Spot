@@ -12,18 +12,18 @@ spec:
   template:
     spec:
       containers:
-      - name: connector-register
-        image: curlimages/curl:latest
-        imagePullPolicy: IfNotPresent
-        envFrom:
-          - secretRef:
-              name: spot-secrets
-        command: ["/bin/sh", "-c", "sh /configs/register-connectors.sh"]
-        volumeMounts:
-        - name: connector-configs
-          mountPath: /configs
+        - name: connector-register
+          image: curlimages/curl:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: infra-secrets
+          command: ["/bin/sh", "-c", "sh /configs/register-connectors.sh"]
+          volumeMounts:
+            - name: connector-configs
+              mountPath: /configs
       volumes:
-      - name: connector-configs
-        configMap:
-          name: connector-init
+        - name: connector-configs
+          configMap:
+            name: connector-init
       restartPolicy: Never
