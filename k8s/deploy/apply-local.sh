@@ -17,10 +17,6 @@ ARGO_PATH="$BASE_DIR/../overlays/local/argo"
 
 log_info "로컬 환경의 배포를 시작합니다."
 
-for file in "$ARGO_PATH"/*.yaml;
-do
-    log_info "$file 파일을 배포합니다"
-    kubectl apply -f "$file"
-done
+kubectl apply -f "$ARGO_PATH/"
 
 log_info "로컬 환경의 배포가 완료되었습니다."

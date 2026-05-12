@@ -47,17 +47,17 @@ spec:
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
-                  name: spot-secrets
+                  name: infra-secrets
                   key: DB_NAME
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: spot-secrets
+                  name: infra-secrets
                   key: SPRING_DATASOURCE_USERNAME
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: spot-secrets
+                  name: infra-secrets
                   key: SPRING_DATASOURCE_PASSWORD
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata

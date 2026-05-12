@@ -39,7 +39,7 @@ spec:
             - name: TEMPORAL_ADDRESS
               valueFrom:
                 secretKeyRef:
-                  name: spot-secrets
+                  name: infra-secrets
                   key: SPRING_TEMPORAL_CONNECTION_TARGET
             - name: TEMPORAL_CORS_ALLOW_ORIGINS
               value: "*"
@@ -55,7 +55,7 @@ spec:
           # temporal ui 연결 상태 확인
           readinessProbe:
             httpGet:
-                path: /
-                port: 8080
+              path: /
+              port: 8080
             initialDelaySeconds: 10
             periodSeconds: 5

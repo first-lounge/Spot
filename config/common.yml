@@ -26,7 +26,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update  # 개발 단계에서는 update, 운영 단계에서는 none 또는 validate 권장
+      ddl-auto: update # 개발 단계에서는 update, 운영 단계에서는 none 또는 validate 권장
     show-sql: false # 실행되는 SQL을 콘솔에 출력
     properties:
       hibernate:
@@ -43,9 +43,9 @@ spring:
   mvc:
     cors:
       mappings:
-        '[/**]':
+        "[/**]":
           allowedOriginPatterns:
-            - '*'
+            - "*"
           allowedMethods:
             - GET
             - POST
@@ -53,7 +53,7 @@ spring:
             - DELETE
             - OPTIONS
           allowedHeaders:
-            - '*'
+            - "*"
           exposedHeaders:
             - Authorization
           allowCredentials: true
