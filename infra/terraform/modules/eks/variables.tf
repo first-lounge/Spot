@@ -1,95 +1,133 @@
+# 공통
 variable "name_prefix" {
-  type = string
+  description = "리소스 네이밍 프리픽스"
+  type        = string
 }
 
 variable "common_tags" {
-  type    = map(string)
-  default = {}
+  description = "공통 태그"
+  type        = map(string)
 }
 
 variable "cluster_name" {
-  type = string
+  description = "EKS 클러스터 이름"
+  type        = string
+}
+
+# Cluster
+variable "cluster_role_arn" {
+  description = "EKS 클러스터 Role ARN"
+  type        = string
 }
 
 variable "cluster_version" {
-  type    = string
-  default = "1.29"
-}
-
-variable "vpc_id" {
-  type = string
+  description = "EKS 클러스터 버전"
+  type        = string
+  default     = "1.35"
 }
 
 variable "subnet_ids" {
-  type = list(string)
-}
-
-variable "node_subnet_ids" {
-  type = list(string)
+  description = "서브넷 ID 목록"
+  type        = list(string)
 }
 
 variable "endpoint_private_access" {
-  type    = bool
-  default = true
+  description = "VPC 내부에서 항상 접근 가능"
+  type        = bool
+  default     = true
 }
 
 variable "endpoint_public_access" {
-  type    = bool
-  default = false
+  description = "외부에서도 접근 가능"
+  type        = bool
+  default     = true
 }
 
 variable "public_access_cidrs" {
-  type    = list(string)
-  default = ["0.0.0.0/0"]
+  description = "EKS 클러스터로 접근 가능한 IP 목록"
+  type        = list(string)
 }
 
 variable "enabled_cluster_log_types" {
-  type    = list(string)
-  default = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  description = "EKS 컨트롤 플레인 로그 유형"
+  type        = list(string)
+  default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 }
 
-variable "node_instance_types" {
-  type    = list(string)
-  default = ["t3.large"]
+variable "log_retention_days" {
+  description = "CloudWatch 로그 보관 기간 (일)"
+  type        = number
+  default     = 7 # Dev 기준 / Prod: 30
 }
 
-variable "node_capacity_type" {
-  type    = string
-  default = "ON_DEMAND"
+# Launch Template
+variable "volume_size" {
+  description = "EBS 크기"
+  type        = number
 }
 
-variable "node_ami_type" {
-  type    = string
-  default = "AL2_x86_64"
+variable "node_group_sg_id" {
+  description = "EKS 노드 그룹 보안 그룹 ID"
+  type        = string
 }
 
-variable "node_disk_size" {
-  type    = number
-  default = 50
+# Node
+variable "node_group_role_arn" {
+  description = "EKS 노드 그룹 Role ARN"
+  type        = string
 }
 
-variable "node_desired_size" {
-  type    = number
-  default = 2
+variable "node_subnet_ids" {
+  description = "노드그룹 Private 서브넷 ID 목록"
+  type        = list(string)
 }
 
-variable "node_min_size" {
-  type    = number
-  default = 2
+variable "instance_types" {
+  description = "EC2 인스턴스 유형"
+  type        = list(string)
 }
 
-variable "node_max_size" {
-  type    = number
-  default = 4
+variable "capacity_type" {
+  description = "인스턴스 구매 방식"
+  type        = string
 }
 
-variable "enable_node_ssm" {
-  type    = bool
-  default = true
+variable "desired_size" {
+  description = "노드 희망 개수"
+  type        = number
 }
 
-variable "enable_node_group" {
-  description = "Worker Node Group 생성 여부"
-  type        = bool
-  default     = false
+variable "max_size" {
+  description = "노드 최대 개수"
+  type        = number
+}
+
+variable "min_size" {
+  description = "노드 최소 개수"
+  type        = number
+}
+
+# Add-Ons
+variable "vpc_cni_version" {
+  description = "EKS Addon VPC CNI 버전"
+  type        = string
+  default     = ""
+}
+
+variable "core_dns_version" {
+  description = "EKS Addon Core DNS 버전"
+  type        = string
+  default     = ""
+}
+
+variable "kube_proxy_version" {
+  description = "EKS Addon Kube Proxy 버전"
+  type        = string
+  default     = ""
+}
+
+variable "ebs_csi_version" {
+  description = "EKS Addon EBS CSI 버전"
+  type        = string
+  default     = ""
 }

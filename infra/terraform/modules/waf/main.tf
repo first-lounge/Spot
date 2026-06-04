@@ -1,7 +1,7 @@
 # =============================================================================
 # WAF Web ALB (EKS Ingress via AWS Load Balancer Controller)
 # =============================================================================
-resource "aws_wafv2_web_acl" "main" {
+resource "aws_wafv2_web_acl" "waf" {
   name        = "${var.name_prefix}-waf"
   description = "WAF for ALB - EKS Ingress"
   scope       = "REGIONAL"
@@ -74,7 +74,7 @@ resource "aws_wafv2_web_acl" "main" {
 
     visibility_config {
       cloudwatch_metrics_enabled = true
-      metric_name                = "${var.name_prefix}-sqli"
+      metric_name                = "${var.name_prefix}-sql-injection"
       sampled_requests_enabled   = true
     }
   }
@@ -111,15 +111,11 @@ resource "aws_wafv2_web_acl" "main" {
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-waf" })
 }
 
-
-
-
-
 # =============================================================================
 # CloudWatch Log Group for WAF logs
 # NOTE: WAF requires the log group name to start with "aws-waf-logs-"
 # =============================================================================
-resource "aws_cloudwatch_log_group" "waf" {
+resource "aws_cloudwatch_log_group" "waf_log" {
   name              = "aws-waf-logs-${var.name_prefix}"
   retention_in_days = var.log_retention_days
   tags              = var.common_tags
@@ -128,7 +124,7 @@ resource "aws_cloudwatch_log_group" "waf" {
 # =============================================================================
 # Allow WAF to write logs to CloudWatch Logs
 # =============================================================================
-resource "aws_cloudwatch_log_resource_policy" "waf" {
+resource "aws_cloudwatch_log_resource_policy" "waf_policy" {
   policy_name = "aws-waf-logs-${var.name_prefix}"
 
   policy_document = jsonencode({
@@ -139,7 +135,7 @@ resource "aws_cloudwatch_log_resource_policy" "waf" {
         Effect    = "Allow"
         Principal = { Service = "wafv2.amazonaws.com" }
         Action    = ["logs:CreateLogStream", "logs:PutLogEvents"]
-        Resource  = "${aws_cloudwatch_log_group.waf.arn}:*"
+        Resource  = "${aws_cloudwatch_log_group.waf_log.arn}:*"
       }
     ]
   })
@@ -148,9 +144,13 @@ resource "aws_cloudwatch_log_resource_policy" "waf" {
 # =============================================================================
 # WAF Logging Configuration
 # =============================================================================
-resource "aws_wafv2_web_acl_logging_configuration" "main" {
-  log_destination_configs = [aws_cloudwatch_log_group.waf.arn]
-  resource_arn            = aws_wafv2_web_acl.main.arn
+resource "aws_wafv2_web_acl_logging_configuration" "waf" {
+  # 로그를 어디로 보낼지
+  log_destination_configs = [aws_cloudwatch_log_group.waf_log.arn]
 
-  depends_on = [aws_cloudwatch_log_resource_policy.waf]
+  # 어떤 WAF의 로그를 보낼지
+  resource_arn = aws_wafv2_web_acl.waf.arn
+
+  # Policy 생성 후 연결되도록 설정
+  depends_on = [aws_cloudwatch_log_resource_policy.waf_policy]
 }

@@ -9,9 +9,20 @@ variable "common_tags" {
   default     = {}
 }
 
+
+variable "service_region" {
+  description = "AWS 서비스 리전"
+  type        = string
+}
+
 variable "vpc_cidr" {
   description = "VPC CIDR 블록"
   type        = string
+}
+
+variable "availability_zones" {
+  description = "가용 영역"
+  type        = map(string)
 }
 
 variable "public_subnet_cidrs" {
@@ -24,37 +35,28 @@ variable "private_subnet_cidrs" {
   type        = map(string)
 }
 
-variable "availability_zones" {
-  description = "가용 영역"
+variable "db_subnet_cidrs" {
+  description = "DB 서브넷 CIDR 목록"
   type        = map(string)
 }
 
-variable "nat_instance_type" {
-  description = "NAT Instance 타입"
+variable "nat_sg_id" {
+  description = "NAT Instance SG ID"
   type        = string
-  default     = "t3.nano"
 }
 
-# =============================================================================
-# NAT Gateway 설정 (Production)
-# =============================================================================
-variable "use_nat_gateway" {
-  description = "NAT Gateway 사용 여부 (false면 NAT Instance)"
+# 환경별로 값이 변경되는 변수
+variable "enable_interface_endpoint" {
+  description = "VPC 인터페이스 엔드포인트 활성화 여부"
   type        = bool
-  default     = true
 }
 
-variable "single_nat_gateway" {
-  description = "단일 NAT Gateway 사용 (비용 절감 vs HA)"
+variable "enable_nat_instance" {
+  description = "NAT Instance 활성화 여부"
   type        = bool
-  default     = true
 }
 
-# =============================================================================
-# EKS Cluster Name
-# =============================================================================
-variable "eks_cluster_name" {
-  description = "EKS 클러스터 이름 (Subnet tag 용도)"
-  type        = string
-  default     = "spot-eks"
+variable "enable_nat_gateway" {
+  description = "NAT Gateway 활성화 여부"
+  type        = bool
 }

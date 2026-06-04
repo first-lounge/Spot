@@ -1,8 +1,5 @@
-# =============================================================================
-# 공통 변수
-# =============================================================================
 variable "name_prefix" {
-  description = "리소스 이름 접두사"
+  description = "리소스 네이밍 프리픽스"
   type        = string
 }
 
@@ -12,7 +9,7 @@ variable "common_tags" {
 }
 
 variable "account_id" {
-  description = "AWS 계정 ID (버킷 이름 고유성)"
+  description = "AWS 계정 ID"
   type        = string
 }
 
@@ -21,23 +18,14 @@ variable "region" {
   type        = string
 }
 
-# =============================================================================
-# S3 설정
-# =============================================================================
-variable "cloudfront_oac_arn" {
-  description = "CloudFront OAC ARN (정적 파일 버킷 접근용)"
-  type        = string
-  default     = ""
+variable "enable_versioning" {
+  description = "Bucket 버저닝 활성화 여부"
+  type        = bool
+  default     = false # Dev: 비활성화 / Prod: true
 }
 
-variable "log_transition_days" {
-  description = "로그를 Glacier로 이동하는 일수"
+variable "log_retention_days" {
+  description = "로그 보관 기간 (일)"
   type        = number
-  default     = 30
-}
-
-variable "log_expiration_days" {
-  description = "로그 삭제 일수"
-  type        = number
-  default     = 90
+  default     = 30 # Dev 기준
 }
