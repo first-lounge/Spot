@@ -33,6 +33,12 @@ aws ecr get-login-password --region "${REGION}" | docker login --username AWS --
 # Docker 이미지 빌드 및 Push
 log_info "Docker 이미지 빌드와 ECR Push를 시작합니다..."
 
+log_info "Kafka Connect with Debezium 빌드를 시작합니다..."
+
+docker build -t "${ECR_REGISTRY}/spot-kafka-connect:3.4.0" "${BASE_DIR}/../overlays/dev/infra/kafka/"
+
+docker push "${ECR_REGISTRY}/spot-kafka-connect:3.4.0"
+
 SERVICES=("gateway" "user" "store" "order" "payment")
 
 for service in "${SERVICES[@]}"; do
