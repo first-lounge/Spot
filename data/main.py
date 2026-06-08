@@ -40,8 +40,8 @@ DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'port': int(os.getenv('DB_PORT', '5432')),
     'database': os.getenv('DB_NAME', 'spot_db'),
-    'user': os.getenv('DB_USER', 'spot'),
-    'password': os.getenv('DB_PASSWORD', 'spot-pwd'),
+    'user': os.getenv('DB_USER', 'spot_user'),
+    'password': os.getenv('DB_PASSWORD', 'spot_pwd'),
 }
 
 
