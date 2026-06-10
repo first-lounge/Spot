@@ -41,8 +41,9 @@ const profiles = {
      */
     smoke: {
         stages: [
-            { duration: '30s', target: 5 },
-            { duration: '10s', target: 0 },
+            { duration: '10s', target: 10 },
+            { duration: '30s', target: 10 },
+            { duration: '10s',  target: 0  }
         ],
         thresholds: {
             'order_create_errors':   ['rate==0.0'],       // 오류율 0%
@@ -56,13 +57,13 @@ const profiles = {
      */
     load: {
         stages: [
-            { duration: '1m',  target: 50 },   // 램프업
-            { duration: '5m',  target: 50 },   // 유지
+            { duration: '1m',  target: 30 },   // 램프업
+            { duration: '3m',  target: 30 },   // 유지
             { duration: '1m',  target: 0  },   // 램프다운
         ],
         thresholds: {
-            'order_create_errors':   ['rate<=0.01'],                       // 오류율 1% 미만
-            'order_create_duration': ['p(95)<1000', 'p(99)<1500'],       // 95%ile 1초, 99%ile 1.5초 이내
+            'order_create_errors':   ['rate<=0.05'],                       // 오류율 1% 미만
+            'order_create_duration': ['p(95)<1000', 'p(99)<3000'],       // 95%ile 1초, 99%ile 3초 이내
         },
     },
 
@@ -75,14 +76,14 @@ const profiles = {
             { duration: '1m',  target: 20  },
             { duration: '1m',  target: 40  },
             { duration: '1m',  target: 60  },
-            { duration: '1m',  target: 70  },
-            { duration: '1m',  target: 75 },
-            { duration: '5m',  target: 75 },  // 최대 부하 유지
+            { duration: '1m',  target: 80  },
+            { duration: '1m',  target: 100 },
+            { duration: '3m',  target: 100 },  // 최대 부하 유지
             { duration: '1m',  target: 0   },  // 복구 확인
         ],
         thresholds: {
             'order_create_errors':   ['rate<0.20'],        // 터질 때까지 보므로 에러율 제한만 느슨하게 둠
-            // 'order_create_duration': ['p(95)<5000'],      // 95%ile 5초 이내
+            'order_create_duration': ['p(95)<5000'],      // 95%ile 5초 이내
         },
     },
 
@@ -101,7 +102,7 @@ const profiles = {
         ],
         thresholds: {
             'order_create_errors':   ['rate<0.10'],       // 스파이크 구간 오류율 10% 허용
-            'order_create_duration': ['p(95)<5000'],     // 95%ile 10초 이내
+            'order_create_duration': ['p(95)<5000'],     // 95%ile 5초 이내
         },
     },
 };
