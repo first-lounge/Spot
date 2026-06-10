@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: temporal
+  namespace: monitoring
+  labels:
+    release: prom
+spec:
+  namespaceSelector:
+    matchNames:
+      - infra
+  selector:
+    matchExpressions:
+      - {key: app, operator: In, values: [temporal, temporal-frontend, temporal-history, temporal-matching]}
+  endpoints:
+    - targetPort: 9090  # 이름(metrics) 대신 번호를 직접 써서 실수를 방지합니다.
+      path: /metrics
+      interval: 15s
+      honorLabels: true

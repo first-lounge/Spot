@@ -22,8 +22,6 @@ kind: Deployment
 metadata:
   name: temporal
   namespace: infra
-  annotations:
-    argocd.argoproj.io/sync-wave: "4"
 spec:
   replicas: 1
   selector:

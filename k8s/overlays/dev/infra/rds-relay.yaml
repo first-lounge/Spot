@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rds-relay
+  namespace: infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rds-relay
+  template:
+    metadata:
+      labels:
+        app: rds-relay
+    spec:
+      containers:
+        - name: relay
+          image: alpine/socat
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "32Mi"
+            limits:
+              cpu: "50m"
+              memory: "64Mi"
+          command:
+            [
+              "/bin/sh",
+              "-c",
+              "socat TCP-LISTEN:5432,fork,reuseaddr TCP:${DB_HOST}:5432",
+            ]
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: infra-secrets
+                  key: DB_HOST
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rds-tunnel
+  namespace: infra
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: rds-relay

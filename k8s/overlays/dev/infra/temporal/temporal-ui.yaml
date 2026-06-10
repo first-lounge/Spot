@@ -17,8 +17,6 @@ kind: Deployment
 metadata:
   name: temporal-ui
   namespace: infra
-  annotations:
-    argocd.argoproj.io/sync-wave: "6"
 spec:
   replicas: 1
   selector:

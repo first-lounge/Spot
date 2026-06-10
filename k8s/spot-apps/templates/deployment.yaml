@@ -50,9 +50,7 @@ spec:
               port: {{ $val.targetPort | default $val.port }}
             initialDelaySeconds: {{ $.Values.global.readiness.initial }}
             periodSeconds: {{ $.Values.global.readiness.period }}
-                      {{- if $val.timeoutSeconds }}
-            timeoutSeconds: {{ $val.timeoutSeconds }}
-                      {{- end }}
+            timeoutSeconds: {{ $val.timeoutSeconds | default 5 }}
                       {{- if $val.failureThreshold }}
             failureThreshold: {{ $val.failureThreshold }}
                       {{- end }}
@@ -67,9 +65,8 @@ spec:
               port: {{ $val.targetPort | default $val.port }}
             initialDelaySeconds: {{ $.Values.global.liveness.initial }}
             periodSeconds: {{ $.Values.global.liveness.period }}
-                    {{- if $val.timeoutSeconds }}
-            timeoutSeconds: {{ $val.timeoutSeconds }}
-                    {{- end }}
+            timeoutSeconds: {{ $val.timeoutSeconds | default 5 }}
+            failureThreshold: {{ $val.livenessFailureThreshold | default 5 }}
 
           # 볼륨 마운트
           volumeMounts:

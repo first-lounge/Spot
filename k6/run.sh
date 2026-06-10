@@ -51,10 +51,10 @@ if [ -f "${CONFIG_FILE}" ]; then
   MENU_ID=$(grep "menu_id" "${CONFIG_FILE}" | sed 's/.*: *"\([^"]*\)".*/\1/' | head -1)
 
   # Set defaults if not found
-  BASE_URL="${BASE_URL:-http://www.spot:30080}"
+  BASE_URL="${BASE_URL:-https://spot.hbksv.cloud}"
 else
   echo "Warning: config.yaml not found. Using defaults."
-  BASE_URL="${BASE_URL:-http://www.spot:30080}"
+  BASE_URL="${BASE_URL:-https://spot.hbksv.cloud}"
 fi
 
 # ==========================================
