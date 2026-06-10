@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafka-ui-svc
+  name: kafka-ui
   namespace: infra
 spec:
   replicas: 1
@@ -22,8 +22,8 @@ spec:
             - name: KAFKA_CLUSTERS_0_NAME
               value: kafka-cluster
             - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
-              value: "kafka-cluster-kafka-bootstrap.infra.svc.cluster.local:9092"
-
+              value: 'kafka-cluster-kafka-bootstrap.infra.svc.cluster.local:9092'
+            
             - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME
               value: "spot-connect"
             - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS
