@@ -47,7 +47,7 @@ docker-compose up --build -d
 # Infrastructure
 AWS Prod 환경입니다. 고가용성 배포를 위해 2중화를 고려한 설계입니다.
 
-![](./docs/infra/image/spot-infra.png)
+![](./docs/infra/image/3차-Dev.png)
 
 ### 네트워크 구성
 - **Region**: ap-northeast-2 (서울)
