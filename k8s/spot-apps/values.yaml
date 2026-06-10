@@ -1,9 +1,18 @@
 # [1] Ingress 공통 설정
 ingress:
-  enabled: true
+  className: "nginx"
+
+  aws:
+    enabled: false
+
+  albLogs:
+    enabled: true
+    bucket: ""
+    prefix: alb
 
   subs:
-    - name: www
+    - name: spot
+      hostname: www
       namespace: spot
       serviceName: spot-gateway
       healthPath: /actuator/health
@@ -18,19 +27,13 @@ ingress:
       serviceName: temporal-ui-svc
       healthPath: /
 
-    - name: grafana
-      namespace: monitoring
-      serviceName: grafana-svc
-      healthPath: "/api/health"
+    # - name: grafana
+    #   namespace: monitoring
+    #   serviceName: grafana-svc
+    #   healthPath: '/api/health'
 
-#    - name: argo
-#      namespace: argocd
-#      groupName: spot-ingress
-#      serviceName: argocd-server
-#      healthPath: /
-#      annotations:
-#        alb.ingress.kubernetes.io/backend-protocol: "HTTPS"
-#        alb.ingress.kubernetes.io/healthcheck-protocol: "HTTPS"
+# 도메인
+domain: spot
 
 # [2] Deployment 공통 설정 (Global)
 global:
@@ -38,17 +41,19 @@ global:
   namespace: spot
   replicas: 1
 
+  repository: spot-registry.localhost:5000
+
   # 이미지
   imageTag: latest # "v0.1.0"
   imagePullPolicy: Always
 
   # 리소스 제한
   requests:
-    cpu: "250m"
-    memory: "256Mi"
+    cpu: '250m'
+    memory: '256Mi'
   limits:
-    cpu: "1000m"
-    memory: "1024Mi"
+    cpu: '500m'
+    memory: '512Mi'
 
   # 헬스 체크
   path: /actuator/health
@@ -88,8 +93,8 @@ apps:
 
 # [4] env
 env:
-  activeProfile: "k8s"
-  loggingConfig: "classpath:logback-spring.xml"
+  activeProfile: 'k8s'
+  loggingConfig: 'classpath:logback-spring.xml'
   secretName: spot-secrets
 
 # [5] configMap
