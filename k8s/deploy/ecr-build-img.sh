@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# 변수 설정
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 변수 설정 (레포 루트 = k8s/deploy 에서 두 단계 위)
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 REGION="ap-northeast-2"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
@@ -35,7 +35,7 @@ log_info "Docker 이미지 빌드와 ECR Push를 시작합니다..."
 
 log_info "Kafka Connect with Debezium 빌드를 시작합니다..."
 
-docker build -t "${ECR_REGISTRY}/spot-kafka-connect:3.4.0" "${BASE_DIR}/../overlays/dev/infra/kafka/"
+docker build -t "${ECR_REGISTRY}/spot-kafka-connect:3.4.0" "${BASE_DIR}/k8s/overlays/dev/infra/kafka/"
 
 docker push "${ECR_REGISTRY}/spot-kafka-connect:3.4.0"
 
@@ -44,13 +44,13 @@ SERVICES=("gateway" "user" "store" "order" "payment")
 for service in "${SERVICES[@]}"; do
     log_info "Building ${service}..."
 
-    SERVICE_DIR="${BASE_DIR}/../../spot-${service}"
+    SERVICE_DIR="${BASE_DIR}/spot-${service}"
 
     (cd "${SERVICE_DIR}" && ./gradlew bootJar -x test)
 
-    docker build -t "${ECR_REGISTRY}/spot-dev-${service}:latest" "${SERVICE_DIR}"
+    docker build -t "${ECR_REGISTRY}/spot-${service}:latest" "${SERVICE_DIR}"
 
-    docker push "${ECR_REGISTRY}/spot-dev-${service}:latest"
+    docker push "${ECR_REGISTRY}/spot-${service}:latest"
 
     log_info "spot-${service} 이미지 Push 성공!"
 done
