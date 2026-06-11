@@ -92,7 +92,7 @@ export default function StoreDetailPage() {
 
   const calculateItemTotal = () => {
     if (!selectedMenu) return 0;
-    const optionsTotal = selectedOptions.reduce((sum, opt) => sum + (opt.optionPrice || 0), 0);
+    const optionsTotal = selectedOptions.reduce((sum, opt) => sum + (opt.price || 0), 0);
     return (selectedMenu.price + optionsTotal) * quantity;
   };
 

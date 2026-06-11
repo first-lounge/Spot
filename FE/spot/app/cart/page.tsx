@@ -275,7 +275,7 @@ export default function CartPage() {
                     <h3 className="font-medium text-gray-900">{item.menu.name}</h3>
                     {item.selectedOptions.length > 0 && (
                       <p className="text-sm text-gray-500 mt-1">
-                        옵션: {item.selectedOptions.map((o) => o.optionName).join(', ')}
+                        옵션: {item.selectedOptions.map((o) => o.name).join(', ')}
                       </p>
                     )}
                   </div>
@@ -308,7 +308,7 @@ export default function CartPage() {
                   <span className="font-semibold text-gray-900">
                     {(
                       (item.menu.price +
-                        item.selectedOptions.reduce((sum, o) => sum + (o.optionPrice || 0), 0)) *
+                        item.selectedOptions.reduce((sum, o) => sum + (o.price || 0), 0)) *
                       item.quantity
                     ).toLocaleString()}
                     원
@@ -417,7 +417,7 @@ export default function CartPage() {
                     <span className="text-gray-900">
                       {(
                         (item.menu.price +
-                          item.selectedOptions.reduce((sum, o) => sum + (o.optionPrice || 0), 0)) *
+                          item.selectedOptions.reduce((sum, o) => sum + (o.price || 0), 0)) *
                         item.quantity
                       ).toLocaleString()}
                       원

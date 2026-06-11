@@ -12,9 +12,9 @@ export interface CreateMenuRequest {
 }
 
 export interface CreateMenuOptionRequest {
-  optionName: string;
-  optionDetail: string;
-  optionPrice: number;
+  name: string;
+  detail: string;
+  price: number;
 }
 
 export const menuApi = {

@@ -139,7 +139,7 @@ export default function OrdersPage() {
 
                 <div className="text-sm text-gray-600 mb-3">
                   {order.orderItems.map((item) => (
-                    <p key={item.itemId}>
+                    <p key={item.id}>
                       {item.menuName} x {item.quantity}
                     </p>
                   ))}
@@ -192,7 +192,7 @@ export default function OrdersPage() {
 
                 <div className="text-sm text-gray-600 mb-3">
                   {order.orderItems.map((item) => (
-                    <p key={item.itemId}>
+                    <p key={item.id}>
                       {item.menuName} x {item.quantity}
                     </p>
                   ))}

@@ -39,9 +39,9 @@ export default function StoreManagementPage() {
   const [showOptionForm, setShowOptionForm] = useState(false);
   const [selectedMenuForOption, setSelectedMenuForOption] = useState<Menu | null>(null);
   const [optionFormData, setOptionFormData] = useState<CreateMenuOptionRequest>({
-    optionName: '',
-    optionDetail: '',
-    optionPrice: 0,
+    name: '',
+    detail: '',
+    price: 0,
   });
 
   // 가게 정보 수정
@@ -192,7 +192,7 @@ export default function StoreManagementPage() {
       alert('옵션이 추가되었습니다.');
       setShowOptionForm(false);
       setSelectedMenuForOption(null);
-      setOptionFormData({ optionName: '', optionDetail: '', optionPrice: 0 });
+      setOptionFormData({ name: '', detail: '', price: 0 });
       loadStoreData();
     } catch (error) {
       console.error('옵션 추가 실패:', error);
@@ -376,7 +376,7 @@ export default function StoreManagementPage() {
                             className="flex items-center justify-between text-sm"
                           >
                             <span className="text-gray-600">
-                              {option.optionName} (+{option.optionPrice.toLocaleString()}원)
+                              {option.name} (+{option.price.toLocaleString()}원)
                             </span>
                             <button
                               onClick={() => handleDeleteOption(menu.id, option.id)}
@@ -616,25 +616,25 @@ export default function StoreManagementPage() {
             <form onSubmit={handleAddOption} className="space-y-4">
               <Input
                 label="옵션 이름"
-                name="optionName"
-                value={optionFormData.optionName}
+                name="name"
+                value={optionFormData.name}
                 onChange={handleOptionFormChange}
                 placeholder="예: 곱빼기, 치즈 추가"
                 required
               />
               <Input
                 label="옵션 설명"
-                name="optionDetail"
-                type={optionFormData.optionDetail}
-                value={optionFormData.optionDetail}
+                name="detail"
+                type="text"
+                value={optionFormData.detail}
                 onChange={handleOptionFormChange}
                 required
               />
               <Input
                 label="추가 가격"
-                name="optionPrice"
+                name="price"
                 type="number"
-                value={optionFormData.optionPrice}
+                value={optionFormData.price}
                 onChange={handleOptionFormChange}
                 required
               />
