@@ -5,7 +5,7 @@
 # version
 - Spring Boot 3.5.9
 - JDK 21
-
+- Kubernetes 1.33
 
 아래 명령어를 이용하여 convention을 지켜주세요
 ```bash
@@ -45,38 +45,36 @@ docker-compose up --build -d
 
 
 # Infrastructure
-AWS Prod 환경입니다. 고가용성 배포를 위해 2중화를 고려한 설계입니다.
+AWS Dev 환경입니다.
 
 ![](./docs/infra/image/3차-Dev.png)
 
 ### 네트워크 구성
 - **Region**: ap-northeast-2 (서울)
-- **VPC**: 2개의 Availability Zone (AZ-a, AZ-b)으로 고가용성 확보
-- **Public Subnet**: NAT Gateway 배치
-- **Private Subnet**: ECS Cluster 및 애플리케이션 서비스 배치
+- **VPC**: 2개의 Availability Zone (AZ-a, AZ-c)
+- **Public Subnet**: NAT Instance, ALB
+- **Private Subnet**: EKS, RDS, ElastiCache, 
 
 ### 트래픽 흐름
 ```
-User → Route 53 → WAF → API Gateway → ALB → ECS Services
-                         ↓
-                      Cognito (인증)
+User → Route 53 → WAF → Spring Gateway → ALB → EKS
+                      
 ```
 
 ### 컴퓨팅
-- **ECS Cluster**: 각 AZ에 4개 서비스 (User, Store, Order, Payment) 이중화 배포
+- **EKS**: 각 AZ에 4개 서비스 (User, Store, Order, Payment) 이중화 배포
 - **Service Connect & Cloud Map**: 서비스 간 통신 및 서비스 디스커버리
 - **Application Load Balancer**: 트래픽 분산
 
 ### 데이터베이스
 - **RDS**: 서비스별 독립 데이터베이스 (User, Store, Order, Payment)
 - **ElastiCache**: Redis 캐시 클러스터
-- **Kafka**: EC2 기반 3노드 클러스터 (메시지 브로커)
+- **Kafka**: Strimzi Operator
 
 ### 보안 및 관리
 | 서비스 | 용도 |
 |--------|------|
 | IAM | 접근 권한 관리 |
-| Cognito | 사용자 인증 |
 | WAF | 웹 방화벽 |
 | Secrets Manager | 비밀 정보 관리 |
 | Parameter Store | 설정 값 관리 |
