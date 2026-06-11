@@ -29,7 +29,6 @@ PostgreSQL, Redis, Kafka(KRaft 3-broker), Kafka Connect, Temporal 및 전체 서
 ```bash
 ./run_k3d.sh                  # k3d 클러스터 생성 및 배포
 ./k8s/deploy/deploy-local.sh  # 로컬 배포
-./k8s/deploy/deploy-dev.sh    # Dev(EKS) 배포
 ```
 
 # Project Structure
