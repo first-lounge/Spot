@@ -27,10 +27,10 @@ ingress:
       serviceName: temporal-ui-svc
       healthPath: /
 
-    # - name: grafana
-    #   namespace: monitoring
-    #   serviceName: grafana-svc
-    #   healthPath: '/api/health'
+    - name: grafana
+      namespace: monitoring
+      serviceName: grafana-svc
+      healthPath: '/api/health'
 
 # 도메인
 domain: spot
