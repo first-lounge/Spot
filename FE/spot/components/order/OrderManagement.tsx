@@ -225,11 +225,11 @@ export function OrderManagement({ storeId }: OrderManagementProps) {
                       <div className="font-medium text-gray-900">
                         {item.menuName} x {item.quantity}
                       </div>
-                      {item.orderItemOptions && item.orderItemOptions.length > 0 && (
+                      {item.options && item.options.length > 0 && (
                         <div className="text-sm text-gray-600 ml-2">
-                          {item.orderItemOptions.map((opt, idx) => (
+                          {item.options.map((opt, idx) => (
                             <div key={idx}>
-                              + {opt.optionName}: {opt.optionValue}
+                              + {opt.optionName} (+{opt.optionPrice.toLocaleString()}원)
                             </div>
                           ))}
                         </div>

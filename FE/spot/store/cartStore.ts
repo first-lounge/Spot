@@ -128,7 +128,7 @@ export const useCartStore = create<CartState>()(
 
         return cart.items.reduce((total, item) => {
           const optionsTotal = item.selectedOptions.reduce(
-            (sum, opt) => sum + (opt.optionPrice || 0),
+            (sum, opt) => sum + (opt.price || 0),
             0
           );
           return total + (item.menu.price + optionsTotal) * item.quantity;

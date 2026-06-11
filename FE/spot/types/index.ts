@@ -151,19 +151,22 @@ export interface OrderResponse {
 }
 
 export interface OrderItemResponse {
-  itemId: string;
+  id: string;
   menuId: string;
   menuName: string;
+  menuPrice: number;
   quantity: number;
-  price: number;
+  optionsTotal: number;
   subtotal: number;
-  orderItemOptions?: OrderItemOptionResponse[];
+  options?: OrderItemOptionResponse[];
 }
 
 export interface OrderItemOptionResponse {
-  optionId: string;
+  id: string;
+  menuOptionId: string;
   optionName: string;
-  optionValue: string;
+  optionDetail?: string;
+  optionPrice: number;
 }
 
 // 결제 관련 타입
