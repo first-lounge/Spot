@@ -70,7 +70,7 @@ PostgreSQL, Redis, Kafka(KRaft 3-broker), Kafka Connect, Temporal 및 전체 서
 - **캐싱**: Redis(ElastiCache)를 통한 메뉴/매장 정보 캐싱
 
 # Infrastructure
-AWS Dev 환경입니다. Terraform으로 프로비저닝하며 EKS 위에서 운영됩니다.
+AWS Dev 환경 기준입니다. Terraform으로 프로비저닝하며 EKS 위에서 운영됩니다. (Prod 환경은 추후 구성 예정)
 
 ![](./docs/infra/image/3차-Dev.png)
 
@@ -86,7 +86,7 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 ```
 
 ### 컴퓨팅
-- **EKS**: 4개 서비스 (User, Store, Order, Payment) 이중화 배포, Dev는 SPOT 노드 사용
+- **EKS**: 4개 서비스 (User, Store, Order, Payment) 배포, SPOT 노드 사용
 - **AWS Load Balancer Controller**: Ingress 기반 ALB 자동 생성 및 트래픽 분산
 - **ECR**: 컨테이너 이미지 저장소
 
@@ -100,7 +100,7 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 | 서비스 | 용도 |
 |--------|------|
 | IAM | 접근 권한 관리 |
-| WAF | 웹 방화벽 (Prod 적용) |
+| WAF | 웹 방화벽 (rate limiting, ALB 연동) |
 | Secrets Manager | 비밀 정보 관리 |
 | Parameter Store | 설정 값 관리 |
 | ACM | TLS 인증서 관리 |
