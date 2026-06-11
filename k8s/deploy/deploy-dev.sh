@@ -112,7 +112,7 @@ deploy_monitoring() {
 
     log_info "Loki, Fluent-bit, Grafana 배포를 시작합니다..."
 
-    kubectl apply -k "${MONITORING_PATH}"
+    kubectl apply -k "${MONITORING_PATH}" --server-side --force-conflicts
 
     kubectl wait --for=condition=available deploy/loki-deploy -n monitoring --timeout=180s
     kubectl wait --for=condition=available deploy/grafana-deploy -n monitoring --timeout=180s
@@ -157,7 +157,7 @@ deploy_apps() {
 main() {
     bootstrap
     deploy_infra
-    # deploy_monitoring
+    deploy_monitoring
     deploy_apps
 }
 
