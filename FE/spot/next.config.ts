@@ -7,7 +7,10 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     // 배포 환경에서는 API_URL 환경변수로 게이트웨이 주소 지정
-    const apiUrl = process.env.API_URL ?? 'http://localhost:8080';
+    // 로컬 docker-compose 백엔드 사용 시 아래 줄로 교체
+    // const apiUrl = process.env.API_URL ?? 'http://localhost:8080';
+    // 미니PC k8s 백엔드
+    const apiUrl = process.env.API_URL ?? 'http://www.spot';
     return [
       {
         source: '/api/:path*',
