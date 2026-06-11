@@ -3,7 +3,7 @@ kind: Kustomization
 
 resources:
   - servicemonitors/kafka-exporter-servicemonitor.yaml
-  - servicemonitors/kafka-broker-servicemonitor.yaml
+  - servicemonitors/kafka-broker-podmonitor.yaml
   - servicemonitors/spot-gateway-servicemonitor.yaml
   - servicemonitors/spot-order-servicemonitor.yaml
   - servicemonitors/spot-payment-servicemonitor.yaml
