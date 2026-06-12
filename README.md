@@ -3,10 +3,10 @@
  <p>픽업 주문 서비스를 위한 MSA 기반 백엔드 프로젝트</p>
 </div>
 
-# Tech Stack
+# Version
 - Java 21 / Spring Boot 3.5.9 / Spring Cloud 2025.0.1
 - PostgreSQL, Redis, Kafka, Temporal
-- Kubernetes 1.33 (EKS / k3d), Terraform, Helm, Kustomize
+- Kubernetes 1.35 (EKS / k3d), Terraform, Helm, Kustomize
 - Prometheus, Grafana, Loki, fluent-bit
 - k6 (부하 테스트)
 
