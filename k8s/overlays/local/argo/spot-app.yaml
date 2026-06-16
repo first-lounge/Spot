@@ -9,9 +9,6 @@ spec:
     repoURL: https://github.com/first-lounge/Spot.git
     targetRevision: dev
     path: k8s/spot-apps
-    helm:
-      valueFiles:
-        - ../overlays/local/apps/values-local.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: spot
