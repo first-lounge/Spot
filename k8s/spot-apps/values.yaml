@@ -55,15 +55,21 @@ global:
     cpu: '500m'
     memory: '512Mi'
 
-  # 헬스 체크
+  # 헬스 체크 경로
   path: /actuator/health
 
-  readiness:
-    initial: 90
+  # probe
+  startup:
     period: 10
+    failureThreshold: 30
+  readiness:
+    period: 10
+    failureThreshold: 12
   liveness:
-    initial: 120
-    period: 30
+    period: 10
+    failureThreshold: 12
+
+  timeoutSeconds: 5
 
 # [3] app 목록
 apps:
@@ -71,9 +77,6 @@ apps:
     name: spot-gateway
     port: 80
     targetPort: 8080
-    timeoutSeconds: 5
-    failureThreshold: 5
-    successThreshold: 1
 
   user:
     name: spot-user
