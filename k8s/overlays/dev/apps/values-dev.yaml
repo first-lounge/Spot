@@ -25,6 +25,11 @@ ingress:
       serviceName: temporal-ui-svc
       healthPath: /
 
+    - name: grafana
+      namespace: monitoring
+      serviceName: grafana-svc
+      healthPath: '/api/health'
+
   annotations:
     # ALB 설정
     alb.ingress.kubernetes.io/scheme: internet-facing
