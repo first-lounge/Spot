@@ -8,8 +8,8 @@ spec:
   selector:
     app: spot-connect
   ports:
-  - port: 8083
-    targetPort: 8083
+    - port: 8083
+      targetPort: 8083
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -37,54 +37,54 @@ spec:
           env:
             # 기본 설정
             - name: CONNECT_CONFIG_PROVIDERS
-              value: 'env'
+              value: "env"
             - name: CONNECT_CONFIG_PROVIDERS_ENV_CLASS
-              value: 'org.apache.kafka.common.config.provider.EnvVarConfigProvider'
+              value: "org.apache.kafka.common.config.provider.EnvVarConfigProvider"
             - name: BOOTSTRAP_SERVERS
-              value: 'kafka-0.kafka-headless.infra.svc.cluster.local:29092'
+              value: "kafka-0.kafka-headless.infra.svc.cluster.local:29092"
             - name: GROUP_ID
-              value: 'spot-connect-group'
+              value: "spot-connect-group"
 
             - name: CONFIG_STORAGE_TOPIC
-              value: 'connect_configs'
+              value: "connect_configs"
             - name: OFFSET_STORAGE_TOPIC
-              value: 'connect_offsets'
+              value: "connect_offsets"
             - name: STATUS_STORAGE_TOPIC
-              value: 'connect_status'
+              value: "connect_status"
             - name: CONFIG_STORAGE_REPLICATION_FACTOR
-              value: '1'
+              value: "1"
             - name: OFFSET_STORAGE_REPLICATION_FACTOR
-              value: '1'
+              value: "1"
             - name: STATUS_STORAGE_REPLICATION_FACTOR
-              value: '1'
+              value: "1"
 
             - name: KEY_CONVERTER
-              value: 'org.apache.kafka.connect.json.JsonConverter'
+              value: "org.apache.kafka.connect.json.JsonConverter"
             - name: VALUE_CONVERTER
-              value: 'org.apache.kafka.connect.json.JsonConverter'
+              value: "org.apache.kafka.connect.json.JsonConverter"
             - name: CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE
-              value: 'false'
+              value: "false"
             - name: CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE
-              value: 'false'
+              value: "false"
 
             # 로그 레벨 설정
             - name: LOGGING_LEVEL
-              value: 'WARN'
+              value: "WARN"
             - name: CONNECT_LOG4j_LOGGERS
-              value: 'org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR'
+              value: "org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR"
 
           resources:
             requests:
-              cpu: '250m'
-              memory: '512Mi'
+              cpu: "250m"
+              memory: "512Mi"
             limits:
-              cpu: '750m'
-              memory: '2Gi'
+              cpu: "750m"
+              memory: "2Gi"
 
           # kafka connect 연결 상태 확인
           readinessProbe:
             httpGet:
-                path: /
-                port: 8083
+              path: /
+              port: 8083
             initialDelaySeconds: 60
             periodSeconds: 10
