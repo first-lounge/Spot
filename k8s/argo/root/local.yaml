@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-local
+  metadata.namespace: argocd
+  finalizers: # 기본 동작은 포어그라운드 삭제
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: "argocd"
+    server: https://kubernetes.default.svc
+  source:
+    path: k8s/argo/apps/local # Application이 저장된 경로
+    repoURL: https://github.com/first-lounge/Spot # Application이 저장된 매니페스트 파일
+    targetRevision: feat/41-local-argocd
+  project: "default"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
