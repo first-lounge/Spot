@@ -1,0 +1,28 @@
+{{- range $key, $val := .Values.apps }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $val.name }}{{ if $val.sub }}-{{ $val.sub }}{{ end }}-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $val.syncWave | quote }}
+spec:
+  project: default
+  source:
+    repoURL: {{ $.Values.global.repoURL }}
+    targetRevision: dev
+    path: k8s/overlays/{{ $.Values.env | default "local" }}/{{ $val.name }}{{ with $val.sub }}/{{ . }}{{end}}
+  destination:
+    server: {{ $.Values.global.destination.server }}
+    namespace: {{ $val.name }}
+  syncPolicy: 
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      {{- if $val.serverSideApply }}
+      - ServerSideApply=true
+      {{- end }}
+{{- end }}
