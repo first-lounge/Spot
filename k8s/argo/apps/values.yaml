@@ -1,0 +1,20 @@
+# 공통
+global:
+  repoURL: https://github.com/first-lounge/Spot.git
+  destination:
+    server: https://kubernetes.default.svc
+
+# application 목록
+apps:
+  infra:
+    name: infra
+    syncWave: -1
+  platform:
+    name: monitoring
+    sub: platform
+    syncWave: 1
+    serverSideApply: true
+  configs:
+    name: monitoring
+    sub: configs
+    syncWave: 2
