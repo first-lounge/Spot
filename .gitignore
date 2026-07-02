@@ -72,3 +72,5 @@ config/application-secret.yml
 .env
 
 /k8s/probe.sh
+
+ROADMAP.md

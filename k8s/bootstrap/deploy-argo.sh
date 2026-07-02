@@ -8,26 +8,26 @@ YELLOW='\033[33m'
 NC='\033[0m' # No Color
 
 log_warn() {
-    echo -e "${YELLOW}[WARN] ⚠️ ${NC} $1"
+    echo -e "${YELLOW}[WARN] ⚠️ ${NC} ${1}"
 }
 
 log_error() {
-    echo -e "${RED}[ERROR] ❌ ${NC} $1"
+    echo -e "${RED}[ERROR] ❌ ${NC} ${1}"
 }
 
 log_info() {
-    echo -e "${PURPLE}[INFO] ☑️ ${NC} $1"
+    echo -e "${PURPLE}[INFO] ☑️ ${NC} ${1}"
 }
 
 # 1. 변수 설정
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-KUSTOMIZATION_DIR="$BASE_DIR/../base"
+KUSTOMIZATION_DIR="${BASE_DIR}/../base"
 ENV=${1:-local} # 기본값 local
-ARGO_SVC_FILE="$BASE_DIR/../overlays/${ENV}/argo/argocd-server-svc.yaml"
+ARGO_SVC_FILE="${BASE_DIR}/../argo/argocd-server-svc.yaml"
 
 # 2. 네임스페이스 및 configMap 생성
 log_info "네임스페이스와 ConfigMap 생성을 시작합니다..."
-kubectl apply -k "$KUSTOMIZATION_DIR"
+kubectl apply -k "${KUSTOMIZATION_DIR}"
 log_info "네임스페이스와 ConfigMap 생성을 완료하였습니다."
 
 # 3. ArgoCD 설치 및 배포
@@ -38,13 +38,18 @@ kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argop
 log_info "ArgoCD 서버 기동 대기 중..."
 kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
 
-if [ -f "$ARGO_SVC_FILE" ]; then
+# 4. ArgoCD svc 실행
+if [ -f "${ARGO_SVC_FILE}" ]; then
     log_info "ArgoCD Service 배포 중..."
-    kubectl apply -f "$ARGO_SVC_FILE"
+    kubectl apply -f "${ARGO_SVC_FILE}"
 else
-    log_error "ArgoCD Service 매니페스트가 없습니다. 파일 경로를 확인해주세요: $ARGO_SVC_FILE"
+    log_error "ArgoCD Service 매니페스트가 없습니다. 파일 경로를 확인해주세요: ${ARGO_SVC_FILE}"
     exit 1
 fi
+
+# 5. ArgoCD root App 실행
+kubectl apply -n argocd -f "${BASE_DIR}/../argo/root/${ENV}.yaml"
+
 
 echo "=================================================="
 echo "🆔 ArgoCD 아이디 : admin"

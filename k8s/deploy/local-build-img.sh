@@ -43,12 +43,6 @@ fi
 
 log_info "로컬 도커 레지스트리로 이미지 빌드를 시작합니다..."
 
-log_info "Kafka Connect with Debezium 빌드를 시작합니다..."
-
-docker build -t "${REGISTRY_NAME}:${REGISTRY_PORT}/spot-kafka-connect:3.4.0" "${BASE_DIR}/../overlays/dev/infra/kafka/"
-
-docker push "${REGISTRY_NAME}:${REGISTRY_PORT}/spot-kafka-connect:3.4.0"
-
 SERVICES=("spot-gateway" "spot-user" "spot-store" "spot-order" "spot-payment")
 
 for service in "${SERVICES[@]}"; do
