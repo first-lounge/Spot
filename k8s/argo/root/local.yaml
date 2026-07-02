@@ -10,8 +10,8 @@ spec:
     namespace: "argocd"
     server: https://kubernetes.default.svc
   source:
-    path: k8s/argo/apps/local # Application이 저장된 경로
-    repoURL: https://github.com/first-lounge/Spot # Application이 저장된 매니페스트 파일
+    path: k8s/argo/apps # Application helm 템플릿이 저장된 경로
+    repoURL: https://github.com/first-lounge/Spot.git # Application이 저장된 매니페스트 파일
     targetRevision: dev
   project: "default"
   syncPolicy:
