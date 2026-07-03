@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-dev
+  namespace: argocd
+  finalizers: # 기본 동작은 포어그라운드 삭제
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: "argocd"
+    server: https://kubernetes.default.svc
+  source:
+    path: k8s/argo/apps # Application helm 템플릿이 저장된 경로
+    repoURL: https://github.com/first-lounge/Spot.git # Application이 저장된 매니페스트 파일
+    targetRevision: dev
+    helm:
+      valueFiles:
+        - values-dev.yaml
+  project: "default"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

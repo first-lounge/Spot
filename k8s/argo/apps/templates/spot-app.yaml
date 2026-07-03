@@ -9,6 +9,12 @@ spec:
     repoURL: {{ .Values.global.repoURL }}
     targetRevision: dev
     path: k8s/spot-apps
+    helm:
+      releaseName: spot
+      {{- if .Values.env }}
+      valueFiles:
+        - values-{{ .Values.env }}.yaml
+      {{- end }}
   destination:
     server: https://kubernetes.default.svc
     namespace: spot

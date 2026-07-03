@@ -74,3 +74,6 @@ config/application-secret.yml
 /k8s/probe.sh
 
 ROADMAP.md
+
+### 개인 준비물 (팀 저장소 커밋 제외) ###
+면접대비-QA-spot.md
