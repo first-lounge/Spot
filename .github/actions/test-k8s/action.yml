@@ -1,0 +1,74 @@
+name: "Check K8s Manifest"
+description: "Check K8s Manifest with Helm and Kubeconform"
+
+inputs:
+  environment:
+    description: "Runtime Environment"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install kubeconform
+      shell: bash
+      run: |
+        curl -sSL -o /tmp/kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
+        tar -zxvf /tmp/kubeconform.tar.gz -C /tmp
+        sudo mv /tmp/kubeconform /usr/local/bin
+
+    - name: Check Argo Helm Chart
+      shell: bash
+      env:
+        ENVIRONMENT: ${{ inputs.environment }}
+      run: |
+        VALUES="values.yaml"
+
+        if [ "$ENVIRONMENT" != "local" ]; then
+          VALUES="values-$ENVIRONMENT.yaml"
+        fi
+
+        # lint 검사
+        helm lint k8s/argo/apps --values k8s/argo/apps/$VALUES 
+
+        # template 검사
+        helm template k8s/argo/apps -f k8s/argo/apps/$VALUES | kubeconform -strict -summary -verbose \
+        -schema-location default \
+        -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+
+    - name: Check Spot-Apps Helm Chart
+      shell: bash
+      env:
+        ENVIRONMENT: ${{ inputs.environment }}
+      run: |
+        VALUES="values.yaml"
+
+        if [ "$ENVIRONMENT" != "local" ]; then
+          VALUES="values-$ENVIRONMENT.yaml"
+        fi
+
+        # lint 검사
+        helm lint k8s/spot-apps --values k8s/spot-apps/$VALUES 
+
+        # template 검사
+        helm template k8s/spot-apps -f k8s/spot-apps/$VALUES | kubeconform -strict -summary -verbose \
+        -schema-location default \
+        -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+
+    - name: Check K8s Manifest With kubeconform
+      shell: bash
+      env:
+        ENVIRONMENT: ${{ inputs.environment }}
+      run: |
+        if [ ! -f k8s/base/common-config/.env ]; then
+          echo "DUMMY_KEY=dummy" > k8s/base/common-config/.env
+        fi
+
+        # infra 네임스페이스 검사
+        kubectl kustomize k8s/overlays/$ENVIRONMENT/infra | kubeconform -strict -summary -verbose \
+        -schema-location default \
+        -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+
+        # monitoring 네임스페이스 검사
+        kubectl kustomize k8s/overlays/$ENVIRONMENT/monitoring | kubeconform -strict -summary -verbose \
+        -schema-location default \
+        -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
