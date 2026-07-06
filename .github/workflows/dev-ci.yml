@@ -221,38 +221,20 @@ jobs:
             ${{ matrix.service.name }}/build/reports/
             ${{ matrix.service.name }}/build/test-results/
 
-  docker-integration-test:
+  check-k8s:
     needs: detect-changes
-    if: needs.detect-changes.outputs.has_changes == 'true'
+    if: needs.detect-changes.outputs.k8s_changed == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ["local", "dev"]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Java and Gradle
-        uses: ./.github/actions/setup-java-gradle
+      - name: Check K8s Manifest
+        uses: ./.github/actions/test-k8s
         with:
-          working-directory: .
-
-      - name: Create .env file
-        run: |
-          cat <<EOF > .env
-          SPRING_JWT_SECRET=${{ secrets.SPRING_JWT_SECRET }}
-          EMAIL_USERNAME=${{ secrets.EMAIL_USERNAME }}
-          EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
-          TOSS_SECRET_KEY=${{ secrets.TOSS_SECRET_KEY }}
-          TOSS_CUSTOMER_KEY=${{ secrets.TOSS_CUSTOMER_KEY }}
-          EOF
-
-      - name: Test Docker Compose
-        uses: ./.github/actions/test-docker
-        with:
-          timeout-seconds: "120"
-
-      - name: Upload docker logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-logs
-          path: ./logs/
+          environment: ${{ matrix.environment }}
