@@ -1,15 +1,17 @@
-name: DEV PR Check
+name: DEV CI
 
 on:
   pull_request:
-    branches: [ dev ]
+    branches: [dev]
     paths:
-      - 'config/**'
-      - 'spot-*/**'
-      - '.github/actions/**'
-      - '.github/workflows/dev-pr-check.yml'
-      - '.github/workflows/_common-dev-pr-check.yml'
-      - 'pretty-logs.sh'
+      - "config/**"
+      - "spot-*/**"
+      - "k8s/**"
+      - "!k8s/bootstrap/**"
+      - "!k8s/deploy/**"
+      - ".github/actions/**"
+      - ".github/workflows/dev-ci.yml"
+      - "pretty-logs.sh"
 
 jobs:
   detect-changes:
@@ -17,6 +19,8 @@ jobs:
     outputs:
       services: ${{ steps.filter.outputs.services }}
       has_changes: ${{ steps.filter.outputs.has_changes }}
+      k8s_changed: ${{ steps.filter.outputs.k8s_changed }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,9 +31,10 @@ jobs:
         id: filter
         run: |
 
+          # dev 브랜치로의 pr에서 변경된 파일 목록 확인
           CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
           echo "Changed files:"
-          echo "$CHANGED_FILES"
+          echo "${CHANGED_FILES}"
 
           declare -A SERVICE_PORTS=(
             ["spot-gateway"]="8080"
@@ -39,7 +44,7 @@ jobs:
             ["spot-payment"]="8084"
           )
 
-          # config/common.yml과 config/kafka-topics.yml 변경 여부 확인
+          # config 폴더, .github/workflows, .github/actions 변경 여부 체크
           COMMON_CHANGED=false
           if echo "$CHANGED_FILES" | grep -qE "^config/(common|kafka-topics)\.yml$|^\.github/(actions|workflows)/"; then
             COMMON_CHANGED=true
@@ -48,7 +53,7 @@ jobs:
 
           SERVICES_JSON="["
           FIRST=true
-          
+
           # *** 변경된 서비스 감지 *** #
           for service in "${!SERVICE_PORTS[@]}"; do
             port="${SERVICE_PORTS[$service]}"
@@ -59,7 +64,7 @@ jobs:
             # 2. 서비스별 config 파일 변경  #
             # 3. 공통 파일 변경 확인        #
             # ************************* #
-        
+
             if echo "$CHANGED_FILES" | grep -q "^${service}/"; then
               SERVICE_CHANGED=true
             elif echo "$CHANGED_FILES" | grep -q "^config/${service}\.yml$"; then
@@ -89,6 +94,14 @@ jobs:
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
             echo "services=$SERVICES_JSON" >> $GITHUB_OUTPUT
+          fi
+
+          # k8s 매니페스트 변경 여부 체크
+          if echo "${CHANGED_FILES}" | grep -qE "^k8s/|^\.github/actions/test-k8s/"; then
+            echo "K8s Manifest has changed"
+            echo "k8s_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "k8s_changed=false" >> $GITHUB_OUTPUT
           fi
 
   build-and-test:
@@ -138,17 +151,17 @@ jobs:
         ports:
           - 9092:9092
         env:
-          KAFKA_LOG4J_ROOT_LOGLEVEL: 'WARN'
-          KAFKA_LOG4J_LOGGERS: 'kafka.controller=WARN,state.change.logger=WARN,kafka.producer.async.DefaultEventHandler=WARN'
+          KAFKA_LOG4J_ROOT_LOGLEVEL: "WARN"
+          KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,state.change.logger=WARN,kafka.producer.async.DefaultEventHandler=WARN"
           KAFKA_NODE_ID: 1
-          KAFKA_PROCESS_ROLES: 'broker,controller'
-          KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
-          KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093'
-          KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:9092'
-          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT'
+          KAFKA_PROCESS_ROLES: "broker,controller"
+          KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+          KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
+          KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9092"
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
           KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
           KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-          CLUSTER_ID: 'J9Xz7kQPRYyK8VkqH3mW5A'
+          CLUSTER_ID: "J9Xz7kQPRYyK8VkqH3mW5A"
           KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
           KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
           KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -161,7 +174,7 @@ jobs:
 
       temporal:
         image: temporalio/auto-setup:1.29.3
-        ports: 
+        ports:
           - "7233:7233"
         env:
           DB: postgres12
@@ -208,38 +221,20 @@ jobs:
             ${{ matrix.service.name }}/build/reports/
             ${{ matrix.service.name }}/build/test-results/
 
-  docker-integration-test:
+  check-k8s:
     needs: detect-changes
-    if: needs.detect-changes.outputs.has_changes == 'true'
+    if: needs.detect-changes.outputs.k8s_changed == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ["local", "dev"]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Java and Gradle
-        uses: ./.github/actions/setup-java-gradle
+      - name: Check K8s Manifest
+        uses: ./.github/actions/test-k8s
         with:
-          working-directory: .
-
-      - name: Create .env file
-        run: |
-          cat <<EOF > .env
-          SPRING_JWT_SECRET=${{ secrets.SPRING_JWT_SECRET }}
-          EMAIL_USERNAME=${{ secrets.EMAIL_USERNAME }}
-          EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
-          TOSS_SECRET_KEY=${{ secrets.TOSS_SECRET_KEY }}
-          TOSS_CUSTOMER_KEY=${{ secrets.TOSS_CUSTOMER_KEY }}
-          EOF
-
-      - name: Test Docker Compose
-        uses: ./.github/actions/test-docker
-        with:
-          timeout-seconds: '120'
-
-      - name: Upload docker logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-logs
-          path: ./logs/
+          environment: ${{ matrix.environment }}
