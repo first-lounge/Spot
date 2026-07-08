@@ -311,3 +311,11 @@ variable "create_alb_record" {
   type    = bool
   default = true
 }
+
+# =============================================================================
+# Github
+# =============================================================================
+variable "git_branch" {
+  description = "Github 브랜치"
+  type        = string
+}
