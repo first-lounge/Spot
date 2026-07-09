@@ -22,3 +22,8 @@ output "waf_acl_arn" {
   description = "ALB Ingress에 연결할 WAF ARN"
   value       = module.waf.waf_arn
 }
+
+output "github_oidc_role_arn" {
+  description = "GitHub OIDC Role ARN"
+  value       = module.github_oidc.github_oidc_role_arn
+}

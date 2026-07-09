@@ -180,3 +180,16 @@ module "acm" {
   domain_name = var.domain_name
   zone_id     = module.route53.zone_id
 }
+
+# =============================================================================
+# Github OIDC
+# =============================================================================
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  name_prefix    = local.name_prefix
+  common_tags    = local.common_tags
+  git_branch     = var.git_branch
+  account_id     = data.aws_caller_identity.current.account_id
+  service_region = var.region
+}

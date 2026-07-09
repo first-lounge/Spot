@@ -12,6 +12,7 @@ runs:
     - name: Install kubeconform
       shell: bash
       run: |
+
         curl -sSL -o /tmp/kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
         tar -zxvf /tmp/kubeconform.tar.gz -C /tmp
         sudo mv /tmp/kubeconform /usr/local/bin
@@ -21,6 +22,7 @@ runs:
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       run: |
+
         VALUES="values.yaml"
 
         if [ "$ENVIRONMENT" != "local" ]; then
@@ -40,6 +42,7 @@ runs:
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       run: |
+
         VALUES="values.yaml"
 
         if [ "$ENVIRONMENT" != "local" ]; then
@@ -59,6 +62,7 @@ runs:
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       run: |
+
         if [ ! -f k8s/base/common-config/.env ]; then
           echo "DUMMY_KEY=dummy" > k8s/base/common-config/.env
         fi

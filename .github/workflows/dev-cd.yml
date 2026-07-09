@@ -1,0 +1,133 @@
+name: DEV EKS CD
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "spot-*/**"
+      - "!spot-mono/**"
+      - ".github/workflows/dev-cd.yml"
+      - ".github/actions/**"
+
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-2
+
+jobs:
+  detect-changes:
+    name: Detect Changed Files
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.changed-files.outputs.services }}
+      has_changed: ${{ steps.changed-files.outputs.has_changed }}
+      image_tag: ${{ steps.image-tag.outputs.image_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # 전체 커밋 기록, 모든 브랜치, 모든 태그를 확인
+          # 1로 설정 시 현재 HEAD 커밋만 확인하기 때문에 0으로 설정
+          fetch-depth: 0
+
+      # 변경된 파일 목록 얻기
+      - name: Get changed files
+        id: changed-files
+        run: |
+
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.event.after }}"
+          CHANGED_FILES=""
+          declare -A FILES  # FILES 연관 배열 선언(Python의 set으로 이해하면 됨)
+
+          # 변경된 파일 목록 확인
+          if git cat-file -e "$BEFORE"; then
+            CHANGED_FILES=$(git diff --name-only "$BEFORE" "$AFTER")
+          else
+              FILES[spot-gateway]=1
+              FILES[spot-user]=1 
+              FILES[spot-store]=1
+              FILES[spot-order]=1 
+              FILES[spot-payment]=1
+          fi
+
+          echo "Changed files:$CHANGED_FILES"
+
+          # 변경된 파일이 spot 서비스들인지 체크
+          while read -r file; do
+            case "$file" in
+              spot-gateway/*) FILES[spot-gateway]=1 ;;
+              spot-user/*) FILES[spot-user]=1 ;;
+              spot-store/*) FILES[spot-store]=1 ;;
+              spot-order/*) FILES[spot-order]=1 ;;
+              spot-payment/*) FILES[spot-payment]=1 ;;
+            esac
+          done <<< "$CHANGED_FILES"
+
+          if [[ "${#FILES[@]}" == 0 ]]; then
+            echo "has_changed=false" >> $GITHUB_OUTPUT
+          else
+            # 키값을 JSON으로 저장
+            echo "services=$(printf '%s\n' "${!FILES[@]}" | jq -R '{name: .}' | jq -sc '.')" >> $GITHUB_OUTPUT
+            echo "has_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+        # Git SHA 태그 (8자리)
+      - name: Get Short Image Tag
+        id: image-tag
+        run: echo "image_tag=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+
+  build-and-push:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java and Gradle
+        uses: ./.github/actions/setup-java-gradle
+        with:
+          working-directory: ${{ matrix.service.name }}
+
+      - name: Build with Gradle
+        run: ./gradlew bootJar
+        working-directory: ${{ matrix.service.name }}
+
+      # AWS OIDC 인증
+      - name: Configure AWS Credentials
+        id: aws-oidc
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+
+      # ECR 로그인
+      - name: Login To ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Docker 이미지 빌드
+      - name: Build Docker Image
+        id: build-img
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ needs.detect-changes.outputs.image_tag }}
+        run: docker build -t $REGISTRY/${{ matrix.service.name }}:$IMAGE_TAG ./${{ matrix.service.name }}
+
+      # 이미지 push
+      - name: Push Image To ECR
+        id: push-img
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ needs.detect-changes.outputs.image_tag }}
+        run: docker push $REGISTRY/${{ matrix.service.name }}:$IMAGE_TAG
