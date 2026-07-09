@@ -1,4 +1,4 @@
-name: DEV CI
+name: DEV EKS CI
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
     paths:
       - "config/**"
       - "spot-*/**"
+      - "!spot-mono/**"
       - "k8s/**"
       - "!k8s/bootstrap/**"
       - "!k8s/deploy/**"
