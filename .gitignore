@@ -1,3 +1,6 @@
+## LF로 변환 ##
+.gitattributes
+
 ### infra ###
 **/.terraform/*
 **/terraform.tfstate
@@ -35,6 +38,9 @@ build/
 !k8s/**/*.yaml
 !k8s/**/*.yml
 
+!.github/**/*.yml
+!.github/**/*.yaml
+
 ### Maven ###
 target/
 pom.xml.tag
@@ -67,3 +73,10 @@ logs/
 config/application-secret.yml
 
 .env
+
+/k8s/probe.sh
+
+ROADMAP.md
+
+### 개인 준비물 (팀 저장소 커밋 제외) ###
+면접대비-QA-spot.md
