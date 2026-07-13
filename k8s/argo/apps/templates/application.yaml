@@ -5,6 +5,8 @@ kind: Application
 metadata:
   name: {{ $val.name }}{{ if $val.sub }}-{{ $val.sub }}{{ end }}-app
   namespace: argocd
+  finalizers: # 기본 동작은 포어그라운드 삭제
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: {{ $val.syncWave | quote }}
 spec:
