@@ -5,7 +5,7 @@
 
 ## 프로젝트 소개
 
-종로구 혜화동 근처에서 운영될 음식점들의 픽업 주문 관리, 결제, 그리고 주문 내역 관리 기능을 제공하는 플랫폼입니다.
+종로구 혜화동 근처에서 운영중인 음식점들의 픽업 주문 관리, 결제, 그리고 주문 내역 관리 기능을 제공하는 플랫폼입니다.
 
 ## 시작 가이드
 
@@ -100,13 +100,13 @@ SPOT_PAYMENT_URI=
 | 디렉터리                                                   | 설명                                                                                                      |
 | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `spot-gateway`                                             | Spring Cloud Gateway (라우팅, 인증/인가)                                                                  |
-| `spot-user` / `spot-store` / `spot-order` / `spot-payment` | 도메인 서비스                                                                                             |
+| [`spot-user`](./spot-user/README.md) / [`spot-store`](./spot-store/README.md) / [`spot-order`](./spot-order/README.md) / [`spot-payment`](./spot-payment/README.md) | 도메인 서비스 (링크 = 도메인별 README)                                                                    |
 | `spot-mono`                                                | 모놀리식 통합 모듈                                                                                        |
 | `FE`                                                       | 프론트엔드                                                                                                |
 | `config`                                                   | 공통 Spring 설정(yml) — Docker Compose 실행 시 사용 (`./config:/config` 마운트)                           |
 | `k8s`                                                      | Kustomize(base/overlays) + Helm 차트(spot-apps), ArgoCD App-of-Apps(argo/), k3d 부트스트랩, 배포 스크립트 |
 | `k8s/base/common-config`                                   | 클러스터용 설정·시크릿 소스 — k3d 실행 시 ConfigMap·Secret으로 생성 (kustomize generator)                 |
-| `terraform`                                                | AWS 인프라 IaC (modules + environments)                                                                   |
+| `terraform`                                                | AWS 인프라 IaC (modules + environments) — [실행 가이드](./terraform/README.md)                            |
 | `k6`                                                       | 부하 테스트 스크립트                                                                                      |
 | `docs`                                                     | 기능 문서                                                                                                 |
 
@@ -196,14 +196,14 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 - **CloudWatch / CloudTrail**: AWS 리소스 모니터링 및 감사 로그
 - **S3**: 정적 파일, ALB 액세스 로그 및 백업 스토리지
 
-### Terraform 구조
+### Terraform 폴더 구조
 
 ```
 terraform/
 ├── environments/
 │   ├── bootstrap/   # tfstate용 S3 + DynamoDB lock (최초 1회, destroy 금지)
 │   ├── dev/         # Dev 환경 (VPC, EKS, RDS 등)
-│   └── argo/        # ArgoCD 스택 (dev 클러스터를 소비하는 GitOps 계층, 별도 state)
+│   └── argo/        # ArgoCD 루트 모듈 (dev 클러스터를 참조, 별도 state)
 └── modules
     ├─acm
     ├─argocd
@@ -218,3 +218,5 @@ terraform/
     ├─security
     └─waf
 ```
+
+> 루트 모듈별 역할과 실행(apply/destroy) 순서, ArgoCD 접속 방법은 [terraform/README.md](./terraform/README.md)를 참고하세요.
