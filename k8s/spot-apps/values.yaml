@@ -44,7 +44,6 @@ global:
   repository: spot-registry.localhost:5000
 
   # 이미지
-  imageTag: latest # "v0.1.0"
   imagePullPolicy: Always
 
   # 리소스 제한
@@ -77,22 +76,27 @@ apps:
     name: spot-gateway
     port: 80
     targetPort: 8080
+    imageTag: latest
 
   user:
     name: spot-user
     port: 8081
+    imageTag: latest
 
   store:
     name: spot-store
     port: 8083
+    imageTag: latest
 
   order:
     name: spot-order
     port: 8082
+    imageTag: latest
 
   payment:
     name: spot-payment
     port: 8084
+    imageTag: latest
 
 # [4] env
 env:

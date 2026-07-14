@@ -131,3 +131,54 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ needs.detect-changes.outputs.image_tag }}
         run: docker push $REGISTRY/${{ matrix.service.name }}:$IMAGE_TAG
+
+  update-image:
+    needs: [detect-changes, build-and-push]
+    if: success()
+    runs-on: ubuntu-latest
+    env:
+      SERVICES: ${{ needs.detect-changes.outputs.services }}
+      IMAGE_TAG: ${{ needs.detect-changes.outputs.image_tag }}
+      VALUE_FILE: k8s/spot-apps/values-dev.yaml
+    permissions:
+      contents: read
+
+    steps:
+      - name: Generate a token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Update Helm Image Tag
+        run: |
+
+          # 각 서비스명에서 'spot-' 제거
+          SERVICES=$(echo "$SERVICES" | jq -c 'map(.name |= sub("^spot-"; ""))')
+
+          # spot-apps 폴더의 value-dev.yaml에서 imageTag 수정
+          for service in $(echo $SERVICES | jq -r '.[].name' ); do
+            service="$service" yq '.apps[strenv(service)].imageTag = strenv(IMAGE_TAG)' -i "$VALUE_FILE"
+          done
+
+      - name: Commit and Push to Branch
+        run: |
+          services=$(echo $SERVICES | jq -r 'map(.name) | join(", ")')
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add "$VALUE_FILE"
+
+          if git diff --staged --quiet; then
+            echo "No changes To commit"
+          else
+            git commit -m "Update $services : $IMAGE_TAG [skip ci]"
+            git pull --rebase origin dev
+            git push origin dev
+          fi

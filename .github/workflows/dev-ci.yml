@@ -47,7 +47,7 @@ jobs:
 
           # config 폴더, .github/workflows, .github/actions 변경 여부 체크
           COMMON_CHANGED=false
-          if echo "$CHANGED_FILES" | grep -qE "^config/(common|kafka-topics)\.yml$|^\.github/(actions|workflows)/"; then
+          if echo "$CHANGED_FILES" | grep -qE "^config/(common|kafka-topics)\.yml$|^\.github/(actions/|workflows/dev-ci\.yml)"; then
             COMMON_CHANGED=true
             echo "Common files changed - all services will be checked"
           fi
