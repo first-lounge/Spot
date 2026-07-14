@@ -48,20 +48,27 @@ ingress:
 
     # 태그 설정
     alb.ingress.kubernetes.io/tags: Name=spot-alb, Environment=dev,Team=spot, ManagedBy=terraform
-  
-  # subs:
-  #   - name: argo
-  #     namespace: argocd
-  #     groupName: spot-ingress
-  #     serviceName: argocd-server
-  #     healthPath: /
-  #     annotations:
-  #       alb.ingress.kubernetes.io/backend-protocol: "HTTPS"
-  #       alb.ingress.kubernetes.io/healthcheck-protocol: "HTTPS"
 
-# 도메인 (AWS)
+# [2] 도메인 (AWS)
 domain: hbksv.cloud
 
-# [2] Deployment 설정
+# [3] Deployment 설정
 global:
   repository: ""
+
+# [4] app 목록
+apps:
+  gateway:
+    imageTag: ""
+
+  user:
+    imageTag: ""
+
+  store:
+    imageTag: ""
+
+  order:
+    imageTag: ""
+
+  payment:
+    imageTag: ""
