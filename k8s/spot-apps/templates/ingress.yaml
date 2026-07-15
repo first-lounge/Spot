@@ -13,6 +13,7 @@ metadata:
     {{- /* ALB healthcheck-path일 때만 sub에 정의된 경로로 덮어쓰기 */ -}}
     {{- if eq $key "alb.ingress.kubernetes.io/healthcheck-path" }}
     {{ $key }}: {{ $sub.healthPath | default "/" | quote }}
+    {{- /* annotations의 각 key의 value가 존재하는 경우 */ -}}
     {{- else if $value }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
