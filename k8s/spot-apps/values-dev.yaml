@@ -6,7 +6,7 @@ ingress:
     enabled: true
 
   # ALB 로그 저장용 S3 버킷 이름
-  bucket: null
+  bucket: spot-dev-logs
 
   subs:
     - name: spot
@@ -19,12 +19,12 @@ ingress:
       namespace: infra
       serviceName: kafka-ui-svc
       healthPath: /
-
+    
     - name: temporal
       namespace: infra
       serviceName: temporal-ui-svc
       healthPath: /
-
+    
     - name: grafana
       namespace: monitoring
       serviceName: grafana-svc
@@ -34,18 +34,21 @@ ingress:
     # ALB 설정
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip # IP 모드
-
+    
     # 헬스 체크
     alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
     alb.ingress.kubernetes.io/success-codes: '200'
-
+    
     # 모든 서비스가 하나의 ALB를 공유
     alb.ingress.kubernetes.io/group.name: spot-ingress
 
+    # WAF
+    alb.ingress.kubernetes.io/wafv2-acl-arn: ""
+    
     # HTTPS/HTTP 설정
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
-
+    
     # 태그 설정
     alb.ingress.kubernetes.io/tags: Name=spot-alb, Environment=dev,Team=spot, ManagedBy=terraform
 
@@ -54,7 +57,7 @@ domain: hbksv.cloud
 
 # [3] Deployment 설정
 global:
-  repository: ""
+  repository: 164076841262.dkr.ecr.ap-northeast-2.amazonaws.com
 
 # [4] app 목록
 apps:
