@@ -17,7 +17,7 @@ resource "aws_iam_openid_connect_provider" "eks_irsa" {
 # IRSA
 # =============================================================================
 
-# LBC Policy
+# Permission Policy
 data "http" "lbc_policy" {
   url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.3.0/docs/install/iam_policy.json"
 }
@@ -33,14 +33,25 @@ locals {
 
   irsa_roles = {
     lbc = {
-      sa_name = "aws-load-balancer-controller"
+      namespace = "kube-system"
+      sa_name   = "aws-load-balancer-controller"
     }
     ebs_csi = {
-      sa_name = "ebs-csi-controller-sa"
+      namespace = "kube-system"
+      sa_name   = "ebs-csi-controller-sa"
+    }
+    eso = {
+      namespace = "external-secrets"
+      sa_name   = "external-secrets"
+    }
+    external_dns = {
+      namespace = "external-dns"
+      sa_name   = "external-dns"
     }
   }
 }
 
+# Trust Policy
 resource "aws_iam_role" "irsa" {
   for_each = local.irsa_roles
 
@@ -56,7 +67,7 @@ resource "aws_iam_role" "irsa" {
         Condition = {
           StringEquals = {
             "${local.oidc_provider}:aud" = "sts.amazonaws.com",
-            "${local.oidc_provider}:sub" = "system:serviceaccount:kube-system:${each.value.sa_name}"
+            "${local.oidc_provider}:sub" = "system:serviceaccount:${each.value.namespace}:${each.value.sa_name}"
           }
         }
       }
@@ -66,6 +77,7 @@ resource "aws_iam_role" "irsa" {
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-${each.key}-role" })
 }
 
+# Attachment
 resource "aws_iam_role_policy_attachment" "lbc" {
   policy_arn = aws_iam_policy.lbc.arn
   role       = aws_iam_role.irsa["lbc"].name
