@@ -63,16 +63,23 @@ runs:
         ENVIRONMENT: ${{ inputs.environment }}
       run: |
 
-        if [ ! -f k8s/base/common-config/.env ]; then
-          echo "DUMMY_KEY=dummy" > k8s/base/common-config/.env
+        # 더미 .env 파일
+        if [ ! -f k8s/base/.env ]; then
+          echo "DUMMY_KEY=dummy" > k8s/base/.env
         fi
 
-        # infra 네임스페이스 검사
+        # secret & namespace 매니페스트 빌드 및 k8s 스키마 검사
+        kubectl kustomize k8s/base | kubeconform -strict -summary -verbose
+
+        # configMap 매니페스트 빌드 및 k8s 스키마 검사
+        kubectl kustomize k8s/overlays/$ENVIRONMENT/config | kubeconform -strict -summary -verbose
+
+        # infra 네임스페이스에 속한 매니페스트 빌드 및 k8s 스키마 검사
         kubectl kustomize k8s/overlays/$ENVIRONMENT/infra | kubeconform -strict -summary -verbose \
         -schema-location default \
         -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
 
-        # monitoring 네임스페이스 검사
+        # monitoring 네임스페이스에 속한 매니페스트 빌드 및 k8s 스키마 검사
         kubectl kustomize k8s/overlays/$ENVIRONMENT/monitoring | kubeconform -strict -summary -verbose \
         -schema-location default \
         -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
