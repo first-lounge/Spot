@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: monitoring-prom
   namespace: argocd
+  finalizers: # 기본 동작은 포어그라운드 삭제
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
@@ -16,7 +18,7 @@ spec:
         valueFiles:
           - $values/k8s/overlays/{{ .Values.env | default "local" }}/monitoring/platform/prometheus/values.yaml
     - repoURL: {{ .Values.global.repoURL }}
-      targetRevision: dev
+      targetRevision: feat/62-dev-gitops  # dev
       ref: values
   destination:
     server: {{ .Values.global.destination.server }}

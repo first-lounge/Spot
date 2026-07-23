@@ -3,11 +3,13 @@ kind: Application
 metadata:
   name: spot-app
   namespace: argocd
+  finalizers: # 기본 동작은 포어그라운드 삭제
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
     repoURL: {{ .Values.global.repoURL }}
-    targetRevision: dev
+    targetRevision: feat/62-dev-gitops  # dev
     path: k8s/spot-apps
     helm:
       releaseName: spot
@@ -16,7 +18,7 @@ spec:
         - values-{{ .Values.env }}.yaml
       {{- end }}
   destination:
-    server: https://kubernetes.default.svc
+    server: {{ .Values.global.destination.server }}
     namespace: spot
   syncPolicy:
     automated:
