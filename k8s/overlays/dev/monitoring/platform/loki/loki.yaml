@@ -9,7 +9,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: gp3
+  storageClassName: ebs-sc
 ---
 apiVersion: apps/v1
 kind: Deployment
