@@ -1,0 +1,104 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: spot-order
+  temporal:
+    workers-auto-discovery:
+      packages:
+        - "com.example.Spot"
+    workers:
+      - task-queue: ORDER_TASK_QUEUE
+        name: order-worker
+    threads:
+      virtual:
+        enabled: true
+        
+feign:
+  user:
+    url: ${FEIGN_USER_URL:http://spot-user:8081}
+  store:
+    url: ${FEIGN_STORE_URL:http://spot-store:8083}
+  payment:
+    url: ${FEIGN_PAYMENT_URL:http://spot-payment:8084}
+  client:
+    config:
+      spot-user:
+        connectTimeout: 100
+        readTimeout: 500
+        loggerLevel: BASIC
+        
+
+
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        cancelRunningFuture: true
+    instances:
+      user_validate_activeUser:
+        timeoutDuration: 250ms
+
+  bulkhead:
+    instances:
+      user_validate_activeUser:
+        maxConcurrentCalls: 40
+        maxWaitDuration: 0
+
+  retry:
+    instances:
+      user_validate_activeUser:
+        maxAttempts: 1
+        waitDuration: 0ms
+
+  circuitbreaker:
+    configs:
+      cb_slowCall_user:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 250ms
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - java.io.IOException
+          - java.net.SocketTimeoutException
+          - feign.RetryableException
+          - feign.FeignException
+    instances:
+      user_validate_activeUser:
+        baseConfig: cb_slowCall_user
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - metrics
+          - beans
+          - mappings
+          - env
+          - configprops
+          - prometheus
+
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    root: INFO
+    com.example.Spot: INFO
+    feign: INFO
+    io.github.resilience4j.circuitbreaker: INFO
+    io.github.resilience4j.retry: INFO
+    io.github.resilience4j.bulkhead: INFO

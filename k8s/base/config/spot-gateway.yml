@@ -1,0 +1,112 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: user-auth
+              uri: ${SPOT_USER_URI:http://spot-user:8081}
+              predicates:
+                - Path=/api/login,/api/join,/api/auth/refresh
+
+            - id: user-service
+              uri: ${SPOT_USER_URI:http://spot-user:8081}
+              predicates:
+                - Path=/api/users/**,/api/admin/**
+
+            - id: store-service
+              uri: ${SPOT_STORE_URI:http://spot-store:8083}
+              predicates:
+                - Path=/api/stores/**,/api/categories/**,/api/reviews/**
+
+            - id: order-service
+              uri: ${SPOT_ORDER_URI:http://spot-order:8082}
+              predicates:
+                - Path=/api/orders/**
+
+            - id: payment-service
+              uri: ${SPOT_PAYMENT_URI:http://spot-payment:8084}
+              predicates:
+                - Path=/api/payments/**
+
+            - id: block-internal
+              uri: http://localhost:9999
+              predicates:
+                - Path=/internal/**
+              filters:
+                - SetStatus=403
+            # ==================== OpenAPI Routes ====================
+            - id: user-api-docs
+              uri: http://spot-user:8081
+              predicates:
+                - Path=/v3/api-docs/user
+              filters:
+                - RewritePath=/v3/api-docs/user, /v3/api-docs
+
+            - id: order-api-docs
+              uri: http://spot-order:8082
+              predicates:
+                - Path=/v3/api-docs/order
+              filters:
+                - RewritePath=/v3/api-docs/order, /v3/api-docs
+
+            - id: store-api-docs
+              uri: http://spot-store:8083
+              predicates:
+                - Path=/v3/api-docs/store
+              filters:
+                - RewritePath=/v3/api-docs/store, /v3/api-docs
+
+            - id: payment-api-docs
+              uri: http://spot-payment:8084
+              predicates:
+                - Path=/v3/api-docs/payment
+              filters:
+                - RewritePath=/v3/api-docs/payment, /v3/api-docs
+        metrics:
+          enabled: true
+          httpclient:
+            wiretap: false
+            response-timeout: 5s
+          httpserver:
+            wiretap: false
+
+
+
+# ==================== SpringDoc OpenAPI (통합 Swagger) ====================
+springdoc:
+  swagger-ui:
+    urls:
+      - name: User Service
+        url: /v3/api-docs/user
+      - name: Store Service
+        url: /v3/api-docs/store
+      - name: Order Service
+        url: /v3/api-docs/order
+      - name: Payment Service
+        url: /v3/api-docs/payment
+    urls-primary-name: User Service
+
+test:
+  marker: spot-gateway-yml-loaded
+
+logging:
+  level:
+    org.springframework.boot.context.config: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.gateway.route.RouteDefinitionRouteLocator: DEBUG
+    org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping: TRACE
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - metrics
+          - gateway
+          - prometheus
+  endpoint:
+    gateway:
+      access: unrestricted
