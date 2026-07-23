@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-strimzi
+  namespace: argocd
+  finalizers: # 기본 동작은 포어그라운드 삭제
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: default
+  sources:
+    - repoURL: "https://strimzi.io/charts/"
+      chart: strimzi-kafka-operator
+      targetRevision: 1.0.0
+      helm:
+        releaseName: strimzi-operator
+        parameters:
+            - name: "watchNamespaces[0]"
+              value: "infra"
+  destination:
+    server: {{ .Values.global.destination.server }}
+    namespace: strimzi
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
