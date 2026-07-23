@@ -4,26 +4,17 @@ kind: Kustomization
 generatorOptions:
   disableNameSuffixHash: true
 
-# config 디렉토리의 yml 파일들을 ConfigMap으로 생성
-configMapGenerator:
-  - name: spot-app-config
-    namespace: spot
-    files:
-      - common-config/spot-gateway.yml
-      - common-config/common.yml
-      - common-config/kafka-topics.yml
-      - common-config/spot-user.yml
-      - common-config/spot-store.yml
-      - common-config/spot-order.yml
-      - common-config/spot-payment.yml
+resources:
+  - namespace.yaml
 
+# .env를 네임스페이스별 Secret 매니페스트 생성
 secretGenerator:
   - name: spot-secrets
     namespace: spot
     envs:
-      - common-config/.env
+      - .env
 
   - name: infra-secrets
     namespace: infra
     envs:
-      - common-config/.env
+      - .env
