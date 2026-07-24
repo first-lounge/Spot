@@ -76,6 +76,9 @@ module "eks" {
   capacity_type  = var.capacity_type
   volume_size    = var.volume_size
 
+  # EKS Addons
+  hosted_zone_id = module.route53.hosted_zone_id
+
   depends_on = [module.network, module.security]
 }
 
@@ -162,9 +165,7 @@ module "route53" {
   name_prefix = local.name_prefix
   common_tags = local.common_tags
 
-  domain_name  = var.domain_name
-  environment  = var.environment
-  alb_dns_name = var.alb_dns_name
+  domain_name = var.domain_name
 }
 
 # =============================================================================
@@ -178,7 +179,7 @@ module "acm" {
   common_tags = local.common_tags
 
   domain_name = var.domain_name
-  zone_id     = module.route53.zone_id
+  zone_id     = module.route53.hosted_zone_id
 }
 
 # =============================================================================

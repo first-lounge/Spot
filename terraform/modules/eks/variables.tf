@@ -14,7 +14,7 @@ variable "cluster_name" {
   type        = string
 }
 
-# Cluster
+# EKS Cluster
 variable "cluster_role_arn" {
   description = "EKS 클러스터 Role ARN"
   type        = string
@@ -59,7 +59,7 @@ variable "enabled_cluster_log_types" {
   default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 }
 
-# Launch Template
+# Node Launch Template
 variable "volume_size" {
   description = "EBS 크기"
   type        = number
@@ -106,7 +106,7 @@ variable "min_size" {
   type        = number
 }
 
-# Add-Ons
+# EKS Addons
 variable "vpc_cni_version" {
   description = "EKS Addon VPC CNI 버전"
   type        = string
@@ -129,4 +129,9 @@ variable "ebs_csi_version" {
   description = "EKS Addon EBS CSI 버전"
   type        = string
   default     = ""
+}
+
+variable "hosted_zone_id" {
+  description = "Route53 Hosted Zone ID"
+  type        = string
 }

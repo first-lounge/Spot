@@ -137,12 +137,6 @@ variable "domain_name" {
   default     = "hbksv.cloud"
 }
 
-variable "alb_dns_name" {
-  description = "ALB DNS 이름 (Ingress 배포 후 Route53 레코드 생성에 사용)"
-  type        = string
-  default     = ""
-}
-
 # =============================================================================
 # WAF 모듈
 # =============================================================================
