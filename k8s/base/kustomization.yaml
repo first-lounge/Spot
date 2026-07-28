@@ -6,15 +6,3 @@ generatorOptions:
 
 resources:
   - namespace.yaml
-
-# .env를 네임스페이스별 Secret 매니페스트 생성
-secretGenerator:
-  - name: spot-secrets
-    namespace: spot
-    envs:
-      - .env
-
-  - name: infra-secrets
-    namespace: infra
-    envs:
-      - .env
