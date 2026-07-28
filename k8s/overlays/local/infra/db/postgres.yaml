@@ -46,8 +46,8 @@ spec:
           env:
             - name: POSTGRES_DB
               valueFrom:
-                secretKeyRef:
-                  name: infra-secrets
+                configMapKeyRef:
+                  name: infra-env
                   key: DB_NAME
             - name: POSTGRES_USER
               valueFrom:

@@ -93,11 +93,15 @@ apps:
     port: 8084
     imageTag: latest
 
-# [4] env
+# [4] envFrom
+envFrom:
+  secretName: spot-secrets
+  configName: spot-env
+
+# [5] 개별 env 변수
 env:
   activeProfile: 'k8s'
   loggingConfig: 'classpath:logback-spring.xml'
-  secretName: spot-secrets
 
-# [5] configMap
+# [6] 파일 마운트용 configMap
 configMap: spot-app-config

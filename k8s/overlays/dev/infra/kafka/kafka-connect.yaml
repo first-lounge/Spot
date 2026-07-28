@@ -41,8 +41,8 @@ spec:
               key: DB_HOST
         - name: DB_NAME
           valueFrom:
-            secretKeyRef:
-              name: infra-secrets
+            configMapKeyRef:
+              name: infra-env
               key: DB_NAME
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:

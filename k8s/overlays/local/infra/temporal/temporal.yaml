@@ -50,13 +50,16 @@ spec:
             # DB 연결 정보
             - name: DB
               value: postgres12
+
             - name: POSTGRES_SEEDS
               valueFrom:
-                secretKeyRef:
-                  name: infra-secrets
+                configMapKeyRef:
+                  name: infra-env
                   key: DB_HOST
+
             - name: DB_PORT
               value: "5432"
+
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
