@@ -44,6 +44,13 @@ resource "aws_iam_policy" "external_dns_policy" {
         Resource = [
           "arn:aws:route53:::hostedzone/${var.hosted_zone_id}"
         ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "route53:ListHostedZones"
+        ],
+        Resource = ["*"]
       }
     ]
   })
