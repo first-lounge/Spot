@@ -9,6 +9,15 @@ variable "common_tags" {
   type        = map(string)
 }
 
+variable "project" {
+  description = "프로젝트 이름"
+  type        = string
+}
+
+variable "environment" {
+  description = "환경 (dev, prod)"
+  type        = string
+}
 variable "cluster_name" {
   description = "EKS 클러스터 이름"
   type        = string
@@ -133,5 +142,15 @@ variable "ebs_csi_version" {
 
 variable "hosted_zone_id" {
   description = "Route53 Hosted Zone ID"
+  type        = string
+}
+
+variable "account_id" {
+  description = "AWS 계정 ID"
+  type        = string
+}
+
+variable "region" {
+  description = "AWS 리전"
   type        = string
 }

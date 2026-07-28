@@ -27,7 +27,7 @@ resource "aws_iam_policy" "lbc" {
   policy = data.http.lbc_policy.response_body
 }
 
-# 커스텀 External-DNS Policy
+# External-DNS Policy
 resource "aws_iam_policy" "external_dns_policy" {
   name        = "${var.name_prefix}-external-dns-policy"
   description = "External DNS policy for Spot Dev"
@@ -44,19 +44,31 @@ resource "aws_iam_policy" "external_dns_policy" {
         Resource = [
           "arn:aws:route53:::hostedzone/${var.hosted_zone_id}"
         ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "route53:ListHostedZones",
-        ]
-        Resource = "*"
-      },
+      }
     ]
   })
 }
 
-# External-Secrets
+# External-Secrets Policy
+resource "aws_iam_policy" "external_secrets_policy" {
+  name        = "${var.name_prefix}-external-secrets-policy"
+  description = "External Secrets policy for Spot Dev"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ssm:GetParameter*"
+        ],
+        Resource = [
+          "arn:aws:ssm:${var.region}:${var.account_id}:parameter/${var.project}/${var.environment}/*"
+        ]
+      }
+    ]
+  })
+}
 
 # IRSA
 locals {
@@ -129,4 +141,9 @@ resource "aws_iam_role_policy_attachment" "ebs_csi" {
 resource "aws_iam_role_policy_attachment" "external_dns" {
   policy_arn = aws_iam_policy.external_dns_policy.arn
   role       = aws_iam_role.irsa["external_dns"].name
+}
+
+resource "aws_iam_role_policy_attachment" "external_secrets" {
+  policy_arn = aws_iam_policy.external_secrets_policy.arn
+  role       = aws_iam_role.irsa["eso"].name
 }
