@@ -42,9 +42,12 @@
 ### Destroy
 
 ```
-1. terraform/environments/argo로 이동 ⇒ terraform destroy (root App 삭제 → finalizer cascade → ALB 자동 소멸)
-2. terraform/environments/dev로 이동 ⇒ terraform destroy
+1. kubectl delete app root-dev -n argocd (root App 삭제 → finalizer cascade → ALB 자동 소멸)
+2. terraform/environments/argo로 이동 ⇒ terraform destroy
+3. terraform/environments/dev로 이동 ⇒ terraform destroy
 ```
+
+> ⚠️ 1번 후 kubectl get application -n argocd로 root 외 전부 삭제된 걸 확인한 뒤 2번 실행
 
 ## ArgoCD UI 접속
 
@@ -55,7 +58,3 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 ```
 
 2. https://argocd.hbksv.cloud 접속 ⇒ 아이디(**admin**)와 비밀번호 입력
-
-## 보완할 점
-
-- base 폴더의 Secret은 현재 수동 apply -> Secret은 ESO를 통해 자동화 예정
