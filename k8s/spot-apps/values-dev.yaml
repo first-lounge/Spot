@@ -1,77 +1,58 @@
 # [1] AWS Ingress 설정 (기본값: AWS ALB)
 ingress:
   className: 'alb'
-
   aws:
     enabled: true
-
   # ALB 로그 저장용 S3 버킷 이름
   bucket: spot-dev-logs
-
   subs:
     - name: spot
       hostname: spot
       namespace: spot
       serviceName: spot-gateway
       healthPath: /actuator/health
-
     - name: kafka
       namespace: infra
       serviceName: kafka-ui-svc
       healthPath: /
-    
     - name: temporal
       namespace: infra
       serviceName: temporal-ui-svc
       healthPath: /
-    
     - name: grafana
       namespace: monitoring
       serviceName: grafana-svc
       healthPath: '/api/health'
-
   annotations:
     # ALB 설정
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip # IP 모드
-    
     # 헬스 체크
     alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
     alb.ingress.kubernetes.io/success-codes: '200'
-    
     # 모든 서비스가 하나의 ALB를 공유
     alb.ingress.kubernetes.io/group.name: spot-ingress
-
     # WAF
-    alb.ingress.kubernetes.io/wafv2-acl-arn: ""
-    
+    alb.ingress.kubernetes.io/wafv2-acl-arn: "arn:aws:wafv2:ap-northeast-2:164076841262:regional/webacl/spot-dev-waf/f642eec4-877a-4543-960e-7a8bd326e65a"
     # HTTPS/HTTP 설정
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
-    
     # 태그 설정
     alb.ingress.kubernetes.io/tags: Name=spot-alb, Environment=dev,Team=spot, ManagedBy=terraform
-
 # [2] 도메인 (AWS)
 domain: hbksv.cloud
-
 # [3] Deployment 설정
 global:
   repository: 164076841262.dkr.ecr.ap-northeast-2.amazonaws.com
-
 # [4] app 목록
 apps:
   gateway:
-    imageTag: ""
-
+    imageTag: latest # ""
   user:
-    imageTag: ""
-
+    imageTag: latest # ""
   store:
-    imageTag: ""
-
+    imageTag: latest # ""
   order:
-    imageTag: ""
-
+    imageTag: latest # ""
   payment:
-    imageTag: ""
+    imageTag: latest # ""
