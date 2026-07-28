@@ -137,12 +137,6 @@ variable "domain_name" {
   default     = "hbksv.cloud"
 }
 
-variable "alb_dns_name" {
-  description = "ALB DNS 이름 (Ingress 배포 후 Route53 레코드 생성에 사용)"
-  type        = string
-  default     = ""
-}
-
 # =============================================================================
 # WAF 모듈
 # =============================================================================
@@ -230,14 +224,13 @@ variable "refresh_token_expire_days" {
 variable "mail_username" {
   description = "SMTP 사용자 이름 (Gmail)"
   type        = string
-  default     = ""
+  sensitive   = true
 }
 
 variable "mail_password" {
   description = "SMTP 비밀번호 (Gmail 앱 비밀번호)"
   type        = string
   sensitive   = true
-  default     = ""
 }
 
 # Toss Payments
@@ -245,7 +238,6 @@ variable "toss_secret_key" {
   description = "Toss Payments 시크릿 키"
   type        = string
   sensitive   = true
-  default     = ""
 }
 
 variable "toss_customer_key" {

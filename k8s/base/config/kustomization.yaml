@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+# config 디렉토리의 yml 파일들을 ConfigMap으로 생성
+configMapGenerator:
+  - name: spot-app-config
+    namespace: spot
+    files:
+      - spot-gateway.yml
+      - common.yml
+      - kafka-topics.yml
+      - spot-user.yml
+      - spot-store.yml
+      - spot-order.yml
+      - spot-payment.yml

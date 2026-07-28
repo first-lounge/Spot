@@ -9,12 +9,21 @@ variable "common_tags" {
   type        = map(string)
 }
 
+variable "project" {
+  description = "프로젝트 이름"
+  type        = string
+}
+
+variable "environment" {
+  description = "환경 (dev, prod)"
+  type        = string
+}
 variable "cluster_name" {
   description = "EKS 클러스터 이름"
   type        = string
 }
 
-# Cluster
+# EKS Cluster
 variable "cluster_role_arn" {
   description = "EKS 클러스터 Role ARN"
   type        = string
@@ -59,7 +68,7 @@ variable "enabled_cluster_log_types" {
   default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 }
 
-# Launch Template
+# Node Launch Template
 variable "volume_size" {
   description = "EBS 크기"
   type        = number
@@ -106,7 +115,7 @@ variable "min_size" {
   type        = number
 }
 
-# Add-Ons
+# EKS Addons
 variable "vpc_cni_version" {
   description = "EKS Addon VPC CNI 버전"
   type        = string
@@ -129,4 +138,19 @@ variable "ebs_csi_version" {
   description = "EKS Addon EBS CSI 버전"
   type        = string
   default     = ""
+}
+
+variable "hosted_zone_id" {
+  description = "Route53 Hosted Zone ID"
+  type        = string
+}
+
+variable "account_id" {
+  description = "AWS 계정 ID"
+  type        = string
+}
+
+variable "region" {
+  description = "AWS 리전"
+  type        = string
 }

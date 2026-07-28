@@ -53,6 +53,8 @@ module "eks" {
   source = "../../modules/eks"
 
   # 공통
+  project      = var.project
+  environment  = var.environment
   name_prefix  = local.name_prefix
   common_tags  = local.common_tags
   cluster_name = var.cluster_name
@@ -75,6 +77,11 @@ module "eks" {
   instance_types = var.instance_types
   capacity_type  = var.capacity_type
   volume_size    = var.volume_size
+
+  # IRSA (EKS Addons)
+  hosted_zone_id = module.route53.hosted_zone_id
+  account_id     = data.aws_caller_identity.current.account_id
+  region         = var.region
 
   depends_on = [module.network, module.security]
 }
@@ -162,9 +169,7 @@ module "route53" {
   name_prefix = local.name_prefix
   common_tags = local.common_tags
 
-  domain_name  = var.domain_name
-  environment  = var.environment
-  alb_dns_name = var.alb_dns_name
+  domain_name = var.domain_name
 }
 
 # =============================================================================
@@ -178,7 +183,7 @@ module "acm" {
   common_tags = local.common_tags
 
   domain_name = var.domain_name
-  zone_id     = module.route53.zone_id
+  zone_id     = module.route53.hosted_zone_id
 }
 
 # =============================================================================
@@ -187,9 +192,31 @@ module "acm" {
 module "github_oidc" {
   source = "../../modules/github-oidc"
 
-  name_prefix    = local.name_prefix
-  common_tags    = local.common_tags
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
   git_branch     = var.git_branch
   account_id     = data.aws_caller_identity.current.account_id
   service_region = var.region
+}
+
+# =============================================================================
+# SSM Parameter Store
+# =============================================================================
+module "parameter_store" {
+  source = "../../modules/parameter-store"
+
+  common_tags = local.common_tags
+  project     = var.project
+  environment = var.environment
+
+  db_username     = var.db_username
+  db_password     = var.db_password
+  mail_username   = var.mail_username
+  mail_password   = var.mail_password
+  jwt_secret      = var.jwt_secret
+  toss_secret_key = var.toss_secret_key
+
+  db_endpoint    = module.rds.rds_endpoint
+  redis_endpoint = module.redis.redis_reader_endpoint
 }

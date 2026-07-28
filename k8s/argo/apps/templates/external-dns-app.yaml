@@ -1,0 +1,45 @@
+{{- if .Values.env }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns-app
+  namespace: argocd
+  finalizers: # 기본 동작은 포어그라운드 삭제
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  project: default
+  sources:
+    - repoURL: "https://kubernetes-sigs.github.io/external-dns/"
+      chart: external-dns
+      targetRevision: 1.21.1
+      helm:
+        releaseName: external-dns
+        parameters:
+            - name: serviceAccount.name
+              value: "external-dns"
+            - name: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
+              value: "arn:aws:iam::164076841262:role/spot-dev-external_dns-role"
+            - name: domainFilters[0]
+              value: "hbksv.cloud"
+            - name: policy
+              value: "sync"
+            - name: provider.name
+              value: "aws"
+            - name: sources[0]
+              value: "ingress"
+            - name: txtOwnerId
+              value: "dev"
+
+  destination:
+    server: {{ .Values.global.destination.server }}
+    namespace: external-dns
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+{{- end }}

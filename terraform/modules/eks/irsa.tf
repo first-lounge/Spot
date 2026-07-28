@@ -14,10 +14,10 @@ resource "aws_iam_openid_connect_provider" "eks_irsa" {
 }
 
 # =============================================================================
-# IRSA
+# Permission Policy
 # =============================================================================
 
-# LBC Policy
+# AWS LBC Policy
 data "http" "lbc_policy" {
   url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.3.0/docs/install/iam_policy.json"
 }
@@ -27,23 +27,89 @@ resource "aws_iam_policy" "lbc" {
   policy = data.http.lbc_policy.response_body
 }
 
+# External-DNS Policy
+resource "aws_iam_policy" "external_dns_policy" {
+  name        = "${var.name_prefix}-external-dns-policy"
+  description = "External DNS policy for Spot Dev"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "route53:ChangeResourceRecordSets",
+          "route53:ListResourceRecordSets"
+        ],
+        Resource = [
+          "arn:aws:route53:::hostedzone/${var.hosted_zone_id}"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "route53:ListHostedZones"
+        ],
+        Resource = ["*"]
+      }
+    ]
+  })
+}
+
+# External-Secrets Policy
+resource "aws_iam_policy" "external_secrets_policy" {
+  name        = "${var.name_prefix}-external-secrets-policy"
+  description = "External Secrets policy for Spot Dev"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ssm:GetParameter*"
+        ],
+        Resource = [
+          "arn:aws:ssm:${var.region}:${var.account_id}:parameter/${var.project}/${var.environment}/*"
+        ]
+      }
+    ]
+  })
+}
+
 # IRSA
 locals {
   oidc_provider = replace(aws_iam_openid_connect_provider.eks_irsa.url, "https://", "")
 
   irsa_roles = {
     lbc = {
-      sa_name = "aws-load-balancer-controller"
+      namespace = "kube-system"
+      sa_name   = "aws-load-balancer-controller"
     }
     ebs_csi = {
-      sa_name = "ebs-csi-controller-sa"
+      namespace = "kube-system"
+      sa_name   = "ebs-csi-controller-sa"
+    }
+    eso = {
+      namespace = "external-secrets"
+      sa_name   = "external-secrets"
+    }
+    external_dns = {
+      namespace = "external-dns"
+      sa_name   = "external-dns"
     }
   }
 }
 
+# =============================================================================
+# IAM Role
+# =============================================================================
+
+# Trust Policy
 resource "aws_iam_role" "irsa" {
   for_each = local.irsa_roles
 
+  name = "${var.name_prefix}-${each.key}-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -56,7 +122,7 @@ resource "aws_iam_role" "irsa" {
         Condition = {
           StringEquals = {
             "${local.oidc_provider}:aud" = "sts.amazonaws.com",
-            "${local.oidc_provider}:sub" = "system:serviceaccount:kube-system:${each.value.sa_name}"
+            "${local.oidc_provider}:sub" = "system:serviceaccount:${each.value.namespace}:${each.value.sa_name}"
           }
         }
       }
@@ -66,6 +132,9 @@ resource "aws_iam_role" "irsa" {
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-${each.key}-role" })
 }
 
+# =============================================================================
+# Policy Attachment
+# =============================================================================
 resource "aws_iam_role_policy_attachment" "lbc" {
   policy_arn = aws_iam_policy.lbc.arn
   role       = aws_iam_role.irsa["lbc"].name
@@ -74,4 +143,14 @@ resource "aws_iam_role_policy_attachment" "lbc" {
 resource "aws_iam_role_policy_attachment" "ebs_csi" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
   role       = aws_iam_role.irsa["ebs_csi"].name
+}
+
+resource "aws_iam_role_policy_attachment" "external_dns" {
+  policy_arn = aws_iam_policy.external_dns_policy.arn
+  role       = aws_iam_role.irsa["external_dns"].name
+}
+
+resource "aws_iam_role_policy_attachment" "external_secrets" {
+  policy_arn = aws_iam_policy.external_secrets_policy.arn
+  role       = aws_iam_role.irsa["eso"].name
 }

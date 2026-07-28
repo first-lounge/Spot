@@ -38,8 +38,8 @@ spec:
           env:
             - name: TEMPORAL_ADDRESS
               valueFrom:
-                secretKeyRef:
-                  name: infra-secrets
+                configMapKeyRef:
+                  name: infra-env
                   key: SPRING_TEMPORAL_CONNECTION_TARGET
             - name: TEMPORAL_CORS_ALLOW_ORIGINS
               value: "*"

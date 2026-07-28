@@ -18,6 +18,8 @@ spec:
           envFrom:
             - secretRef:
                 name: infra-secrets
+            - configMapRef:
+                name: infra-env
           command: ["/bin/sh", "-c", "sh /configs/register-connectors.sh"]
           volumeMounts:
             - name: connector-configs

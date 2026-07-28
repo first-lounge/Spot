@@ -4,7 +4,7 @@ metadata:
   name: grafana-pvc
   namespace: monitoring
 spec:
-  storageClassName: gp3 
+  storageClassName: ebs-sc
   accessModes:
     - ReadWriteOnce
   resources:

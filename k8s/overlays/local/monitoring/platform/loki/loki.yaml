@@ -9,8 +9,6 @@ spec:
   resources:
     requests:
       storage: 2Gi
-#  # AWS용
-#  storageClassName: gp3
 ---
 apiVersion: apps/v1
 kind: Deployment

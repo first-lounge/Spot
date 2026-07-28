@@ -32,7 +32,9 @@ spec:
             # 어플리케이션 환경 변수
           envFrom:
             - secretRef:
-                name: {{ $.Values.env.secretName}}
+                name: {{ $.Values.envFrom.secretName}}
+            - configMapRef:
+                name: {{ $.Values.envFrom.configName }}
 
           # 리소스 설정
           resources:

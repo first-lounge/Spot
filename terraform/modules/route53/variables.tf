@@ -12,14 +12,3 @@ variable "domain_name" {
   type        = string
   description = "도메인 이름"
 }
-
-variable "environment" {
-  description = "환경"
-  type        = string
-}
-
-variable "alb_dns_name" {
-  description = "ALB DNS 이름"
-  type        = string
-  default     = ""
-}

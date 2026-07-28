@@ -1,25 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: spot-app
+  name: base-app
   namespace: argocd
   finalizers: # 기본 동작은 포어그라운드 삭제
     - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   project: default
   source:
+    path: k8s/base
     repoURL: {{ .Values.global.repoURL }}
     targetRevision: dev
-    path: k8s/spot-apps
-    helm:
-      releaseName: spot
-      {{- if .Values.env }}
-      valueFiles:
-        - values-{{ .Values.env }}.yaml
-      {{- end }}
   destination:
+    namespace: argocd
     server: {{ .Values.global.destination.server }}
-    namespace: spot
   syncPolicy:
     automated:
       prune: true

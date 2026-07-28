@@ -25,12 +25,7 @@ KUSTOMIZATION_DIR="${BASE_DIR}/../base"
 ENV=${1:-local} # 기본값 local
 ARGO_SVC_FILE="${BASE_DIR}/../argo/argocd-server-svc.yaml"
 
-# 2. 네임스페이스 및 configMap 생성
-log_info "네임스페이스와 ConfigMap 생성을 시작합니다..."
-kubectl apply -k "${KUSTOMIZATION_DIR}"
-log_info "네임스페이스와 ConfigMap 생성을 완료하였습니다."
-
-# 3. ArgoCD 설치 및 배포
+# 2. ArgoCD 설치 및 배포
 log_info "ArgoCD 설치 및 배포를 시작합니다..."
 
 kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
@@ -38,7 +33,7 @@ kubectl apply -n argocd --server-side -f https://raw.githubusercontent.com/argop
 log_info "ArgoCD 서버 기동 대기 중..."
 kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
 
-# 4. ArgoCD svc 실행
+# 3. ArgoCD svc 실행
 if [ -f "${ARGO_SVC_FILE}" ]; then
     log_info "ArgoCD Service 배포 중..."
     kubectl apply -f "${ARGO_SVC_FILE}"
@@ -47,9 +42,8 @@ else
     exit 1
 fi
 
-# 5. ArgoCD root App 실행
+# 4. ArgoCD root App 실행
 kubectl apply -n argocd -f "${BASE_DIR}/../argo/root/${ENV}.yaml"
-
 
 echo "=================================================="
 echo "🆔 ArgoCD 아이디 : admin"

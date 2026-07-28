@@ -21,6 +21,12 @@ variable "common_tags" {
 # =============================================================================
 # 민감 정보 (SecureString으로 저장)
 # =============================================================================
+variable "db_username" {
+  description = "데이터베이스 유저명"
+  type        = string
+  sensitive   = true
+}
+
 variable "db_password" {
   description = "데이터베이스 비밀번호"
   type        = string
@@ -33,18 +39,22 @@ variable "jwt_secret" {
   sensitive   = true
 }
 
+variable "mail_username" {
+  description = "SMTP 유저명"
+  type        = string
+  sensitive   = true
+}
+
 variable "mail_password" {
   description = "SMTP 비밀번호"
   type        = string
   sensitive   = true
-  default     = ""
 }
 
 variable "toss_secret_key" {
   description = "Toss Payments 시크릿 키"
   type        = string
   sensitive   = true
-  default     = ""
 }
 
 # =============================================================================
@@ -58,5 +68,4 @@ variable "db_endpoint" {
 variable "redis_endpoint" {
   description = "Redis 엔드포인트 (Terraform이 생성 후 자동 저장)"
   type        = string
-  default     = ""
 }

@@ -6,6 +6,7 @@ namespace: infra
 
 resources:
   - rds-relay.yaml
+  - storage-class.yaml
   - kafka
   - temporal/temporal.yaml
   - temporal/temporal-ui.yaml
