@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: {{ .Values.global.repoURL }}
-    targetRevision: feat/62-dev-gitops  # dev
+    targetRevision: dev
     path: k8s/spot-apps
     helm:
       releaseName: spot

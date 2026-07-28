@@ -12,7 +12,7 @@ spec:
   source:
     path: k8s/argo/apps # Application helm 템플릿이 저장된 경로
     repoURL: https://github.com/first-lounge/Spot.git # Application이 저장된 매니페스트 파일
-    targetRevision: feat/62-dev-gitops # dev
+    targetRevision: dev
   project: "default"
   syncPolicy:
     automated:

@@ -12,7 +12,7 @@ spec:
   source:
     path: k8s/base
     repoURL: {{ .Values.global.repoURL }}
-    targetRevision: feat/62-dev-gitops  # dev
+    targetRevision: dev
   destination:
     namespace: argocd
     server: {{ .Values.global.destination.server }}

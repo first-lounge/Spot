@@ -47,12 +47,12 @@ global:
 # [4] app 목록
 apps:
   gateway:
-    imageTag: latest # ""
+    imageTag: ""
   user:
-    imageTag: latest # ""
+    imageTag: ""
   store:
-    imageTag: latest # ""
+    imageTag: ""
   order:
-    imageTag: latest # ""
+    imageTag: ""
   payment:
-    imageTag: latest # ""
+    imageTag: ""

@@ -18,7 +18,7 @@ spec:
         valueFiles:
           - $values/k8s/overlays/{{ .Values.env | default "local" }}/monitoring/platform/prometheus/values.yaml
     - repoURL: {{ .Values.global.repoURL }}
-      targetRevision: feat/62-dev-gitops  # dev
+      targetRevision: dev
       ref: values
   destination:
     server: {{ .Values.global.destination.server }}
