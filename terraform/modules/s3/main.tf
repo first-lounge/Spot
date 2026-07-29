@@ -1,15 +1,14 @@
 # =============================================================================
 # S3
 # =============================================================================
-# state 파일 저장
+# log 파일 저장
 resource "aws_s3_bucket" "logs" {
   bucket        = "${var.name_prefix}-logs"
   force_destroy = true
   tags          = merge(var.common_tags, { Name = "${var.name_prefix}-s3-logs" })
 }
 
-# state 파일 실수로 덮어쓰면 복구 불가능
-# 버저닝 활성화하면 이전 버전으로 복구 가능
+# log 파일 실수로 지웠을 때 복구
 resource "aws_s3_bucket_versioning" "logs" {
   bucket = aws_s3_bucket.logs.id
   versioning_configuration {
@@ -27,7 +26,18 @@ resource "aws_s3_bucket_public_access_block" "logs" {
   restrict_public_buckets = true
 }
 
-# 로그 자동 삭제 정책
+resource "aws_s3_bucket_server_side_encryption_configuration" "logs" {
+  bucket = aws_s3_bucket.logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+    blocked_encryption_types = ["SSE-C"]
+  }
+}
+
+# 로그 수명 주기 정책 - 오래된 로그 자동 삭제
 resource "aws_s3_bucket_lifecycle_configuration" "logs" {
   bucket = aws_s3_bucket.logs.id
 
@@ -49,6 +59,23 @@ resource "aws_s3_bucket_policy" "logs" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      # HTTPS 요청만 허용
+      {
+        Sid    = "AllowSSLRequestsOnly",
+        Action = "s3:*",
+        Effect = "Deny",
+        Resource = [
+          aws_s3_bucket.logs.arn,
+          "${aws_s3_bucket.logs.arn}/*"
+        ],
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        },
+        Principal = "*"
+      },
+
       # ALB Access Log
       {
         Effect = "Allow"
