@@ -17,11 +17,15 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "spot-tfstate-bucket"
-    key            = "dev/terraform.tfstate"
-    region         = "ap-northeast-2"
+    bucket = "spot-tfstate-bucket"
+    key    = "dev/terraform.tfstate"
+    region = "ap-northeast-2"
+
+    # KMS key로 암호화 활성
+    encrypt    = true
+    kms_key_id = "arn:aws:kms:ap-northeast-2:164076841262:alias/spot-tfstate"
+
     dynamodb_table = "spot-tf-locks"
-    encrypt        = true
   }
 }
 

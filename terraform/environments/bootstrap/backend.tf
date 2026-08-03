@@ -1,16 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = "ap-northeast-2"
-}
-
 # state 파일 저장
 resource "aws_s3_bucket" "tfstate" {
   bucket = "spot-tfstate-bucket"
@@ -75,8 +62,11 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_alias.tfstate.name
     }
+
+    bucket_key_enabled       = true
     blocked_encryption_types = ["SSE-C"]
   }
 }
@@ -93,7 +83,7 @@ resource "aws_dynamodb_table" "tf_locks" {
 
   tags = {
     Name        = "Terraform State Lock Table"
-    Environment = "global"
+    Environment = "Global"
     Project     = "spot"
   }
 }
