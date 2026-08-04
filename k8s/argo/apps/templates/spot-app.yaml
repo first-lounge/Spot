@@ -9,14 +9,12 @@ spec:
   project: default
   source:
     repoURL: {{ .Values.global.repoURL }}
-    targetRevision: dev
+    targetRevision: {{ .Values.global.targetRevision }}
     path: k8s/spot-apps
     helm:
       releaseName: spot
-      {{- if .Values.env }}
       valueFiles:
         - values-{{ .Values.env }}.yaml
-      {{- end }}
   destination:
     server: {{ .Values.global.destination.server }}
     namespace: spot

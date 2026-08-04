@@ -16,8 +16,6 @@ kind: Deployment
 metadata:
   name: kafka-ui
   namespace: infra
-  annotations:
-    argocd.argoproj.io/sync-wave: "6"
 spec:
   replicas: 1
   selector:
@@ -38,8 +36,8 @@ spec:
             - name: KAFKA_CLUSTERS_0_NAME
               value: kafka-cluster
             - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
-              value: 'kafka-0.kafka-headless.infra.svc.cluster.local:29092'
-            
+              value: "kafka-0.kafka-headless.infra.svc.cluster.local:29092"
+
             - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME
               value: "spot-connect"
             - name: KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS
@@ -51,7 +49,7 @@ spec:
               value: WARN
             - name: LOGGING_LEVEL_COM_PROVECTUS
               value: WARN
-              
+
           resources:
             requests:
               cpu: "100m"
@@ -63,7 +61,7 @@ spec:
           # kafka ui 연결 상태 확인
           readinessProbe:
             httpGet:
-                path: /
-                port: 8080
+              path: /
+              port: 8080
             initialDelaySeconds: 10
             periodSeconds: 5

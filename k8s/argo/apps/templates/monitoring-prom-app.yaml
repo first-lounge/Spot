@@ -16,9 +16,9 @@ spec:
       helm:
         releaseName: prom
         valueFiles:
-          - $values/k8s/overlays/{{ .Values.env | default "local" }}/monitoring/platform/prometheus/values.yaml
+          - $values/k8s/overlays/{{ .Values.env }}/monitoring/platform/prometheus/values.yaml
     - repoURL: {{ .Values.global.repoURL }}
-      targetRevision: dev
+      targetRevision: {{ .Values.global.targetRevision }}
       ref: values
   destination:
     server: {{ .Values.global.destination.server }}

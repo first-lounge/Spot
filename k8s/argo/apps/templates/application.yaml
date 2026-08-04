@@ -13,8 +13,8 @@ spec:
   project: default
   source:
     repoURL: {{ $.Values.global.repoURL }}
-    targetRevision: dev
-    path: k8s/overlays/{{ $.Values.env | default "local" }}/{{ $val.name }}{{ with $val.sub }}/{{ . }}{{end}}
+    targetRevision: {{ $.Values.global.targetRevision }}
+    path: k8s/overlays/{{ $.Values.env }}/{{ $val.name }}{{ with $val.sub }}/{{ . }}{{end}}
   destination:
     server: {{ $.Values.global.destination.server }}
     namespace: {{ $val.name }}

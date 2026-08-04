@@ -18,3 +18,7 @@ configMapGenerator:
       - connectors/order-outbox.json
       - connectors/payment-outbox.json
       - connectors/register-connectors.sh
+
+  - name: kafka-metrics-config
+    files:
+      - kafka-metrics-config.yaml

@@ -65,20 +65,6 @@ cat "$CONFIG_FILE" | envsubst | k3d cluster create --config -
 log_info "노드 준비 대기 중..."
 kubectl wait --for=condition=ready node --all --timeout=180s
 
-# 8. 초기 세팅 네임스페이스 생성
-log_info "네임스페이스 생성을 시작합니다..."
-for ns in argocd ingress-nginx infra monitoring spot; do
-    kubectl create namespace "$ns" --dry-run=client -o yaml | kubectl apply -f -
-done
-
-# 9. Ingress Controller 설치
-log_info "Ingress-nginx Controller 설치를 시작합니다..."
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.14.3/deploy/static/provider/cloud/deploy.yaml
-
-log_info "Ingress Controller Pod가 준비될 때까지 대기합니다..."
-sleep 5
-kubectl wait --for=condition=ready pod -n ingress-nginx --selector=app.kubernetes.io/component=controller --timeout=120s
-
 echo "--------------------------------------"
 log_info "클러스터 구축 및 초기 세팅이 완료되었습니다!"
 echo "--------------------------------------"

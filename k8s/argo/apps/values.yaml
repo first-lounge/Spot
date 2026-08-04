@@ -1,6 +1,9 @@
 # 공통
+env: dev
+
 global:
   repoURL: https://github.com/first-lounge/Spot.git
+  targetRevision: dev
   destination:
     server: https://kubernetes.default.svc
 
