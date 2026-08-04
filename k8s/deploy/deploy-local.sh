@@ -14,11 +14,21 @@ log_info() { echo -e "${PURPLE}[INFO] ☑️ ${NC} $1"; }
 # 변수 설정
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Secret & ConfigMap 생성
-config_secret() {
+# Namespace & Secret & ConfigMap & nginx-ingress 생성
+bootstrap() {
     SECRET_PATH="$BASE_DIR/../base/secret"
     CONFIG_PATH="$BASE_DIR/../overlays/local/config"
 
+    # Namespace
+    log_info "네임스페이스 생성을 시작합니다..."
+
+    for ns in ingress-nginx infra monitoring spot; do
+        kubectl create namespace "$ns" --dry-run=client -o yaml | kubectl apply -f -
+    done
+
+    log_info "네임스페이스 생성을 완료하였습니다...!"
+
+    # Secret & ConfigMap
     if [ ! -f "$SECRET_PATH/.env" ]; then
         log_error ".env 파일을 생성 후 실행해주세요."
         exit 1
@@ -29,9 +39,19 @@ config_secret() {
     kubectl apply -k "$SECRET_PATH"
     kubectl apply -k "$CONFIG_PATH"
 
-    echo "--------------------------------------"
     log_info "ConfigMap과 Secret 생성을 완료하였습니다."
-    echo "--------------------------------------"
+    
+    # Ingress Controller 설치
+    log_info "Ingress-nginx Controller 설치를 시작합니다..."
+
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.14.3/deploy/static/provider/cloud/deploy.yaml
+
+    log_info "Ingress Controller Pod가 준비될 때까지 대기합니다..."
+    
+    sleep 5
+    kubectl wait --for=condition=ready pod -n ingress-nginx --selector=app.kubernetes.io/component=controller --timeout=120s
+
+    log_info "Ingress-nginx Controller 설치를 완료하였습니다...!"
 }
 
 # infra 네임스페이스 배포 (Kustomize)
@@ -109,7 +129,7 @@ deploy_monitoring() {
 }
 
 # spot 네임스페이스 배포 (Helm)
-deploy_apps() {
+deploy_spot() {
     CHART_PATH="${BASE_DIR}/../spot-apps"
     
     log_info "Spot 네임스페이스 배포를 시작합니다..."
@@ -136,17 +156,24 @@ deploy_apps() {
 }
 
 main() {
+
+
     local run_monitoring=true
 
     case "${1:-}" in
+        --infra)
+            deploy_infra; exit 0 ;;
+        --monitoring)
+            deploy_monitoring; exit 0 ;;
+        --spot)
+            deploy_spot; exit 0 ;;
         --no-monitoring) run_monitoring=false ;;
         "")              ;;
         *) log_error "알 수 없는 옵션: $1"; exit 1 ;;
     esac
 
     log_info "로컬 환경 배포를 시작합니다..."
-
-    config_secret
+    bootstrap
     deploy_infra
 
     if [[ "$run_monitoring" == true ]]; then
@@ -155,7 +182,7 @@ main() {
         log_info "Monitoring 네임스페이스 배포를 건너뜁니다..."
     fi
     
-    deploy_apps
+    deploy_spot
 
     log_info "로컬 환경 배포가 모두 완료되었습니다!"
 }
