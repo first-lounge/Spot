@@ -3,8 +3,6 @@ kind: PersistentVolumeClaim
 metadata:
   name: grafana-pvc
   namespace: monitoring
-  annotations:
-    argocd.argoproj.io/sync-wave: "5"
 spec:
   accessModes:
     - ReadWriteOnce
@@ -32,8 +30,6 @@ metadata:
   namespace: monitoring
   labels:
     app: grafana
-  annotations:
-    argocd.argoproj.io/sync-wave: "5"
 spec:
   replicas: 1
   selector:

@@ -16,8 +16,6 @@ kind: Deployment
 metadata:
   name: spot-connect
   namespace: infra
-  annotations:
-    argocd.argoproj.io/sync-wave: "4"
 spec:
   replicas: 1
   selector:

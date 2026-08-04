@@ -3,10 +3,6 @@ kind: Job
 metadata:
   name: connector-register
   namespace: infra
-  annotations:
-    argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
-    argocd.argoproj.io/sync-wave: "8"
 spec:
   ttlSecondsAfterFinished: 60 # job 완료 후 60초 후에 자동으로 삭제
   template:
