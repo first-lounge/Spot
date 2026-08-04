@@ -19,13 +19,14 @@ runs:
 
     - name: Check Argo Helm Chart
       shell: bash
+      if: inputs.environment != 'local'
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       run: |
 
         VALUES="values.yaml"
 
-        if [ "$ENVIRONMENT" != "local" ]; then
+        if [ "$ENVIRONMENT" != 'dev' ]; then
           VALUES="values-$ENVIRONMENT.yaml"
         fi
 
@@ -64,12 +65,15 @@ runs:
       run: |
 
         # 더미 .env 파일
-        if [ ! -f k8s/base/.env ]; then
-          echo "DUMMY_KEY=dummy" > k8s/base/.env
+        if [ ! -f k8s/base/secret/.env ]; then
+          echo "DUMMY_KEY=dummy" > k8s/base/secret/.env
         fi
 
-        # secret & namespace 매니페스트 빌드 및 k8s 스키마 검사
+        # namespace 매니페스트 빌드 및 k8s 스키마 검사
         kubectl kustomize k8s/base | kubeconform -strict -summary -verbose
+
+        # Secret 빌드 및 k8s 스키마 검사
+        kubectl kustomize k8s/base/secret | kubeconform -strict -summary -verbose
 
         # configMap 매니페스트 빌드 및 k8s 스키마 검사
         kubectl kustomize k8s/overlays/$ENVIRONMENT/config | kubeconform -strict -summary -verbose

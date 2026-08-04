@@ -12,7 +12,7 @@ spec:
   source:
     path: k8s/base
     repoURL: {{ .Values.global.repoURL }}
-    targetRevision: dev
+    targetRevision: {{ .Values.global.targetRevision }}
   destination:
     namespace: argocd
     server: {{ .Values.global.destination.server }}

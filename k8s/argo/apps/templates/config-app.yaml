@@ -12,7 +12,7 @@ spec:
   source:
     path: k8s/overlays/{{ .Values.env }}/config
     repoURL: {{ .Values.global.repoURL }}
-    targetRevision: dev
+    targetRevision: {{ .Values.global.targetRevision }}
   destination:
     server: {{ .Values.global.destination.server }}
   syncPolicy:
