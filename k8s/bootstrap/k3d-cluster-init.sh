@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Colors for output
+# output 색상
 RED='\033[1;31m'
 PURPLE='\033[95m'
 YELLOW='\033[33m'
@@ -25,7 +25,7 @@ REGISTRY_NAME="spot-registry.localhost"
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 PUBLIC_IP=$(curl -s ifconfig.me)
-API_PORT=$K8S_API_PORT
+API_PORT=${K8S_API_PORT:-6443}
 
 # 2. 설치 여부 확인
 log_info "필수 도구 설치 여부를 확인합니다..."
