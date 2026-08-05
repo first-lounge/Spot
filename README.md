@@ -40,7 +40,7 @@ PostgreSQL, Redis, Kafka(KRaft 3-broker), Kafka Connect, Temporal 및 전체 서
 
 `docker`, `k3d`, `kubectl`, `helm` 이 설치돼 있어야 합니다.
 
-**1. 시크릿 파일 생성**
+#### 1. 시크릿 파일 생성
 
 `k8s/base/secret/.env` 를 만들고 아래 6개 키에 값을 채웁니다 (gitignore 대상).
 
@@ -62,48 +62,52 @@ TOSS_SECRET_KEY=
 
 > DB 주소·Kafka 주소·Feign URL 등 나머지 설정값은 [`k8s/overlays/local/config/env-config/configs.env`](./k8s/overlays/local/config/env-config/configs.env)에 이미 커밋돼 있으므로 따로 작성할 필요가 없습니다.
 
-**2. 실행**
+#### 2. 실행
+
+> ⚠️ 로컬은 셸 스크립트 실행으로 ArgoCD는 사용하지 않습니다. (Dev/Prod는 GitOps)
 
 ```bash
+# 전체 실행
 ./run_k3d.sh
+
+# 부분 실행 예시
+./run_k3d.sh --cluster
 ```
 
-k3d 클러스터 생성 → 서비스 이미지 빌드·push → 인프라·모니터링·애플리케이션 배포까지 한 번에 진행됩니다. (ArgoCD는 사용하지 않습니다 — 로컬은 셸 스크립트, Dev/Prod는 GitOps)
+**⚙️ 부분 실행 옵션**
 
-부분 실행 옵션:
+| 옵션                                  | 동작                                                                    |
+| ------------------------------------- | ----------------------------------------------------------------------- |
+| _(없음)_                              | 전체 실행                                                               |
+| `--no-monitoring`                     | 모니터링 스택을 제외하고 전체 실행                                      |
+| `--cluster`                           | k3d 클러스터만 재생성 — 레지스트리도 함께 삭제되므로 이미지 재빌드 필요 |
+| `--build`                             | 서비스 이미지 빌드·push만 실행                                          |
+| `--bootstrap`                         | 네임스페이스·ConfigMap·Secret 생성 + ingress-nginx 설치                 |
+| `--infra` / `--monitoring` / `--spot` | 해당 네임스페이스만 재배포                                              |
 
-| 옵션                                  | 동작                                         |
-| ------------------------------------- | -------------------------------------------- |
-| _(없음)_                              | 전체 실행                                    |
-| `--no-monitoring`                     | 모니터링 스택을 제외하고 전체 실행           |
-| `--cluster`                           | k3d 클러스터만 생성                          |
-| `--build`                             | 서비스 이미지 빌드·push만 실행               |
-| `--infra` / `--monitoring` / `--spot` | 해당 네임스페이스만 재배포                   |
-| `--mini`                              | 원격 레지스트리로 빌드 후 배포 (원격 구성용) |
+#### 3. hosts 파일 등록
 
-**3. hosts 파일 등록**
-
-배포된 서비스는 Ingress 도메인으로 접근하기 때문에 hosts 파일 등록이 필수입니다.
+> ⚠️ 배포된 서비스는 Ingress 도메인으로 접근하기 때문에 hosts 파일 등록이 필수입니다.
 
 - Windows
 
-```
-# 1. 메모장을 "관리자 권한으로 실행"한 뒤, 아래 파일을 엽니다
-C:\Windows\System32\drivers\etc\hosts
+  ```
+  # 1. 메모장을 "관리자 권한으로 실행"한 뒤, 아래 파일을 엽니다
+  C:\Windows\System32\drivers\etc\hosts
 
-# 2. 파일 맨 아래에 아래 내용을 추가하고 저장합니다
-127.0.0.1 www.spot kafka.spot temporal.spot grafana.spot
-```
+  # 2. 파일 맨 아래에 아래 내용을 추가하고 저장합니다
+  127.0.0.1 www.spot kafka.spot temporal.spot grafana.spot
+  ```
 
 - macOS·Linux
 
-```bash
-# 1. 터미널에서 hosts 파일을 엽니다
-sudo vi /etc/hosts
+  ```bash
+  # 1. 터미널에서 hosts 파일을 엽니다
+  sudo vi /etc/hosts
 
-# 2. 파일 맨 아래에 아래 내용을 추가하고 저장합니다
-127.0.0.1 www.spot kafka.spot temporal.spot grafana.spot
-```
+  # 2. 파일 맨 아래에 아래 내용을 추가하고 저장합니다
+  127.0.0.1 www.spot kafka.spot temporal.spot grafana.spot
+  ```
 
 | 서비스      | 주소                 |
 | ----------- | -------------------- |

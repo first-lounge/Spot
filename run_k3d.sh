@@ -56,17 +56,20 @@ main() {
         
         # 미니PC 대상: 이미지 빌드(SSH 터널) + 배포 — 노트북에서 실행
         --mini) 
-            "${BASE_DIR}/k8s/deploy/local-build-img.sh" "$1"; 
-            "${BASE_DIR}/k8s/deploy/deploy-local.sh"
+            "${BASE_DIR}/k8s/deploy/local-build-img.sh" "$1"
+            "${BASE_DIR}/k8s/deploy/deploy-local.sh" # "--no-monitoring"
             show_status;
             exit 0 
             ;;
         
-        # k3d 클러스터만 생성 (미니PC에서 실행)
+        # k3d 클러스터만 생성 (미니PC에서 실행) 
         --cluster) "${BASE_DIR}/k8s/bootstrap/k3d-cluster-init.sh"; exit 0  ;;
 
         # 이미지 빌드 및 푸시만 실행
         --build) "${BASE_DIR}/k8s/deploy/local-build-img.sh"; exit 0 ;;
+
+        # k3d 초기 세팅 (namespace, secret, config, nginx 설치) 
+        --bootstrap) "${BASE_DIR}/k8s/deploy/deploy-local.sh" "$1"; exit 0 ;;
 
         # Infra 네임스페이스만 배포
         --infra) "${BASE_DIR}/k8s/deploy/deploy-local.sh" "$1"; exit 0 ;;
