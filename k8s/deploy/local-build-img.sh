@@ -32,9 +32,13 @@ case "${1:-}" in
     *) log_error "알 수 없는 옵션: $1"; exit 1 ;;
 esac
 
+is_port_open() {
+    (echo > /dev/tcp/127.0.0.1/"$REGISTRY_PORT") 2>/dev/null
+}
+
 if [[ "$MINI" == true ]]; then
     # 기존 터널 종료
-    if nc -z localhost "$REGISTRY_PORT"; then
+    if is_port_open; then
         log_warn "이미 ${REGISTRY_PORT} 포트가 사용 중입니다. 기존 SSH 터널을 종료합니다..."
         taskkill //F //IM ssh.exe 2>/dev/null || true
         sleep 2
@@ -42,11 +46,8 @@ if [[ "$MINI" == true ]]; then
 
     # ssh 포트 포워딩
     log_info "미니PC 레지스트리로 포트 포워딩을 시작합니다..."
-
-    if ! nc -z localhost "$REGISTRY_PORT" 2>/dev/null; then
-        ssh -f -N -L ${REGISTRY_PORT}:localhost:${REGISTRY_PORT} mini-pc
-        log_info "SSH 터널링 성공!"
-    fi
+    ssh -f -N -o ExitOnForwardFailure=yes -L ${REGISTRY_PORT}:localhost:${REGISTRY_PORT} mini-pc
+    log_info "SSH 터널링 성공!"
 
     log_info "미니PC Docker 레지스트리로 이미지 빌드를 시작합니다..."
 else
