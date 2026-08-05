@@ -161,12 +161,10 @@ main() {
     local run_monitoring=true
 
     case "${1:-}" in
-        --infra)
-            deploy_infra; exit 0 ;;
-        --monitoring)
-            deploy_monitoring; exit 0 ;;
-        --spot)
-            deploy_spot; exit 0 ;;
+        --bootstrap) bootstrap; exit 0 ;;
+        --infra) deploy_infra; exit 0 ;;
+        --monitoring) deploy_monitoring; exit 0 ;;
+        --spot) deploy_spot; exit 0 ;;
         --no-monitoring) run_monitoring=false ;;
         "")              ;;
         *) log_error "알 수 없는 옵션: $1"; exit 1 ;;

@@ -13,7 +13,7 @@
 
 - Java 21 / Spring Boot 3.5.9 / Spring Cloud 2025.0.1
 - PostgreSQL, Redis, Kafka, Temporal
-- Kubernetes 1.35 (EKS / k3d), Terraform, Helm, Kustomize, ArgoCD (GitOps)
+- Kubernetes (EKS 1.35 / 로컬 k3d 1.30), Terraform, Helm, Kustomize, ArgoCD (GitOps)
 - Prometheus, Grafana, Loki, fluent-bit
 - k6 (부하 테스트)
 
@@ -38,77 +38,101 @@ PostgreSQL, Redis, Kafka(KRaft 3-broker), Kafka Connect, Temporal 및 전체 서
 
 ### 로컬 k3d 실행
 
-```bash
-./k8s/bootstrap/k3d-cluster-init.sh  # k3d 클러스터 생성
-./k8s/bootstrap/deploy-argo.sh       # ArgoCD 설치 + root App 배포 (App-of-Apps)
-./k8s/deploy/local-build-img.sh      # 서비스 이미지 빌드 및 로컬 레지스트리 push
-```
+`docker`, `k3d`, `kubectl`, `helm` 이 설치돼 있어야 합니다.
 
-> ⚠️ `deploy-argo.sh` 실행 전에 `k8s/base/common-config/.env` 파일이 필요합니다 (Secret 생성용, gitignore 대상). 아래 키에 값을 채워 생성하세요.
+#### 1. 시크릿 파일 생성
 
-<details>
-<summary><code>.env</code> 예시 (값은 직접 채워주세요)</summary>
+`k8s/base/secret/.env` 를 만들고 아래 6개 키에 값을 채웁니다 (gitignore 대상).
 
 ```ini
 # [PostgreSQL]
-SPRING_DATASOURCE_URL=
 SPRING_DATASOURCE_USERNAME=
 SPRING_DATASOURCE_PASSWORD=
-DB_HOST=
-DB_NAME=
-
-# [Redis]
-SPRING_DATA_REDIS_HOST=
-SPRING_DATA_REDIS_PORT=
-
-# [Kafka]
-KAFKA_BOOTSTRAP_SERVERS=
-
-# [Temporal]
-SPRING_TEMPORAL_CONNECTION_TARGET=
 
 # [JWT]
 SPRING_JWT_SECRET=
-SPRING_JWT_EXPIRE_MS=
 
 # [EMAIL]
 EMAIL_USERNAME=
 EMAIL_PASSWORD=
 
 # [TOSS]
-TOSS_CUSTOMER_KEY=
 TOSS_SECRET_KEY=
-
-# [Feign]
-FEIGN_USER_URL=
-FEIGN_ORDER_URL=
-FEIGN_STORE_URL=
-FEIGN_PAYMENT_URL=
-
-SPOT_USER_URI=
-SPOT_STORE_URI=
-SPOT_ORDER_URI=
-SPOT_PAYMENT_URI=
 ```
 
-</details>
+> DB 주소·Kafka 주소·Feign URL 등 나머지 설정값은 [`k8s/overlays/local/config/env-config/configs.env`](./k8s/overlays/local/config/env-config/configs.env)에 이미 커밋돼 있으므로 따로 작성할 필요가 없습니다.
+
+#### 2. 실행
+
+> ⚠️ 로컬은 셸 스크립트 실행으로 ArgoCD는 사용하지 않습니다. (Dev/Prod는 GitOps)
+
+```bash
+# 전체 실행
+./run_k3d.sh
+
+# 부분 실행 예시
+./run_k3d.sh --cluster
+```
+
+**⚙️ 부분 실행 옵션**
+
+| 옵션                                  | 동작                                                                    |
+| ------------------------------------- | ----------------------------------------------------------------------- |
+| _(없음)_                              | 전체 실행                                                               |
+| `--no-monitoring`                     | 모니터링 스택을 제외하고 전체 실행                                      |
+| `--cluster`                           | k3d 클러스터만 재생성 — 레지스트리도 함께 삭제되므로 이미지 재빌드 필요 |
+| `--build`                             | 서비스 이미지 빌드·push만 실행                                          |
+| `--bootstrap`                         | 네임스페이스·ConfigMap·Secret 생성 + ingress-nginx 설치                 |
+| `--infra` / `--monitoring` / `--spot` | 해당 네임스페이스만 재배포                                              |
+
+#### 3. hosts 파일 등록
+
+> ⚠️ 배포된 서비스는 Ingress 도메인으로 접근하기 때문에 hosts 파일 등록이 필수입니다.
+
+- Windows
+
+  ```
+  # 1. 메모장을 "관리자 권한으로 실행"한 뒤, 아래 파일을 엽니다
+  C:\Windows\System32\drivers\etc\hosts
+
+  # 2. 파일 맨 아래에 아래 내용을 추가하고 저장합니다
+  127.0.0.1 www.spot kafka.spot temporal.spot grafana.spot
+  ```
+
+- macOS·Linux
+
+  ```bash
+  # 1. 터미널에서 hosts 파일을 엽니다
+  sudo vi /etc/hosts
+
+  # 2. 파일 맨 아래에 아래 내용을 추가하고 저장합니다
+  127.0.0.1 www.spot kafka.spot temporal.spot grafana.spot
+  ```
+
+| 서비스      | 주소                 |
+| ----------- | -------------------- |
+| Gateway API | http://www.spot      |
+| Kafka UI    | http://kafka.spot    |
+| Temporal UI | http://temporal.spot |
+| Grafana     | http://grafana.spot  |
 
 > 더미 데이터와 함께 실행하려면 [data/README.md](./data/README.md)를 참고하세요.
 
 ## Project Structure
 
-| 디렉터리                                                   | 설명                                                                                                      |
-| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `spot-gateway`                                             | Spring Cloud Gateway (라우팅, 인증/인가)                                                                  |
-| [`spot-user`](./spot-user/README.md) / [`spot-store`](./spot-store/README.md) / [`spot-order`](./spot-order/README.md) / [`spot-payment`](./spot-payment/README.md) | 도메인 서비스 (링크 = 도메인별 README)                                                                    |
-| `spot-mono`                                                | 모놀리식 통합 모듈                                                                                        |
-| `FE`                                                       | 프론트엔드                                                                                                |
-| `config`                                                   | 공통 Spring 설정(yml) — Docker Compose 실행 시 사용 (`./config:/config` 마운트)                           |
-| `k8s`                                                      | Kustomize(base/overlays) + Helm 차트(spot-apps), ArgoCD App-of-Apps(argo/), k3d 부트스트랩, 배포 스크립트 |
-| `k8s/base/common-config`                                   | 클러스터용 설정·시크릿 소스 — k3d 실행 시 ConfigMap·Secret으로 생성 (kustomize generator)                 |
-| `terraform`                                                | AWS 인프라 IaC (modules + environments) — [실행 가이드](./terraform/README.md)                            |
-| `k6`                                                       | 부하 테스트 스크립트                                                                                      |
-| `docs`                                                     | 기능 문서                                                                                                 |
+| 디렉터리                                                                                                                                                            | 설명                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `spot-gateway`                                                                                                                                                      | Spring Cloud Gateway (라우팅, 인증/인가)                                                                                           |
+| [`spot-user`](./spot-user/README.md) / [`spot-store`](./spot-store/README.md) / [`spot-order`](./spot-order/README.md) / [`spot-payment`](./spot-payment/README.md) | 도메인 서비스 (링크 = 도메인별 README)                                                                                             |
+| `spot-mono`                                                                                                                                                         | 모놀리식 통합 모듈                                                                                                                 |
+| `FE`                                                                                                                                                                | 프론트엔드                                                                                                                         |
+| `config`                                                                                                                                                            | 공통 Spring 설정(yml) — Docker Compose 실행 시 사용 (`./config:/config` 마운트)                                                    |
+| `k8s`                                                                                                                                                               | Kustomize(base/overlays) + Helm 차트(spot-apps), ArgoCD App-of-Apps(`argo/` — Dev/Prod GitOps 전용), k3d 부트스트랩, 배포 스크립트 |
+| `k8s/base/secret`                                                                                                                                                   | `.env` → Secret 생성 (kustomize secretGenerator, `.env`는 gitignore 대상)                                                          |
+| `k8s/overlays/local` · `k8s/overlays/dev`                                                                                                                           | 환경별 매니페스트 (config / infra / monitoring)                                                                                    |
+| `terraform`                                                                                                                                                         | AWS 인프라 IaC (modules + environments) — [실행 가이드](./terraform/README.md)                                                     |
+| `k6`                                                                                                                                                                | 부하 테스트 스크립트                                                                                                               |
+| `docs`                                                                                                                                                              | 기능 문서                                                                                                                          |
 
 ## Application Flow
 
@@ -172,6 +196,10 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
   - App-of-Apps 패턴으로 `k8s/`의 매니페스트를 pull 방식으로 동기화
   - Terraform(`environments/argo`)으로 부트스트랩
 - **GitHub Actions**: dev 머지 시 변경된 서비스만 빌드해 ECR push (OIDC 인증) — 클러스터 반영은 ArgoCD 담당
+- **External Secrets Operator**: Parameter Store의 값을 클러스터 Secret으로 동기화 (`ClusterSecretStore` + `ExternalSecret`)
+- **external-dns**: Ingress 생성 시 Route 53 레코드 자동 등록
+
+> GitOps는 Dev/Prod 환경에만 적용됩니다. 로컬 k3d는 셸 스크립트(`run_k3d.sh`)로 배포합니다.
 
 ### 데이터베이스 및 메시징
 
@@ -182,12 +210,14 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 
 ### 보안 및 관리
 
-| 서비스          | 용도                                             |
-| --------------- | ------------------------------------------------ |
-| IAM             | 접근 권한 관리 (GitHub Actions OIDC 포함)        |
-| WAF             | 웹 방화벽 (rate limiting)                        |
-| Secrets Manager | RDS 마스터 암호 관리 (앱 시크릿은 ESO 도입 예정) |
-| ACM             | TLS 인증서 관리                                  |
+| 서비스          | 용도                                                                         |
+| --------------- | ---------------------------------------------------------------------------- |
+| IAM             | 접근 권한 관리 (GitHub Actions OIDC 포함)                                    |
+| WAF             | 웹 방화벽 (rate limiting)                                                    |
+| Secrets Manager | RDS 마스터 암호 관리                                                         |
+| Parameter Store | 앱 시크릿 저장 — External Secrets Operator(ESO)가 클러스터 Secret으로 동기화 |
+| KMS             | tfstate 암호화 (S3 backend, 전 환경 공용 키)                                 |
+| ACM             | TLS 인증서 관리                                                              |
 
 ### 모니터링 및 로깅
 
