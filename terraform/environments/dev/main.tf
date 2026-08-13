@@ -110,7 +110,6 @@ module "rds" {
   common_tags = local.common_tags
 
   # DB 설정
-  db_name                     = var.db_name
   engine                      = var.db_engine
   engine_version              = var.db_engine_version
   instance_class              = var.db_instance_class
