@@ -101,19 +101,6 @@ resource "aws_ssm_parameter" "db_endpoint" {
   })
 }
 
-resource "aws_ssm_parameter" "db_url" {
-  name        = "${local.prefix}/database/url"
-  type        = "String"
-  description = "RDS URL"
-  value       = "jdbc:postgresql://${var.db_endpoint}:5432/spot_db"
-
-  tags = merge(var.common_tags, {
-    Name     = "${var.project}-${var.environment}-db-url"
-    Category = "database"
-    Type     = "infrastructure"
-  })
-}
-
 resource "aws_ssm_parameter" "db_service_url" {
   for_each = local.db_services
 
