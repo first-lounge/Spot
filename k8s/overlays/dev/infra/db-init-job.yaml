@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init
+  namespace: infra
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  template:
+    spec:
+      containers:
+        - name: db-init
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+
+              # postgreslq 접속 확인
+              psql -c "SELECT 1" >/dev/null || { echo "DB 접속 실패"; exit 1; }
+
+              # DB 생성 유무 확인
+              for db in spot_user spot_order spot_payment spot_store; do
+                if [ "$(psql -tAc "SELECT 1 FROM pg_database WHERE datname = '$db'")" = "1" ]; then
+                  echo "skip: $db"
+                else
+                  psql -c "CREATE DATABASE $db"
+                  echo "created: $db"
+                fi
+              done
+          env:
+            - name: PGDATABASE
+              value: postgres
+            - name: PGPORT
+              value: "5432"
+            - name: PGCONNECT_TIMEOUT
+              value: "15"
+            - name: PGHOST
+              valueFrom:
+                secretKeyRef:
+                  name: infra-secrets
+                  key: DB_HOST
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: infra-secrets
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: infra-secrets
+                  key: SPRING_DATASOURCE_PASSWORD
+      restartPolicy: Never

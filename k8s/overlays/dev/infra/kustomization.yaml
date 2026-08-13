@@ -5,8 +5,9 @@ kind: Kustomization
 namespace: infra
 
 resources:
+  - db-init-job.yaml
+  - kafka
   - rds-relay.yaml
   - storage-class.yaml
-  - kafka
   - temporal/temporal.yaml
   - temporal/temporal-ui.yaml
