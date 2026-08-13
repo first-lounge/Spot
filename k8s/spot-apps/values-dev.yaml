@@ -49,12 +49,12 @@ global:
 # [4] app 목록
 apps:
   gateway:
-    imageTag: ""
+    imageTag: "f32c6976"
   user:
-    imageTag: ""
+    imageTag: "f32c6976"
   store:
-    imageTag: ""
+    imageTag: "f32c6976"
   order:
-    imageTag: ""
+    imageTag: "f32c6976"
   payment:
-    imageTag: ""
+    imageTag: "f32c6976"
