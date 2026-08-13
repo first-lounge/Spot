@@ -72,26 +72,31 @@ apps:
     port: 80
     targetPort: 8080
     imageTag: latest
+    dbEnabled: false
 
   user:
     name: spot-user
     port: 8081
     imageTag: latest
+    dbEnabled: true
 
   store:
     name: spot-store
     port: 8083
     imageTag: latest
+    dbEnabled: true
 
   order:
     name: spot-order
     port: 8082
     imageTag: latest
+    dbEnabled: true
 
   payment:
     name: spot-payment
     port: 8084
     imageTag: latest
+    dbEnabled: true
 
 # [4] envFrom
 envFrom:

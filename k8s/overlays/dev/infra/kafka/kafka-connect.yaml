@@ -39,11 +39,16 @@ spec:
             secretKeyRef:
               name: infra-secrets
               key: DB_HOST
-        - name: DB_NAME
+        - name: DB_NAME_ORDER
           valueFrom:
             configMapKeyRef:
               name: infra-env
-              key: DB_NAME
+              key: DB_NAME_ORDER
+        - name: DB_NAME_PAYMENT
+          valueFrom:
+            configMapKeyRef:
+              name: infra-env
+              key: DB_NAME_PAYMENT
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:

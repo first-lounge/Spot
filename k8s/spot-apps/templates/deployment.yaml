@@ -28,7 +28,14 @@ spec:
               value: {{ $.Values.env.activeProfile }}
             - name: LOGGING_CONFIG
               value: {{ $.Values.env.loggingConfig }}
-            
+            {{- if and $.Values.environment ($val.dbEnabled) }}
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: spot-{{ $key }}-secrets
+                  key: SPRING_DATASOURCE_URL
+            {{- end }}
+
             # 어플리케이션 환경 변수
           envFrom:
             - secretRef:

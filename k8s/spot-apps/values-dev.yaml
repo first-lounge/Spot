@@ -1,3 +1,5 @@
+# [0] 프로젝트 환경
+environment: dev
 # [1] AWS Ingress 설정 (기본값: AWS ALB)
 ingress:
   className: 'alb'
@@ -33,7 +35,7 @@ ingress:
     # 모든 서비스가 하나의 ALB를 공유
     alb.ingress.kubernetes.io/group.name: spot-ingress
     # WAF
-    alb.ingress.kubernetes.io/wafv2-acl-arn: "arn:aws:wafv2:ap-northeast-2:164076841262:regional/webacl/spot-dev-waf/f642eec4-877a-4543-960e-7a8bd326e65a"
+    alb.ingress.kubernetes.io/wafv2-acl-arn: "arn:aws:wafv2:ap-northeast-2:164076841262:regional/webacl/spot-dev-waf/d83a6706-f2e4-422b-b849-915042d2836b"
     # HTTPS/HTTP 설정
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'

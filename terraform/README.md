@@ -37,7 +37,7 @@
 4. terraform/environments/argo로 이동 ⇒ terraform apply — ArgoCD 설치 + root App (여기서 ALB 생성됨)
 ```
 
-> ⚠️ **3번(WAF ARN 갱신·머지)은 반드시 4번(argo apply)보다 먼저 완료해야 한다.** spot-app이 첫 sync 진행 시, 새 WAF ARN이 dev 브랜치에 merge돼 있지 않으면 에러가 발생한다. 이 경우 LBC가 존재하지 않는 WAF에 associate를 시도해 spot-ingress 그룹 전체가 reconcile 400 루프에 빠지고, 심하면 finalizer가 멈춰 이후 destroy까지 블로킹된다.
+> ⚠️ **3번(WAF ARN 갱신·머지)은 반드시 4번(argo apply)보다 먼저 완료해야 합니다.** spot-app이 첫 sync 진행 시, 새 WAF ARN이 dev 브랜치에 merge돼 있지 않으면 에러가 발생하기 때문입니다.
 
 ### Destroy
 
@@ -47,7 +47,7 @@
 3. terraform/environments/dev로 이동 ⇒ terraform destroy
 ```
 
-> ⚠️ 1번 후 kubectl get application -n argocd로 root 외 전부 삭제된 걸 확인한 뒤 2번 실행
+> ⚠️ 1번 실행 후 kubectl get application -n argocd로 root 외 전부 삭제된 걸 확인한 뒤 나머지 실행
 
 ## ArgoCD UI 접속
 
@@ -57,4 +57,4 @@
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 ```
 
-2. https://argocd.hbksv.cloud 접속 ⇒ 아이디(**admin**)와 비밀번호 입력
+2. https://argocd.hbksv.cloud 접속 ⇒ 아이디(=**admin**)와 비밀번호 입력

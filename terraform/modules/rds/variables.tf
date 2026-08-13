@@ -14,11 +14,6 @@ variable "common_tags" {
 # =============================================================================
 # DB 설정
 # =============================================================================
-variable "db_name" {
-  description = "DB 이름"
-  type        = string
-}
-
 variable "engine" {
   description = "DB 엔진"
   type        = string

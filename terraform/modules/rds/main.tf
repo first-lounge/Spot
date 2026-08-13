@@ -71,7 +71,6 @@ resource "aws_db_instance" "rds" {
   engine_version    = var.engine_version
   instance_class    = var.instance_class
 
-  db_name  = var.db_name
   username = var.username
 
   # Dev: 직접 설정 / Prod: Secrets Manager 사용

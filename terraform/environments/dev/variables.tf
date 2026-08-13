@@ -86,11 +86,6 @@ variable "availability_zones" {
 # =============================================================================
 # RDS 모듈
 # =============================================================================
-variable "db_name" {
-  description = "데이터베이스 이름"
-  type        = string
-}
-
 variable "db_username" {
   description = "데이터베이스 사용자 이름"
   type        = string

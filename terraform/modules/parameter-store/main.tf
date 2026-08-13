@@ -2,7 +2,8 @@
 # Parameter Store 
 # =============================================================================
 locals {
-  prefix = "/${var.project}/${var.environment}"
+  prefix      = "/${var.project}/${var.environment}"
+  db_services = toset(["user", "order", "payment", "store"])
 }
 
 # 민감 정보(SecureString)
@@ -100,14 +101,16 @@ resource "aws_ssm_parameter" "db_endpoint" {
   })
 }
 
-resource "aws_ssm_parameter" "db_url" {
-  name        = "${local.prefix}/database/url"
+resource "aws_ssm_parameter" "db_service_url" {
+  for_each = local.db_services
+
+  name        = "${local.prefix}/database/${each.key}/url"
   type        = "String"
-  description = "RDS URL"
-  value       = "jdbc:postgresql://${var.db_endpoint}:5432/spot_db"
+  description = "RDS URL for spot-${each.key}"
+  value       = "jdbc:postgresql://${var.db_endpoint}:5432/spot_${each.key}"
 
   tags = merge(var.common_tags, {
-    Name     = "${var.project}-${var.environment}-db-url"
+    Name     = "${var.project}-${var.environment}-${each.key}-db-url"
     Category = "database"
     Type     = "infrastructure"
   })

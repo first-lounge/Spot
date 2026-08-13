@@ -89,7 +89,7 @@ TOSS_SECRET_KEY=
 
 > ⚠️ 배포된 서비스는 Ingress 도메인으로 접근하기 때문에 hosts 파일 등록이 필수입니다.
 
-- Windows
+- **Windows**
 
   ```
   # 1. 메모장을 "관리자 권한으로 실행"한 뒤, 아래 파일을 엽니다
@@ -99,7 +99,7 @@ TOSS_SECRET_KEY=
   127.0.0.1 www.spot kafka.spot temporal.spot grafana.spot
   ```
 
-- macOS·Linux
+- **macOS·Linux**
 
   ```bash
   # 1. 터미널에서 hosts 파일을 엽니다
@@ -109,21 +109,23 @@ TOSS_SECRET_KEY=
   127.0.0.1 www.spot kafka.spot temporal.spot grafana.spot
   ```
 
-| 서비스      | 주소                 |
-| ----------- | -------------------- |
-| Gateway API | http://www.spot      |
-| Kafka UI    | http://kafka.spot    |
-| Temporal UI | http://temporal.spot |
-| Grafana     | http://grafana.spot  |
+- **서비스별 주소**
 
-> 더미 데이터와 함께 실행하려면 [data/README.md](./data/README.md)를 참고하세요.
+  | 서비스      | 주소                 |
+  | ----------- | -------------------- |
+  | Gateway API | http://www.spot      |
+  | Kafka UI    | http://kafka.spot    |
+  | Temporal UI | http://temporal.spot |
+  | Grafana     | http://grafana.spot  |
+
+  > 더미 데이터와 함께 실행하려면 [data/README.md](./data/README.md)를 참고하세요.
 
 ## Project Structure
 
 | 디렉터리                                                                                                                                                            | 설명                                                                                                                               |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `spot-gateway`                                                                                                                                                      | Spring Cloud Gateway (라우팅, 인증/인가)                                                                                           |
-| [`spot-user`](./spot-user/README.md) / [`spot-store`](./spot-store/README.md) / [`spot-order`](./spot-order/README.md) / [`spot-payment`](./spot-payment/README.md) | 도메인 서비스 (링크 = 도메인별 README)                                                                                             |
+| [`spot-user`](./spot-user/README.md) / [`spot-store`](./spot-store/README.md) / [`spot-order`](./spot-order/README.md) / [`spot-payment`](./spot-payment/README.md) | 도메인 서비스 (**링크 = 각 도메인별 README**)                                                                                      |
 | `spot-mono`                                                                                                                                                         | 모놀리식 통합 모듈                                                                                                                 |
 | `FE`                                                                                                                                                                | 프론트엔드                                                                                                                         |
 | `config`                                                                                                                                                            | 공통 Spring 설정(yml) — Docker Compose 실행 시 사용 (`./config:/config` 마운트)                                                    |
@@ -203,7 +205,7 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 
 ### 데이터베이스 및 메시징
 
-- **RDS**: PostgreSQL 16 — Dev는 단일 공유 데이터베이스, Prod는 서비스별 독립 데이터베이스 예정
+- **RDS**: PostgreSQL 16 — Dev는 단일 인스턴스에 서비스별 데이터베이스, Prod는 서비스별 인스턴스 분리 예정
 - **ElastiCache**: Redis 7 캐시
 - **Kafka**: Strimzi Operator (KRaft 모드)
 - **Temporal**: 워크플로 엔진

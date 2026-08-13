@@ -7,6 +7,6 @@ namespace: infra
 resources:
   - db/postgres.yaml
   - db/redis.yaml
-  - kafka 
+  - kafka
   - temporal/temporal.yaml
   - temporal/temporal-ui.yaml
