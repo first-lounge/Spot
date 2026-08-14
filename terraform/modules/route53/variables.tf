@@ -9,6 +9,11 @@ variable "common_tags" {
 }
 
 variable "domain_name" {
-  type        = string
   description = "도메인 이름"
+  type        = string
+}
+
+variable "zone_force_destroy" {
+  description = "zone destroy 시 남은 레코드까지 강제 삭제(dev만 true, prod는 false)"
+  type        = bool
 }

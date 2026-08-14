@@ -42,12 +42,10 @@
 ### Destroy
 
 ```
-1. kubectl delete app root-dev -n argocd (root App 삭제 → finalizer cascade → ALB 자동 소멸)
-2. terraform/environments/argo로 이동 ⇒ terraform destroy
+1. kubectl delete app root-dev -n argocd (root App 삭제 → finalizer cascade)
+2. terraform/environments/argo로 이동 ⇒ terraform destroy (ALB 자동 소멸)
 3. terraform/environments/dev로 이동 ⇒ terraform destroy
 ```
-
-> ⚠️ 1번 실행 후 kubectl get application -n argocd로 root 외 전부 삭제된 걸 확인한 뒤 나머지 실행
 
 ## ArgoCD UI 접속
 
