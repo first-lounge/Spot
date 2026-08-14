@@ -306,3 +306,12 @@ variable "git_branch" {
   description = "Github 브랜치"
   type        = string
 }
+
+# =============================================================================
+# Route53
+# =============================================================================
+variable "zone_force_destroy" {
+  description = "zone destroy 시 남은 레코드까지 강제 삭제(dev만 true, prod는 false)"
+  type        = bool
+  default     = false
+}
