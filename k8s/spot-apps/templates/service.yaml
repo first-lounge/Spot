@@ -14,4 +14,22 @@ spec:
   ports:
     - port: {{ $val.port }}
       targetPort: {{ $val.targetPort | default $val.port }}
+
+{{- if $val.rollout }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $val.name }}-preview
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    app: {{ $val.name }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ $val.name }}
+  ports:
+    - port: {{ $val.port }}
+      targetPort: {{ $val.targetPort | default $val.port }}
+{{- end }}
 {{- end }}

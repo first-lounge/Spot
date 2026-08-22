@@ -1,5 +1,6 @@
 # [0] 프로젝트 환경
 environment: dev
+
 # [1] AWS Ingress 설정 (기본값: AWS ALB)
 ingress:
   className: 'alb'
@@ -41,20 +42,47 @@ ingress:
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     # 태그 설정
     alb.ingress.kubernetes.io/tags: Name=spot-alb, Environment=dev,Team=spot, ManagedBy=terraform
+
 # [2] 도메인 (AWS)
 domain: hbksv.cloud
+
 # [3] Deployment 설정
 global:
   repository: 164076841262.dkr.ecr.ap-northeast-2.amazonaws.com
+
 # [4] app 목록
 apps:
   gateway:
     imageTag: "f32c6976"
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 900
+    smokePath: /actuator/health
+  
   user:
     imageTag: "f32c6976"
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 900
+    smokePath: /actuator/health
+
   store:
     imageTag: "f32c6976"
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 180
+    smokePath: /actuator/health
+
   order:
     imageTag: "f32c6976"
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 300
+    smokePath: /actuator/health
+    
   payment:
     imageTag: "f32c6976"
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 900
+    smokePath: /actuator/health

@@ -1,15 +1,15 @@
 {{- range $key, $val := .Values.apps }}
-{{- if not $val.rollout }}
+{{- if $val.rollout }}
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: {{ $val.name }}
   namespace: {{ $.Values.global.namespace }}
   labels:
     app: {{ $val.name }}
 spec:
-  replicas: {{ $.Values.global.replicas | default 1}}
+  replicas: {{ $.Values.global.replicas }}
   selector:
     matchLabels:
       app: {{ $val.name }}
@@ -37,7 +37,7 @@ spec:
                   key: SPRING_DATASOURCE_URL
             {{- end }}
 
-            # 어플리케이션 환경 변수
+          # 어플리케이션 환경 변수
           envFrom:
             - secretRef:
                 name: {{ $.Values.envFrom.secretName}}
@@ -85,10 +85,18 @@ spec:
             - name: app-config
               mountPath: /config
               readOnly: true
-
       volumes:
         - name: app-config
           configMap:
             name: {{ $.Values.configMap }}
+  strategy:
+    blueGreen:
+      autoPromotionEnabled: {{ $val.autoPromotionEnabled }}
+      activeService: {{ $val.name }}
+      previewService: {{ $val.name }}-preview
+      scaleDownDelaySeconds: {{ $val.scaleDownDelaySeconds }}
+      prePromotionAnalysis:
+        templates:
+          - templateName: {{ $val.name }}-smoke-test
 {{- end }}
 {{- end }}
