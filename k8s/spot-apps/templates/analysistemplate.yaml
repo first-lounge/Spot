@@ -1,0 +1,28 @@
+{{- range $key, $val := .Values.apps }}
+{{- if $val.rollout }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: {{ $val.name }}-smoke-test
+  namespace: {{ $.Values.global.namespace }}
+spec:
+  metrics:
+    - name: smoke-test
+      provider:
+        job:
+          spec:
+            backoffLimit: 1
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: {{ $val.name }}-smoke-test
+                    image: curlimages/curl:8.21.0
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        set -e
+                        curl -fsS "http://{{ $val.name }}-preview:{{ $val.port }}{{ $val.smokePath }}"
+{{- end }}
+{{- end }}
