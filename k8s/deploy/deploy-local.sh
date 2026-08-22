@@ -128,6 +128,25 @@ deploy_monitoring() {
     log_info "Monitoring 네임스페이스 배포를 모두 완료하였습니다...!"
 }
 
+# # Argo Rollouts 설치 및 배포 (Helm)
+# deploy_rollouts() {
+#     log_info "Argo Rollouts 설치를 시작합니다..."
+
+#     helm repo add argo https://argoproj.github.io/argo-helm >/dev/null 2>&1 || true
+#     helm repo update
+
+#     helm upgrade --install argo-rollouts argo/argo-rollouts \
+#         -n argo-rollouts \
+#         --create-namespace \
+# 	    --set dashboard.enabled=true \
+# 	    --set dashboard.service.type=NodePort \
+# 	    --set dashboard.service.nodePort=30100 \
+#         --wait \
+#         --timeout 5m
+
+#     log_info "Argo Rollouts 설치 및 배포를 모두 완료하였습니다...!"
+# }
+
 # spot 네임스페이스 배포 (Helm)
 deploy_spot() {
     CHART_PATH="${BASE_DIR}/../spot-apps"
@@ -164,6 +183,7 @@ main() {
         --bootstrap) bootstrap; exit 0 ;;
         --infra) deploy_infra; exit 0 ;;
         --monitoring) deploy_monitoring; exit 0 ;;
+        --rollouts) deploy_rollouts; exit 0 ;;
         --spot) deploy_spot; exit 0 ;;
         --no-monitoring) run_monitoring=false ;;
         "")              ;;
@@ -180,6 +200,7 @@ main() {
         log_info "Monitoring 네임스페이스 배포를 건너뜁니다..."
     fi
     
+    deploy_rollouts
     deploy_spot
 
     log_info "로컬 환경 배포가 모두 완료되었습니다!"
