@@ -49,7 +49,7 @@ global:
 # [4] app 목록
 apps:
   gateway:
-    imageTag: "ceb54c38"
+    imageTag: "albtest1"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
@@ -67,7 +67,7 @@ apps:
     scaleDownDelaySeconds: 180
     smokePath: /actuator/health
   order:
-    imageTag: "ceb54c38"
+    imageTag: "albtest1"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 300
