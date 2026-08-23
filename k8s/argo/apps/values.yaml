@@ -3,7 +3,7 @@ env: dev
 
 global:
   repoURL: https://github.com/first-lounge/Spot.git
-  targetRevision: feat/79-argo-rollouts # dev
+  targetRevision: dev
   destination:
     server: https://kubernetes.default.svc
 
