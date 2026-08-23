@@ -1,6 +1,5 @@
 # [0] 프로젝트 환경
 environment: dev
-
 # [1] AWS Ingress 설정 (기본값: AWS ALB)
 ingress:
   className: 'alb'
@@ -36,20 +35,17 @@ ingress:
     # 모든 서비스가 하나의 ALB를 공유
     alb.ingress.kubernetes.io/group.name: spot-ingress
     # WAF
-    alb.ingress.kubernetes.io/wafv2-acl-arn: "arn:aws:wafv2:ap-northeast-2:164076841262:regional/webacl/spot-dev-waf/d83a6706-f2e4-422b-b849-915042d2836b"
+    alb.ingress.kubernetes.io/wafv2-acl-arn: "arn:aws:wafv2:ap-northeast-2:164076841262:regional/webacl/spot-dev-waf/15a0f4be-9a05-408a-9d7d-147955cf062a"
     # HTTPS/HTTP 설정
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     # 태그 설정
     alb.ingress.kubernetes.io/tags: Name=spot-alb, Environment=dev,Team=spot, ManagedBy=terraform
-
 # [2] 도메인 (AWS)
 domain: hbksv.cloud
-
 # [3] Deployment 설정
 global:
   repository: 164076841262.dkr.ecr.ap-northeast-2.amazonaws.com
-
 # [4] app 목록
 apps:
   gateway:
@@ -58,28 +54,24 @@ apps:
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
     smokePath: /actuator/health
-  
   user:
     imageTag: "f32c6976"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
     smokePath: /actuator/health
-
   store:
     imageTag: "f32c6976"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 180
     smokePath: /actuator/health
-
   order:
     imageTag: "f32c6976"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 300
     smokePath: /actuator/health
-    
   payment:
     imageTag: "f32c6976"
     rollout: true
