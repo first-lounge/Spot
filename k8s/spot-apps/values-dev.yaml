@@ -49,7 +49,7 @@ global:
 # [4] app 목록
 apps:
   gateway:
-    imageTag: "albtest4"
+    imageTag: "albtest5"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
