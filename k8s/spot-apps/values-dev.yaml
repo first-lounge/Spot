@@ -35,7 +35,7 @@ ingress:
     # 모든 서비스가 하나의 ALB를 공유
     alb.ingress.kubernetes.io/group.name: spot-ingress
     # WAF
-    alb.ingress.kubernetes.io/wafv2-acl-arn: "arn:aws:wafv2:ap-northeast-2:164076841262:regional/webacl/spot-dev-waf/d83a6706-f2e4-422b-b849-915042d2836b"
+    alb.ingress.kubernetes.io/wafv2-acl-arn: "arn:aws:wafv2:ap-northeast-2:164076841262:regional/webacl/spot-dev-waf/15a0f4be-9a05-408a-9d7d-147955cf062a"
     # HTTPS/HTTP 설정
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
@@ -50,11 +50,31 @@ global:
 apps:
   gateway:
     imageTag: "ceb54c38"
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 900
+    smokePath: /actuator/health
   user:
     imageTag: "ceb54c38"
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 900
+    smokePath: /actuator/health
   store:
     imageTag: "ceb54c38"
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 180
+    smokePath: /actuator/health
   order:
-    imageTag: "ceb54c38"
+    imageTag: "albtest1"
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 300
+    smokePath: /actuator/health
   payment:
     imageTag: "ceb54c38"
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 900
+    smokePath: /actuator/health

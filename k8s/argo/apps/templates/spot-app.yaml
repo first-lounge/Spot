@@ -15,6 +15,11 @@ spec:
       releaseName: spot
       valueFiles:
         - values-{{ .Values.env }}.yaml
+  ignoreDifferences:
+    - group: ""
+      kind: Service
+      jqPathExpressions:
+        - .spec.selector."rollouts-pod-template-hash"
   destination:
     server: {{ .Values.global.destination.server }}
     namespace: spot
