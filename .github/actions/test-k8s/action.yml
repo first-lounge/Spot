@@ -13,7 +13,10 @@ runs:
       shell: bash
       run: |
 
-        curl -sSL -o /tmp/kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
+        curl -sSL --retry 5 --retry-delay 3 --retry-all-errors \
+          -o /tmp/kubeconform.tar.gz \
+          https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz
+
         tar -zxvf /tmp/kubeconform.tar.gz -C /tmp
         sudo mv /tmp/kubeconform /usr/local/bin
 
