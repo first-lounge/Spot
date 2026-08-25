@@ -56,29 +56,29 @@ spec:
           # Startup
           startupProbe:
             httpGet:
-              path: {{ $.Values.global.path }}
+              path: {{ $.Values.probes.path }}{{ required "probes.startup.path 필요" $.Values.probes.startup.path }}
               port: {{ $val.targetPort | default $val.port }}
-            periodSeconds: {{ $.Values.global.startup.period }}
-            failureThreshold: {{ $.Values.global.startup.failureThreshold }}
-            timeoutSeconds: {{ $.Values.global.timeoutSeconds }}
+            periodSeconds: {{ $.Values.probes.startup.period }}
+            failureThreshold: {{ $.Values.probes.startup.failureThreshold }}
+            timeoutSeconds: {{ $.Values.probes.timeoutSeconds }}
 
           # Readiness
           readinessProbe:
             httpGet:
-              path: {{ $.Values.global.path }}
+              path: {{ $.Values.probes.path }}{{ $.Values.probes.readiness.path }}
               port: {{ $val.targetPort | default $val.port }}
-            periodSeconds: {{ $.Values.global.readiness.period }}
-            failureThreshold: {{ $.Values.global.readiness.failureThreshold }}
-            timeoutSeconds: {{ $.Values.global.timeoutSeconds }}
+            periodSeconds: {{ $.Values.probes.readiness.period }}
+            failureThreshold: {{ $.Values.probes.readiness.failureThreshold }}
+            timeoutSeconds: {{ $.Values.probes.timeoutSeconds }}
 
           # Liveness
           livenessProbe:
             httpGet:
-              path: {{ $.Values.global.path }}
+              path: {{ $.Values.probes.path }}{{ $.Values.probes.liveness.path }}
               port: {{ $val.targetPort | default $val.port }}
-            periodSeconds: {{ $.Values.global.liveness.period }}
-            failureThreshold: {{ $.Values.global.liveness.failureThreshold }}
-            timeoutSeconds: {{ $.Values.global.timeoutSeconds }}
+            periodSeconds: {{ $.Values.probes.liveness.period }}
+            failureThreshold: {{ $.Values.probes.liveness.failureThreshold }}
+            timeoutSeconds: {{ $.Values.probes.timeoutSeconds }}
 
           # 볼륨 마운트
           volumeMounts:

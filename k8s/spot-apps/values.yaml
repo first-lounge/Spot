@@ -6,26 +6,26 @@ ingress:
     enabled: false
 
   subs:
-    - name: spot
+    spot:
       hostname: www
       namespace: spot
       serviceName: spot-gateway
-      healthPath: /actuator/health
+      healthPath: /actuator/health/readiness
 
-    - name: kafka
+    kafka:
       namespace: infra
       serviceName: kafka-ui-svc
       healthPath: /
 
-    - name: temporal
+    temporal:
       namespace: infra
       serviceName: temporal-ui-svc
       healthPath: /
 
-    - name: grafana
+    grafana:
       namespace: monitoring
       serviceName: grafana-svc
-      healthPath: '/api/health'
+      healthPath: /api/health
 
 # 도메인
 domain: spot
@@ -49,19 +49,23 @@ global:
     cpu: '500m'
     memory: '512Mi'
 
-  # 헬스 체크 경로
+# Probes
+probes:
+  # Health Check 경로
   path: /actuator/health
 
-  # probe
   startup:
     period: 10
     failureThreshold: 30
+    path: /liveness
   readiness:
     period: 10
     failureThreshold: 12
+    path: /readiness
   liveness:
     period: 10
     failureThreshold: 12
+    path: /liveness
 
   timeoutSeconds: 5
 
