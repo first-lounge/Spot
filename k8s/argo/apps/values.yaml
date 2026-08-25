@@ -3,7 +3,7 @@ env: dev
 
 global:
   repoURL: https://github.com/first-lounge/Spot.git
-  targetRevision: dev
+  targetRevision: fix/82-probe-split # dev
   destination:
     server: https://kubernetes.default.svc
 
