@@ -25,7 +25,7 @@ ingress:
     grafana:
       namespace: monitoring
       serviceName: grafana-svc
-      healthPath: '/api/health'
+      healthPath: /api/health
 
 # 도메인
 domain: spot
