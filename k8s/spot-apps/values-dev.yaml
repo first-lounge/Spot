@@ -49,31 +49,31 @@ global:
 # [4] app 목록
 apps:
   gateway:
-    imageTag: "ceb54c38"
+    imageTag: "d4fb1d59"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
     smokePath: /actuator/health
   user:
-    imageTag: "ceb54c38"
+    imageTag: "d4fb1d59"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
     smokePath: /actuator/health
   store:
-    imageTag: "ceb54c38"
+    imageTag: "d4fb1d59"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 180
     smokePath: /actuator/health
   order:
-    imageTag: "albtest1"
+    imageTag: "d4fb1d59"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 300
     smokePath: /actuator/health
   payment:
-    imageTag: "ceb54c38"
+    imageTag: "d4fb1d59"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
