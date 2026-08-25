@@ -3,17 +3,13 @@ environment: dev
 # [1] AWS Ingress 설정 (기본값: AWS ALB)
 ingress:
   className: 'alb'
-  
   aws:
     enabled: true
-  
   # ALB 로그 저장용 S3 버킷 이름
   bucket: spot-dev-logs
-
   subs:
     spot:
       hostname: spot
-
   annotations:
     # ALB 설정
     alb.ingress.kubernetes.io/scheme: internet-facing
@@ -23,7 +19,7 @@ ingress:
     # 모든 서비스가 하나의 ALB를 공유
     alb.ingress.kubernetes.io/group.name: spot-ingress
     # WAF
-    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:ap-northeast-2:164076841262:regional/webacl/spot-dev-waf/15a0f4be-9a05-408a-9d7d-147955cf062a
+    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:ap-northeast-2:164076841262:regional/webacl/spot-dev-waf/ef52470b-f182-4b2b-b840-092a009ed787
     # HTTPS/HTTP 설정
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: 443
