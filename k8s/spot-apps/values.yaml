@@ -49,10 +49,11 @@ global:
     cpu: '500m'
     memory: '512Mi'
 
-  # 헬스 체크 경로
+# Health Check Probe
+probes:
+  # 경로
   path: /actuator/health
 
-  # probe
   startup:
     period: 10
     failureThreshold: 30
