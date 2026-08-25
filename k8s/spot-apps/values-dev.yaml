@@ -3,28 +3,17 @@ environment: dev
 # [1] AWS Ingress 설정 (기본값: AWS ALB)
 ingress:
   className: 'alb'
+  
   aws:
     enabled: true
+  
   # ALB 로그 저장용 S3 버킷 이름
   bucket: spot-dev-logs
+
   subs:
-    - name: spot
+    spot:
       hostname: spot
-      namespace: spot
-      serviceName: spot-gateway
-      healthPath: /actuator/health
-    - name: kafka
-      namespace: infra
-      serviceName: kafka-ui-svc
-      healthPath: /
-    - name: temporal
-      namespace: infra
-      serviceName: temporal-ui-svc
-      healthPath: /
-    - name: grafana
-      namespace: monitoring
-      serviceName: grafana-svc
-      healthPath: '/api/health'
+
   annotations:
     # ALB 설정
     alb.ingress.kubernetes.io/scheme: internet-facing

@@ -56,7 +56,7 @@ spec:
           # Startup
           startupProbe:
             httpGet:
-              path: {{ $.Values.probes.path }}
+              path: {{ $.Values.probes.path }}{{ $.Values.probes.startup.path }}
               port: {{ $val.targetPort | default $val.port }}
             periodSeconds: {{ $.Values.probes.startup.period }}
             failureThreshold: {{ $.Values.probes.startup.failureThreshold }}
@@ -65,7 +65,7 @@ spec:
           # Readiness
           readinessProbe:
             httpGet:
-              path: {{ $.Values.probes.path }}
+              path: {{ $.Values.probes.path }}{{ $.Values.probes.readiness.path }}
               port: {{ $val.targetPort | default $val.port }}
             periodSeconds: {{ $.Values.probes.readiness.period }}
             failureThreshold: {{ $.Values.probes.readiness.failureThreshold }}
@@ -74,7 +74,7 @@ spec:
           # Liveness
           livenessProbe:
             httpGet:
-              path: {{ $.Values.probes.path }}
+              path: {{ $.Values.probes.path }}{{ $.Values.probes.liveness.path }}
               port: {{ $val.targetPort | default $val.port }}
             periodSeconds: {{ $.Values.probes.liveness.period }}
             failureThreshold: {{ $.Values.probes.liveness.failureThreshold }}
