@@ -51,7 +51,7 @@ apps:
     scaleDownDelaySeconds: 180
     smokePath: /actuator/health
   order:
-    imageTag: "d4fb1d59"
+    imageTag: "latest"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 300
