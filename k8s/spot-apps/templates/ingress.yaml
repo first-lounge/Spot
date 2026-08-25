@@ -1,10 +1,9 @@
-{{- range .Values.ingress.subs }}
-{{- $sub := . }}
+{{- range $key, $sub := .Values.ingress.subs }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ $sub.name }}-ing
+  name: {{ $key }}-ing
   namespace: {{ $sub.namespace }}
   annotations:
   {{- if $.Values.ingress.aws.enabled }}
@@ -25,7 +24,7 @@ metadata:
 spec:
   ingressClassName: {{ $.Values.ingress.className }}
   rules:
-    - host: {{ $sub.hostname | default $sub.name }}.{{ $.Values.domain }}
+    - host: {{ $sub.hostname | default $key }}.{{ $.Values.domain }}
       http:
         paths:
           - path: /
