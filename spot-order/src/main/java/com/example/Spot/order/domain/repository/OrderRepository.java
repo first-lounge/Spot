@@ -130,11 +130,11 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
             "AND (CAST(:startDate AS timestamp) IS NULL OR o.createdAt >= :startDate) " +
             "AND (CAST(:endDate AS timestamp) IS NULL OR o.createdAt <= :endDate)",
             countQuery = "SELECT COUNT(DISTINCT o) FROM OrderEntity o " +
-            "WHERE o.userId = :userId " +
-            "AND (CAST(:storeId AS string) IS NULL OR o.storeId = :storeId) " +
-            "AND (CAST(:status AS string) IS NULL OR o.orderStatus = :status) " +
-            "AND (CAST(:startDate AS timestamp) IS NULL OR o.createdAt >= :startDate) " +
-            "AND (CAST(:endDate AS timestamp) IS NULL OR o.createdAt <= :endDate)")
+                    "WHERE o.userId = :userId " +
+                    "AND (CAST(:storeId AS string) IS NULL OR o.storeId = :storeId) " +
+                    "AND (CAST(:status AS string) IS NULL OR o.orderStatus = :status) " +
+                    "AND (CAST(:startDate AS timestamp) IS NULL OR o.createdAt >= :startDate) " +
+                    "AND (CAST(:endDate AS timestamp) IS NULL OR o.createdAt <= :endDate)")
     Page<OrderEntity> findUserOrdersWithFilters(
             @Param("userId") Integer userId,
             @Param("storeId") UUID storeId,
@@ -152,11 +152,11 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
             "AND (CAST(:startDate AS timestamp) IS NULL OR o.createdAt >= :startDate) " +
             "AND (CAST(:endDate AS timestamp) IS NULL OR o.createdAt <= :endDate)",
             countQuery = "SELECT COUNT(DISTINCT o) FROM OrderEntity o " +
-            "WHERE o.storeId = :storeId " +
-            "AND (CAST(:customerId AS string) IS NULL OR o.userId = :customerId) " +
-            "AND (CAST(:status AS string) IS NULL OR o.orderStatus = :status) " +
-            "AND (CAST(:startDate AS timestamp) IS NULL OR o.createdAt >= :startDate) " +
-            "AND (CAST(:endDate AS timestamp) IS NULL OR o.createdAt <= :endDate)")
+                    "WHERE o.storeId = :storeId " +
+                    "AND (CAST(:customerId AS string) IS NULL OR o.userId = :customerId) " +
+                    "AND (CAST(:status AS string) IS NULL OR o.orderStatus = :status) " +
+                    "AND (CAST(:startDate AS timestamp) IS NULL OR o.createdAt >= :startDate) " +
+                    "AND (CAST(:endDate AS timestamp) IS NULL OR o.createdAt <= :endDate)")
     Page<OrderEntity> findStoreOrdersWithFilters(
             @Param("storeId") UUID storeId,
             @Param("customerId") Integer customerId,
@@ -173,10 +173,10 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
             "AND (CAST(:startDate AS timestamp) IS NULL OR o.createdAt >= :startDate) " +
             "AND (CAST(:endDate AS timestamp) IS NULL OR o.createdAt <= :endDate)",
             countQuery = "SELECT COUNT(DISTINCT o) FROM OrderEntity o " +
-            "WHERE (CAST(:storeId AS string) IS NULL OR o.storeId = :storeId) " +
-            "AND (CAST(:status AS string) IS NULL OR o.orderStatus = :status) " +
-            "AND (CAST(:startDate AS timestamp) IS NULL OR o.createdAt >= :startDate) " +
-            "AND (CAST(:endDate AS timestamp) IS NULL OR o.createdAt <= :endDate)")
+                    "WHERE (CAST(:storeId AS string) IS NULL OR o.storeId = :storeId) " +
+                    "AND (CAST(:status AS string) IS NULL OR o.orderStatus = :status) " +
+                    "AND (CAST(:startDate AS timestamp) IS NULL OR o.createdAt >= :startDate) " +
+                    "AND (CAST(:endDate AS timestamp) IS NULL OR o.createdAt <= :endDate)")
     Page<OrderEntity> findAllOrdersWithFilters(
             @Param("storeId") UUID storeId,
             @Param("status") OrderStatus status,
@@ -184,24 +184,17 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable);
 
-    @Query(value = "SELECT order_number FROM p_order " +
-            "WHERE order_number LIKE :datePattern " +
-            "ORDER BY order_number DESC " +
-            "LIMIT 1", nativeQuery = true)
-    Optional<String> findTopOrderNumberByDatePattern(@Param("datePattern") String datePattern);
-
     // internal admin
     @Query("""
-    SELECT o.orderStatus, COUNT(o)
-    FROM OrderEntity o
-    GROUP BY o.orderStatus
-""")
+                SELECT o.orderStatus, COUNT(o)
+                FROM OrderEntity o
+                GROUP BY o.orderStatus
+            """)
     List<Object[]> countGroupByStatus();
 
     long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     long countByOrderStatusIn(List<OrderStatus> statuses);
-
 
 
     @Query("SELECT DISTINCT o FROM OrderEntity o " +
