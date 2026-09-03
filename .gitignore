@@ -76,6 +76,8 @@ config/application-secret.yml
 
 /k8s/probe.sh
 
+*.txt
+
 ### 개인 준비물 (팀 저장소 커밋 제외) ###
 ROADMAP.md
 troubleshooting.md
