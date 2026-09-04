@@ -55,4 +55,4 @@
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 ```
 
-2. https://argocd.hbksv.cloud 접속 ⇒ 아이디(=**admin**)와 비밀번호 입력
+2. https://argocd.hbksv.com 접속 ⇒ 아이디(=**admin**)와 비밀번호 입력

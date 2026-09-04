@@ -6,4 +6,5 @@ module "argocd" {
   source = "../../modules/argocd"
 
   root_app_path = "${local.root_app_path}/dev.yaml"
+  domain_name   = "hbksv.com"
 }
