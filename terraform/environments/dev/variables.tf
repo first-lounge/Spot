@@ -129,7 +129,7 @@ variable "db_engine_version" {
 variable "domain_name" {
   description = "도메인 이름"
   type        = string
-  default     = "hbksv.cloud"
+  default     = "hbksv.com"
 }
 
 # =============================================================================

@@ -42,7 +42,7 @@ resource "helm_release" "argocd" {
             "alb.ingress.kubernetes.io/healthcheck-path" = "/"
             "alb.ingress.kubernetes.io/success-codes"    = "200"
           }
-          hostname = "argocd.hbksv.cloud"
+          hostname = "argocd.${var.domain_name}"
         }
       }
     })

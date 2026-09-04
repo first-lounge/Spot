@@ -21,7 +21,7 @@ spec:
             - name: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
               value: "arn:aws:iam::164076841262:role/spot-dev-external_dns-role"
             - name: domainFilters[0]
-              value: "hbksv.cloud"
+              value: "hbksv.com"
             - name: policy
               value: "sync"
             - name: provider.name
