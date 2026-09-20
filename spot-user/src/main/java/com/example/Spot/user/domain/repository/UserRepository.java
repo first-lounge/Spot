@@ -29,8 +29,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     @Query("SELECT u FROM UserEntity u WHERE u.id = :id")
     Optional<UserEntity> findByIdWithLock(@Param("id") Integer id);
     
-    @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("SELECT u FROM UserEntity u WHERE u.nickname = :nickname")    
-    List<UserEntity> findByNicknameContainingWithLock(@Param("nickname") String nickname);
+    List<UserEntity> findByNickname(@Param("nickname") String nickname);
 }
 
