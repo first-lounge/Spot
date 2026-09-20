@@ -2,6 +2,7 @@
 
 import React, {useEffect, useState} from 'react';
 import {useParams, useRouter} from 'next/navigation';
+import axios from 'axios';
 import {useAuthStore} from '@/store/authStore';
 import {Button} from '@/components/ui/Button';
 import {Input} from '@/components/ui/Input';
@@ -9,7 +10,7 @@ import {storeApi} from '@/lib/stores';
 import {CreateMenuOptionRequest, CreateMenuRequest, menuApi} from '@/lib/menus';
 import {SalesDashboard} from '@/components/sales/SalesDashboard';
 import {OrderManagement} from '@/components/order/OrderManagement';
-import type {Menu, Store} from '@/types';
+import type {Menu, Store, StoreUpdateRequest} from '@/types';
 
 export default function StoreManagementPage() {
   const params = useParams();
@@ -46,7 +47,8 @@ export default function StoreManagementPage() {
 
   // 가게 정보 수정
   const [isEditingStore, setIsEditingStore] = useState(false);
-  const [storeFormData, setStoreFormData] = useState({
+  const [isSavingStore, setIsSavingStore] = useState(false);
+  const [storeFormData, setStoreFormData] = useState<StoreUpdateRequest>({
     name: '',
     phoneNumber: '',
     roadAddress: '',
@@ -74,9 +76,6 @@ export default function StoreManagementPage() {
         storeApi.getStore(storeId),
         menuApi.getMenus(storeId),
       ]);
-
-      console.log('가게 데이터:', storeData);
-      console.log('메뉴 데이터:', menusData);
 
       setStore(storeData);
       setMenus(menusData);
@@ -182,11 +181,6 @@ export default function StoreManagementPage() {
     e.preventDefault();
     if (!selectedMenuForOption) return;
 
-    console.log('옵션 추가 - 선택된 메뉴:', selectedMenuForOption);
-    console.log('옵션 추가 - menuId:', selectedMenuForOption.id);
-    console.log('옵션 추가 - storeId:', storeId);
-    console.log('옵션 데이터:', optionFormData);
-
     try {
       await menuApi.addMenuOption(storeId, selectedMenuForOption.id, optionFormData);
       alert('옵션이 추가되었습니다.');
@@ -221,15 +215,20 @@ export default function StoreManagementPage() {
 
   const handleUpdateStore = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSavingStore(true);
     try {
-      // TODO: 가게 정보 수정 API 호출
-      // await storeApi.updateStore(storeId, storeFormData);
+      await storeApi.updateStore(storeId, storeFormData);
       alert('가게 정보가 수정되었습니다.');
       setIsEditingStore(false);
-      loadStoreData();
+      await loadStoreData();
     } catch (error) {
       console.error('가게 정보 수정 실패:', error);
-      alert('가게 정보 수정에 실패했습니다.');
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message || '가게 정보 수정에 실패했습니다.'
+        : '가게 정보 수정에 실패했습니다.';
+      alert(message);
+    } finally {
+      setIsSavingStore(false);
     }
   };
 
@@ -492,12 +491,13 @@ export default function StoreManagementPage() {
               </div>
 
               <div className="flex gap-2 mt-6">
-                <Button type="submit" className="flex-1">
+                <Button type="submit" className="flex-1" isLoading={isSavingStore}>
                   저장하기
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
+                  disabled={isSavingStore}
                   onClick={() => setIsEditingStore(false)}
                 >
                   취소

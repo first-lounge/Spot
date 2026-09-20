@@ -2,36 +2,47 @@
 
 import {useEffect, useState} from 'react';
 import {ownerOrderApi} from '@/lib/orders';
-import type {OrderResponse} from '@/types';
+import {getApiErrorMessage} from '@/lib/api';
+import type {OrderResponse, OrderStatus} from '@/types';
 import Button from '@/components/ui/Button';
 
 interface OrderManagementProps {
   storeId: string;
 }
 
-const ORDER_STATUS_KR: Record<string, string> = {
+const ORDER_STATUS_KR: Record<OrderStatus, string> = {
   PAYMENT_PENDING: '결제 대기',
   PAYMENT_FAILED: '결제 실패',
   PENDING: '주문 수락 대기',
   ACCEPTED: '주문 수락',
+  REJECT_PENDING: '거절 처리 중',
   REJECTED: '주문 거절',
   COOKING: '조리중',
   READY: '픽업 대기',
   COMPLETED: '픽업 완료',
+  CANCEL_PENDING: '취소 처리 중',
   CANCELLED: '주문 취소',
+  REFUND_ERROR: '환불 확인 필요',
 };
 
-const ORDER_STATUS_COLOR: Record<string, string> = {
+const ORDER_STATUS_COLOR: Record<OrderStatus, string> = {
   PAYMENT_PENDING: 'bg-gray-100 text-gray-800',
   PAYMENT_FAILED: 'bg-red-100 text-red-800',
   PENDING: 'bg-yellow-100 text-yellow-800',
   ACCEPTED: 'bg-blue-100 text-blue-800',
+  REJECT_PENDING: 'bg-orange-100 text-orange-800',
   REJECTED: 'bg-red-100 text-red-800',
   COOKING: 'bg-purple-100 text-purple-800',
   READY: 'bg-green-100 text-green-800',
   COMPLETED: 'bg-gray-100 text-gray-800',
+  CANCEL_PENDING: 'bg-orange-100 text-orange-800',
   CANCELLED: 'bg-gray-100 text-gray-800',
+  REFUND_ERROR: 'bg-red-100 text-red-800',
 };
+
+const STATUS_FILTERS: Array<'all' | OrderStatus> = [
+  'all', 'PENDING', 'ACCEPTED', 'COOKING', 'READY', 'COMPLETED', 'CANCELLED',
+];
 
 export function OrderManagement({ storeId }: OrderManagementProps) {
   const [orders, setOrders] = useState<OrderResponse[]>([]);
@@ -78,10 +89,9 @@ export function OrderManagement({ storeId }: OrderManagementProps) {
       setCancelOrderId(null);
       setCancelReason('');
       loadOrders();
-    } catch (error: any) {
+    } catch (error) {
       console.error('주문 취소 실패:', error);
-      const errorMsg = error.response?.data?.message || '주문 취소에 실패했습니다.';
-      alert(errorMsg);
+      alert(getApiErrorMessage(error, '주문 취소에 실패했습니다.'));
     }
   };
 
@@ -99,9 +109,9 @@ export function OrderManagement({ storeId }: OrderManagementProps) {
       await ownerOrderApi.acceptOrder(orderId, time);
       alert('주문을 수락했습니다.');
       loadOrders();
-    } catch (error: any) {
+    } catch (error) {
       console.error('주문 수락 실패:', error);
-      alert(error.response?.data?.message || '주문 수락에 실패했습니다.');
+      alert(getApiErrorMessage(error, '주문 수락에 실패했습니다.'));
     }
   };
 
@@ -115,9 +125,9 @@ export function OrderManagement({ storeId }: OrderManagementProps) {
       await ownerOrderApi.rejectOrder(orderId, reason);
       alert('주문을 거절했습니다.');
       loadOrders();
-    } catch (error: any) {
+    } catch (error) {
       console.error('주문 거절 실패:', error);
-      alert(error.response?.data?.message || '주문 거절에 실패했습니다.');
+      alert(getApiErrorMessage(error, '주문 거절에 실패했습니다.'));
     }
   };
 
@@ -128,9 +138,9 @@ export function OrderManagement({ storeId }: OrderManagementProps) {
       await ownerOrderApi.completeOrder(orderId);
       alert('주문이 완료 처리되었습니다.');
       loadOrders();
-    } catch (error: any) {
+    } catch (error) {
       console.error('주문 완료 실패:', error);
-      alert(error.response?.data?.message || '주문 완료 처리에 실패했습니다.');
+      alert(getApiErrorMessage(error, '주문 완료 처리에 실패했습니다.'));
     }
   };
 
@@ -157,7 +167,7 @@ export function OrderManagement({ storeId }: OrderManagementProps) {
 
       {/* 상태 필터 */}
       <div className="flex flex-wrap gap-2">
-        {['all', 'PENDING', 'ACCEPTED', 'COOKING', 'READY', 'COMPLETED', 'CANCELLED'].map(
+        {STATUS_FILTERS.map(
           (status) => (
             <button
               key={status}

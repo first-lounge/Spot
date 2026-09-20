@@ -32,18 +32,6 @@ export default function StoreDetailPage() {
   const loadStoreData = async () => {
     try {
       const storeData = await storeApi.getStore(storeId);
-      console.log('[StoreDetail] 매장 데이터 로드 완료:', storeData);
-      console.log('[StoreDetail] 포함된 메뉴 개수:', storeData.menus?.length || 0);
-
-      if (storeData.menus && storeData.menus.length > 0) {
-        console.log('[StoreDetail] 첫 번째 메뉴 샘플:', {
-          id: storeData.menus[0].id,
-          name: storeData.menus[0].name,
-          price: storeData.menus[0].price,
-          options: storeData.menus[0].options
-        });
-      }
-
       setStore(storeData);
       // 매장 상세 조회 시 메뉴가 포함되어 있음
       setMenus(storeData.menus || []);
@@ -61,28 +49,17 @@ export default function StoreDetailPage() {
   };
 
   const handleOptionToggle = (option: MenuOption) => {
-    console.log('[StoreDetail] 옵션 토글:', option);
     setSelectedOptions((prev) => {
       const exists = prev.find((o) => o.id === option.id);
       if (exists) {
-        const filtered = prev.filter((o) => o.id !== option.id);
-        console.log('[StoreDetail] 옵션 제거됨, 현재 선택된 옵션:', filtered);
-        return filtered;
+        return prev.filter((o) => o.id !== option.id);
       }
-      const updated = [...prev, option];
-      console.log('[StoreDetail] 옵션 추가됨, 현재 선택된 옵션:', updated);
-      return updated;
+      return [...prev, option];
     });
   };
 
   const handleAddToCart = () => {
     if (!selectedMenu || !store) return;
-
-    console.log('[StoreDetail] 장바구니 담기:', {
-      menu: selectedMenu,
-      quantity,
-      selectedOptions
-    });
 
     addItem(storeId, store.name, selectedMenu, quantity, selectedOptions);
     setSelectedMenu(null);

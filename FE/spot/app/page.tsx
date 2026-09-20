@@ -11,61 +11,43 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 카테고리는 마운트 시 1회만
   useEffect(() => {
-    loadData();
+    const loadCategories = async () => {
+      try {
+        setCategories((await storeApi.getCategories()) || []);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    loadCategories();
   }, []);
 
+  // 가게 목록은 선택된 카테고리가 바뀔 때마다 (마운트 시에는 selectedCategory=null 이라 전체 조회)
+  // 이전에는 마운트 시 두 effect 가 동시에 가게 목록을 두 번 요청했다
   useEffect(() => {
-    if (selectedCategory) {
-      loadStoresByCategory(selectedCategory);
-    } else {
-      loadStores();
-    }
-  }, [selectedCategory]);
+    let cancelled = false;
 
-  const loadData = async () => {
-    try {
+    const loadStores = async () => {
       setIsLoading(true);
-      const [storesData, categoriesData] = await Promise.all([
-        storeApi.getStores(),
-        storeApi.getCategories(),
-      ]);
+      try {
+        const data = selectedCategory
+          ? await storeApi.getStoresByCategory(selectedCategory)
+          : await storeApi.getStores();
+        if (!cancelled) setStores(data.content || []);
+      } catch (error) {
+        console.error('Failed to load stores:', error);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    loadStores();
 
-      // ApiResponse 형태이므로 .result를 참조해야 함
-      // storesData.result.content (페이징 데이터인 경우)
-      // categoriesData.result (배열인 경우)
-      setStores(storesData.content || []); 
-      setCategories(categoriesData || []); 
-    } catch (error) {
-      console.error('Failed to load data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadStores = async () => {
-    setIsLoading(true);
-    try {
-      const data = await storeApi.getStores();
-      setStores(data.content || []); // .result 추가
-    } catch (error) {
-      console.error('Failed to load stores:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadStoresByCategory = async (categoryName: string) => {
-    setIsLoading(true);
-    try {
-      const data = await storeApi.getStoresByCategory(categoryName);
-      setStores(data.content || []); // .result 추가
-    } catch (error) {
-      console.error('Failed to load stores by category:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // 카테고리를 빠르게 바꿨을 때 늦게 도착한 이전 응답이 화면을 덮어쓰지 않도록
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCategory]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -151,9 +133,16 @@ export default function HomePage() {
                     {store.roadAddress} {store.addressDetail}
                   </p>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">
-                      {store.openTime} - {store.closeTime}
-                    </span>
+                    {/* 목록 응답(StoreListResponse)에는 영업시간이 없고 카테고리별 조회에만 있다 */}
+                    {store.openTime && store.closeTime ? (
+                      <span className="text-gray-600">
+                        {store.openTime} - {store.closeTime}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">
+                        {store.categoryNames?.join(' · ') || ''}
+                      </span>
+                    )}
                     {store.phoneNumber && (
                       <span className="text-gray-400">{store.phoneNumber}</span>
                     )}
