@@ -1,0 +1,384 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Spot 픽업 주문 플랫폼 — 전체 동작 흐름",
+    "output": "spot-architecture.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1310,
+      660
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "client",
+          "edge",
+          "gateway",
+          "user",
+          "store",
+          "order",
+          "payment"
+        ],
+        "note": "사용자 요청이 ALB와 Gateway를 지나 도메인 서비스에 도달하는 경로"
+      },
+      {
+        "id": "order-payment",
+        "label": "주문 · 결제 흐름",
+        "focus": [
+          "order",
+          "rds",
+          "kafka",
+          "payment",
+          "toss"
+        ],
+        "note": "Outbox 저장 → Debezium CDC → Kafka 이벤트 → Toss 승인까지의 비동기 체인"
+      },
+      {
+        "id": "orchestration",
+        "label": "워크플로 오케스트레이션",
+        "focus": [
+          "order",
+          "temporal",
+          "payment"
+        ],
+        "note": "Temporal이 주문 워크플로와 결제 자식 워크플로를 관리"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "사용자 · 점주",
+      "sublabel": "웹 프론트엔드 (FE)",
+      "pos": [
+        20,
+        250
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "edge",
+      "type": "cloud",
+      "label": "Route 53 · ALB",
+      "sublabel": "ALB Controller Ingress",
+      "pos": [
+        210,
+        250
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "WAF rate limit"
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "API Gateway",
+      "sublabel": "Spring Cloud Gateway :8080",
+      "pos": [
+        410,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "X-Request-Id 주입"
+    },
+    {
+      "id": "toss",
+      "type": "external",
+      "label": "Toss Payments",
+      "sublabel": "PG 승인 · 취소 API",
+      "pos": [
+        410,
+        570
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "user",
+      "type": "backend",
+      "label": "User Service",
+      "sublabel": "회원 · 로그인 :8081",
+      "pos": [
+        770,
+        20
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "tag": "JWT 발급 · 재발급"
+    },
+    {
+      "id": "store",
+      "type": "backend",
+      "label": "Store Service",
+      "sublabel": "매장 · 메뉴 :8083",
+      "pos": [
+        770,
+        135
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "주문 :8082",
+      "pos": [
+        770,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka (KRaft ×3)",
+      "sublabel": "Strimzi 이벤트 버스",
+      "pos": [
+        770,
+        365
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "결제 :8084",
+      "pos": [
+        770,
+        480
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis 7",
+      "sublabel": "ElastiCache 캐시",
+      "pos": [
+        1060,
+        135
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "rds",
+      "type": "database",
+      "label": "PostgreSQL 16",
+      "sublabel": "RDS · 서비스별 DB + Outbox",
+      "pos": [
+        1060,
+        305
+      ],
+      "size": [
+        170,
+        234
+      ],
+      "tag": "논리 복제 슬롯"
+    },
+    {
+      "id": "temporal",
+      "type": "backend",
+      "label": "Temporal",
+      "sublabel": "워크플로 엔진 :7233",
+      "pos": [
+        1060,
+        570
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-edge",
+      "from": "client",
+      "to": "edge",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "edge-gateway",
+      "from": "edge",
+      "to": "gateway",
+      "label": "/api/** 전달",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "gw-user",
+      "from": "gateway",
+      "to": "user",
+      "label": "/api/users",
+      "labelAt": [
+        722,
+        38
+      ]
+    },
+    {
+      "id": "gw-store",
+      "from": "gateway",
+      "to": "store",
+      "label": "/api/stores",
+      "labelAt": [
+        722,
+        153
+      ]
+    },
+    {
+      "id": "gw-order",
+      "from": "gateway",
+      "to": "order",
+      "label": "/api/orders",
+      "variant": "emphasis",
+      "labelAt": [
+        722,
+        268
+      ]
+    },
+    {
+      "id": "gw-payment",
+      "from": "gateway",
+      "to": "payment",
+      "label": "/api/payments",
+      "labelAt": [
+        722,
+        498
+      ]
+    },
+    {
+      "id": "store-redis",
+      "from": "store",
+      "to": "redis",
+      "label": "메뉴 · 매장 캐시"
+    },
+    {
+      "id": "order-rds",
+      "from": "order",
+      "to": "rds",
+      "label": "주문 + Outbox 저장",
+      "variant": "emphasis"
+    },
+    {
+      "id": "payment-rds",
+      "from": "payment",
+      "to": "rds",
+      "label": "결제 + Outbox 저장"
+    },
+    {
+      "id": "rds-kafka",
+      "from": "rds",
+      "to": "kafka",
+      "label": "Debezium CDC 발행",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "kafka-order",
+      "from": "kafka",
+      "to": "order",
+      "label": "spot.payment.succeeded",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kafka-payment",
+      "from": "kafka",
+      "to": "payment",
+      "label": "spot.order.created",
+      "labelDy": 24
+    },
+    {
+      "id": "payment-toss",
+      "from": "payment",
+      "to": "toss",
+      "label": "승인 · 취소 REST",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "order-temporal",
+      "from": "order",
+      "to": "temporal",
+      "label": "OrderWorkflow 시작",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "temporal-payment",
+      "from": "temporal",
+      "to": "payment",
+      "label": "결제 자식 워크플로",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom",
+      "labelAt": [
+        975,
+        605
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "요청 경로",
+      "items": [
+        "사용자 · 점주 → Route 53 · ALB → Spring Cloud Gateway",
+        "Gateway는 경로 기반 라우팅과 X-Request-Id 주입만 담당",
+        "JWT 검증은 각 서비스의 JWTFilter가 직접 수행"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "주문 → 결제 흐름",
+      "items": [
+        "Order가 주문과 p_order_outbox 를 한 트랜잭션으로 저장",
+        "Debezium이 Outbox 테이블을 읽어 spot.order.created 발행",
+        "Payment가 구독해 Toss 승인 → spot.payment.succeeded 로 주문 확정"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "동기 · 비동기 · 오케스트레이션",
+      "items": [
+        "OpenFeign + Resilience4j 서킷 브레이커로 내부 동기 호출",
+        "user · store · order · payment 는 같은 RDS 안의 전용 DB 사용",
+        "Temporal이 결제 5분 · 점주 수락 10분 타임아웃과 보상 취소 담당"
+      ]
+    }
+  ]
+}
