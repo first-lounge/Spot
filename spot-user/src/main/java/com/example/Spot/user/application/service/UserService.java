@@ -22,7 +22,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserResponseDTO getUserById(Integer userid) {
-        UserEntity user = userRepository.findByIdWithLock(userid)
+        UserEntity user = userRepository.findById(userid)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         return toResponse(user);
     }
@@ -72,7 +72,7 @@ public class UserService {
     
     @Transactional(readOnly = true)
     public List<UserResponseDTO> searchUsersByNickname(String nickname) {
-        List<UserEntity> users = userRepository.findByNicknameContainingWithLock(nickname);
+        List<UserEntity> users = userRepository.findByNickname(nickname);
 
         if (users.isEmpty()) {
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
