@@ -24,7 +24,6 @@ export function useTokenRefresh(intervalMinutes: number = 10) {
 
       if (!success) {
         // 갱신 실패 시 로그아웃 처리
-        console.log('[useTokenRefresh] 토큰 갱신 실패 - 로그아웃 처리');
         actions.logout();
       }
     };
@@ -33,10 +32,7 @@ export function useTokenRefresh(intervalMinutes: number = 10) {
     checkAndRefresh();
 
     // 주기적으로 체크 (10분마다)
-    intervalRef.current = setInterval(() => {
-      console.log(`[useTokenRefresh] ${intervalMinutes}분 주기 토큰 체크 실행`);
-      checkAndRefresh();
-    }, intervalMinutes * 60 * 1000);
+    intervalRef.current = setInterval(checkAndRefresh, intervalMinutes * 60 * 1000);
 
     // 클린업
     return () => {

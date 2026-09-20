@@ -3,15 +3,39 @@
 import {useEffect, useState} from 'react';
 import {useAuth} from '@/store/authStore';
 import {adminOrderApi, type AdminStats, adminStatsApi, adminStoreApi, adminUserApi,} from '@/lib/admin';
-import type {OrderResponse, PageResponse, Store, User} from '@/types';
+import type {OrderResponse, OrderStatus, PageResponse, Store, User} from '@/types';
 import Button from '@/components/ui/Button';
 
 type TabType = 'dashboard' | 'users' | 'orders' | 'stores';
+
+const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  PAYMENT_PENDING: '결제 대기',
+  PAYMENT_FAILED: '결제 실패',
+  PENDING: '승인 대기',
+  ACCEPTED: '승인됨',
+  REJECT_PENDING: '거절 처리 중',
+  REJECTED: '거절됨',
+  COOKING: '조리 중',
+  READY: '픽업 준비',
+  COMPLETED: '완료',
+  CANCEL_PENDING: '취소 처리 중',
+  CANCELLED: '취소',
+  REFUND_ERROR: '환불 확인 필요',
+};
+
+const formatDateTime = (value?: string): string => {
+  if (!value) return '-';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('ko-KR');
+};
 
 export default function AdminPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isLoading, setIsLoading] = useState(false);
+
+  // 주문 상세 모달 — 목록 응답에 orderItems 가 이미 포함돼 있어 추가 API 호출 없이 표시한다
+  const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null);
 
   // 대시보드 데이터
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -34,7 +58,7 @@ export default function AdminPage() {
       setIsLoading(true);
       const data = await adminStatsApi.getStats();
       setStats(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('대시보드 로드 실패:', error);
       alert('대시보드 데이터를 불러오는데 실패했습니다.');
     } finally {
@@ -195,7 +219,7 @@ export default function AdminPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">관리자 대시보드</h1>
         <p className="mt-2 text-gray-600">
-          안녕하세요, {user?.nickname}님 ({user?.role})
+          안녕하세요, {user?.nickname || user?.username}님 ({user?.role})
         </p>
       </div>
 
@@ -374,10 +398,10 @@ export default function AdminPage() {
                           {user.username}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {user.nickname}
+                          {user.nickname || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.email}
+                          {user.email || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <select
@@ -493,10 +517,7 @@ export default function AdminPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              // 주문 상세 페이지로 이동 또는 모달 열기
-                              alert(`주문 #${order.orderId} 상세 정보`);
-                            }}
+                            onClick={() => setSelectedOrder(order)}
                           >
                             상세
                           </Button>
@@ -565,7 +586,7 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {stores.content.map((store: any) => (
+                    {stores.content.map((store) => (
                       <tr key={store.id} className={store.isDeleted ? 'bg-gray-100 opacity-60' : ''}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {store.id}
@@ -689,6 +710,132 @@ export default function AdminPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* 주문 상세 모달 */}
+      {selectedOrder && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedOrder(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">주문 상세</h2>
+              <button
+                type="button"
+                onClick={() => setSelectedOrder(null)}
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm mb-6">
+              <div>
+                <dt className="text-gray-500">주문 번호</dt>
+                <dd className="text-gray-900 font-medium">{selectedOrder.orderNumber || '-'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">주문 ID</dt>
+                <dd className="text-gray-900 break-all">{selectedOrder.orderId}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">가게</dt>
+                <dd className="text-gray-900">{selectedOrder.storeName}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">주문자 ID</dt>
+                <dd className="text-gray-900">{selectedOrder.userId}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">상태</dt>
+                <dd className="text-gray-900">
+                  {ORDER_STATUS_LABELS[selectedOrder.status] ?? selectedOrder.status}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">주문 시각</dt>
+                <dd className="text-gray-900">{formatDateTime(selectedOrder.createdAt)}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">픽업 시각</dt>
+                <dd className="text-gray-900">{formatDateTime(selectedOrder.pickupTime)}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">일회용품</dt>
+                <dd className="text-gray-900">{selectedOrder.needDisposables ? '필요' : '불필요'}</dd>
+              </div>
+              {selectedOrder.estimatedTime != null && (
+                <div>
+                  <dt className="text-gray-500">예상 조리 시간</dt>
+                  <dd className="text-gray-900">{selectedOrder.estimatedTime}분</dd>
+                </div>
+              )}
+              {selectedOrder.request && (
+                <div className="sm:col-span-2">
+                  <dt className="text-gray-500">요청 사항</dt>
+                  <dd className="text-gray-900 whitespace-pre-wrap">{selectedOrder.request}</dd>
+                </div>
+              )}
+              {selectedOrder.reason && (
+                <div className="sm:col-span-2">
+                  <dt className="text-gray-500">
+                    거절/취소 사유{selectedOrder.cancelledBy ? ` (${selectedOrder.cancelledBy})` : ''}
+                  </dt>
+                  <dd className="text-gray-900 whitespace-pre-wrap">{selectedOrder.reason}</dd>
+                </div>
+              )}
+            </dl>
+
+            <h3 className="text-sm font-medium text-gray-700 mb-2">주문 항목</h3>
+            <div className="border rounded-lg divide-y">
+              {(selectedOrder.orderItems ?? []).length === 0 ? (
+                <p className="p-4 text-sm text-gray-500">항목 정보가 없습니다.</p>
+              ) : (
+                selectedOrder.orderItems.map((item) => (
+                  <div key={item.id ?? `${item.menuId}-${item.quantity}`} className="p-4 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-900">
+                        {item.menuName} × {item.quantity}
+                      </span>
+                      <span className="text-gray-900">
+                        {Number(item.subtotal ?? item.menuPrice * item.quantity).toLocaleString()}원
+                      </span>
+                    </div>
+                    {item.options && item.options.length > 0 && (
+                      <ul className="mt-1 text-gray-500 space-y-0.5">
+                        {item.options.map((option) => (
+                          <li key={option.id ?? option.menuOptionId}>
+                            + {option.optionName}
+                            {option.optionDetail ? ` (${option.optionDetail})` : ''}
+                            {option.optionPrice ? ` ${Number(option.optionPrice).toLocaleString()}원` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex justify-between items-center mt-4 pt-4 border-t">
+              <span className="text-sm text-gray-500">총 금액</span>
+              <span className="text-lg font-bold text-gray-900">
+                {Number(selectedOrder.totalAmount ?? 0).toLocaleString()}원
+              </span>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <Button variant="outline" onClick={() => setSelectedOrder(null)}>
+                닫기
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

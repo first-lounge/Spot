@@ -1,6 +1,7 @@
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
-import Cookies from 'js-cookie';
+import {tokenStore} from '@/lib/token';
+import {useCartStore} from '@/store/cartStore';
 import type {Role, User} from '@/types';
 
 interface AuthState {
@@ -8,7 +9,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   hasHydrated: boolean;
-  
+
   actions: {
     setUser: (user: User | null) => void;
     logout: () => void;
@@ -41,22 +42,26 @@ export const useAuthStore = create<AuthState>()(
 
       actions: {
         setUser: (user) => {
-          console.log('[Debug] Store - setUser 호출됨:', user);
           set({ user, isAuthenticated: !!user, isLoading: false });
         },
         logout: () => {
-          console.log('[Debug] Store - logout 호출됨');
-          Cookies.remove('accessToken');
-          Cookies.remove('refreshToken');
+          tokenStore.clear();
           set({ user: null, isAuthenticated: false });
 
-          // localStorage에서도 완전히 제거
+          // 장바구니는 사용자 소유 — 로그아웃하면 같이 비운다
+          // (예전엔 안 비워서 다음 로그인 때 이전 세션의 장바구니가 그대로 보였음)
+          useCartStore.getState().clearCart();
+
+          // persist 가 남긴 사용자 정보도 제거
           if (typeof window !== 'undefined') {
-            localStorage.removeItem('auth-storage');
+            try {
+              window.localStorage.removeItem('auth-storage');
+            } catch {
+              // 무시
+            }
           }
         },
         setHasHydrated: (value) => {
-          console.log('[Debug] Store - Hydration 상태 변경:', value);
           set({ hasHydrated: value });
         },
       },
@@ -75,11 +80,10 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated
       }),
       onRehydrateStorage: () => {
-        return (hydratedState, error) => {
+        return (_hydratedState, error) => {
           if (error) {
-            console.error('[Debug] Store - Rehydration 에러:', error);
+            console.error('[AuthStore] 저장소 복원 실패:', error);
           }
-          console.log('[Debug] Store - 저장소에서 복구된 데이터:', hydratedState);
           // hydration 완료 후 상태 업데이트 (setTimeout으로 초기화 완료 후 실행)
           setTimeout(() => {
             useAuthStore.setState({ hasHydrated: true, isLoading: false });

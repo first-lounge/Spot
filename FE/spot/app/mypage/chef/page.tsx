@@ -2,19 +2,45 @@
 
 import React, {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
+import axios from 'axios';
 import {useAuthStore} from '@/store/authStore';
 import {Button} from '@/components/ui/Button';
 import {Input} from '@/components/ui/Input';
-import axios from 'axios';
+import api from '@/lib/api';
+import type {ApiResponse, PageResponse, Store} from '@/types';
 
-interface Store {
-  id: string;
-  name: string;
-  description: string;
-  phoneNumber: string;
-  roadAddress: string;
-  addressDetail: string;
-}
+/**
+ * ⚠️ `/api/chefs/**` 엔드포인트는 백엔드에 아직 없다 (ROADMAP F2-1).
+ * 백엔드가 준비되면 lib/chefs.ts 로 옮기고 이 파일의 호출부만 바꾸면 된다.
+ */
+const chefApi = {
+  getMyStore: async (): Promise<Store | null> => {
+    try {
+      const response = await api.get<ApiResponse<Store>>('/api/chefs/my-store');
+      return response.data.result ?? null;
+    } catch (error) {
+      // 소속 가게가 없으면 404 — 정상 상태
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
+  getApprovedStores: async (): Promise<Store[]> => {
+    const response = await api.get<ApiResponse<PageResponse<Store>> | PageResponse<Store>>(
+      '/api/stores',
+      { params: { status: 'APPROVED' } }
+    );
+    const data = response.data as ApiResponse<PageResponse<Store>> & PageResponse<Store>;
+    return data.result?.content ?? data.content ?? [];
+  },
+  joinStore: async (storeId: string): Promise<void> => {
+    await api.post(`/api/chefs/join-store/${storeId}`, {});
+  },
+  leaveStore: async (): Promise<void> => {
+    await api.delete('/api/chefs/leave-store');
+  },
+};
 
 export default function ChefStorePage() {
   const router = useRouter();
@@ -39,25 +65,15 @@ export default function ChefStorePage() {
 
   const loadMyStore = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.get('/api/chefs/my-store', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setMyStore(response.data.result);
-    } catch (error: any) {
-      if (error.response?.status !== 404) {
-        console.error('소속 가게 로드 실패:', error);
-      }
+      setMyStore(await chefApi.getMyStore());
+    } catch (error) {
+      console.error('소속 가게 로드 실패:', error);
     }
   };
 
   const loadAvailableStores = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.get('/api/stores?status=APPROVED', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setAvailableStores(response.data.result.content || []);
+      setAvailableStores(await chefApi.getApprovedStores());
     } catch (error) {
       console.error('가게 목록 로드 실패:', error);
     }
@@ -68,14 +84,7 @@ export default function ChefStorePage() {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.post(
-        `/api/chefs/join-store/${storeId}`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await chefApi.joinStore(storeId);
       alert('가게에 소속되었습니다.');
       loadMyStore();
       loadAvailableStores();
@@ -92,10 +101,7 @@ export default function ChefStorePage() {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.delete('/api/chefs/leave-store', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await chefApi.leaveStore();
       alert('가게에서 나갔습니다.');
       setMyStore(null);
       loadAvailableStores();
@@ -131,7 +137,7 @@ export default function ChefStorePage() {
 
           <div className="space-y-3">
             <h3 className="text-2xl font-bold text-gray-900">{myStore.name}</h3>
-            <p className="text-gray-600">{myStore.description}</p>
+            {myStore.description && <p className="text-gray-600">{myStore.description}</p>}
 
             <div className="space-y-2 text-sm text-gray-600 pt-3">
               <div className="flex items-center gap-2">
@@ -200,9 +206,11 @@ export default function ChefStorePage() {
                       <h3 className="text-lg font-semibold text-gray-900">
                         {store.name}
                       </h3>
-                      <p className="text-gray-600 text-sm mt-1">
-                        {store.description}
-                      </p>
+                      {store.description && (
+                        <p className="text-gray-600 text-sm mt-1">
+                          {store.description}
+                        </p>
+                      )}
                       <div className="space-y-1 text-sm text-gray-600 mt-3">
                         <div className="flex items-center gap-2">
                           <span>📞</span>

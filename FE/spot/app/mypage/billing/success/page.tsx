@@ -2,8 +2,10 @@
 
 import {Suspense, useEffect, useState} from 'react';
 import {useRouter, useSearchParams} from 'next/navigation';
+import axios from 'axios';
 import {useAuthStore} from '@/store/authStore';
 import {paymentApi} from '@/lib/payments';
+import type {PaymentMethod} from '@/types';
 
 function BillingSuccessContent() {
   const router = useRouter();
@@ -16,20 +18,11 @@ function BillingSuccessContent() {
   useEffect(() => {
     const saveBillingKeyAndPay = async () => {
       try {
-        // URL에서 파라미터 추출
-        console.log('=== Billing Success Page ===');
-        console.log('전체 URL:', window.location.href);
-        console.log('모든 URL 파라미터:');
-        searchParams.forEach((value, key) => {
-          console.log(`  ${key}: ${value}`);
-        });
-
+        // URL에서 파라미터 추출 (authKey 는 민감값 — 로그로 남기지 않는다)
         const authKey = searchParams.get('authKey');
         const customerKey = searchParams.get('customerKey');
         const orderId = searchParams.get('orderId');
-        const paymentMethod = searchParams.get('paymentMethod');
-
-        console.log('추출된 값:', { authKey, customerKey, orderId, paymentMethod });
+        const paymentMethod = searchParams.get('paymentMethod') as PaymentMethod | null;
 
         if (!authKey || !customerKey) {
           throw new Error('빌링키 정보가 없습니다.');
@@ -40,7 +33,6 @@ function BillingSuccessContent() {
         }
 
         // 1. 빌링키 저장
-        console.log('빌링키 저장 중...', { authKey, customerKey, userId: user.id });
         await paymentApi.saveBillingKey({
           userId: user.id,
           authKey,
@@ -49,13 +41,12 @@ function BillingSuccessContent() {
 
         // 2. orderId가 있으면 자동으로 결제 진행
         if (orderId) {
-          console.log('결제 진행 중...', { orderId, paymentMethod });
           const paymentData = {
             title: '주문 결제',
             content: '자동결제 등록 후 결제',
             userId: user.id,
             orderId,
-            paymentMethod: (paymentMethod as any) || 'CREDIT_CARD',
+            paymentMethod: paymentMethod ?? 'CREDIT_CARD',
             paymentAmount: 0, // 서버에서 주문 금액 조회
           };
 
@@ -74,10 +65,15 @@ function BillingSuccessContent() {
             router.push('/mypage/billing');
           }, 3000);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('빌링키 저장 또는 결제 실패:', error);
         setStatus('error');
-        setErrorMessage(error.response?.data?.message || error.message || '처리 중 오류가 발생했습니다.');
+        const message = axios.isAxiosError(error)
+          ? error.response?.data?.message || error.message
+          : error instanceof Error
+            ? error.message
+            : undefined;
+        setErrorMessage(message || '처리 중 오류가 발생했습니다.');
       }
     };
 

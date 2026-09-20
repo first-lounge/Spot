@@ -2,20 +2,19 @@
 
 import React, {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
+import axios from 'axios';
 import {useAuthStore} from '@/store/authStore';
 import {Button} from '@/components/ui/Button';
 import {Input} from '@/components/ui/Input';
-import axios from 'axios';
+import {storeApi} from '@/lib/stores';
+import type {Store, StoreCreateRequest, StoreStatus} from '@/types';
 
-interface Store {
-  id: string;
-  name: string;
-  description: string;
-  phoneNumber: string;
-  roadAddress: string;
-  addressDetail: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-}
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.message || error.message || fallback;
+  }
+  return fallback;
+};
 
 export default function OwnerStorePage() {
   const router = useRouter();
@@ -27,14 +26,14 @@ export default function OwnerStorePage() {
   const [newCategory, setNewCategory] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<StoreCreateRequest>({
     name: '',
     phoneNumber: '',
     roadAddress: '서울특별시 종로구 ',  // 서비스 가능 지역으로 자동 설정
     addressDetail: '',
     openTime: '09:00',
     closeTime: '22:00',
-    categoryNames: [] as string[],
+    categoryNames: [],
     ownerId: user?.id || 0,
     chefId: user?.id || 0,
   });
@@ -60,29 +59,9 @@ export default function OwnerStorePage() {
 
   const loadStores = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      console.log('=== 내 가게 조회 요청 ===');
-      console.log('Token:', token ? '있음' : '없음');
-
-      const response = await axios.get('/api/stores/my', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      console.log('응답 전체:', response);
-      console.log('응답 데이터:', response.data);
-
-      // API 응답이 ApiResponse로 래핑되어 있는지, 직접 배열인지 확인
-      const storesData = response.data.result || response.data;
-      console.log('가게 데이터:', storesData);
-      console.log('가게 개수:', storesData?.length || 0);
-
-      setStores(Array.isArray(storesData) ? storesData : []);
+      setStores(await storeApi.getMyStores());
     } catch (error) {
       console.error('가게 목록 로드 실패:', error);
-      if (axios.isAxiosError(error)) {
-        console.error('에러 응답:', error.response?.data);
-        console.error('에러 상태:', error.response?.status);
-      }
     }
   };
 
@@ -92,16 +71,12 @@ export default function OwnerStorePage() {
     }
 
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.delete(`/api/stores/${storeId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await storeApi.deleteStore(storeId);
       alert('가게 등록이 취소되었습니다.');
       loadStores();
-    } catch (error: any) {
+    } catch (error) {
       console.error('가게 취소 실패:', error);
-      const errorMsg = error.response?.data?.message || '가게 취소에 실패했습니다.';
-      alert(`가게 취소 실패: ${errorMsg}`);
+      alert(`가게 취소 실패: ${getErrorMessage(error, '가게 취소에 실패했습니다.')}`);
     }
   };
 
@@ -111,16 +86,12 @@ export default function OwnerStorePage() {
     }
 
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.delete(`/api/stores/${storeId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await storeApi.deleteStore(storeId);
       alert('가게가 삭제되었습니다.');
       loadStores();
-    } catch (error: any) {
+    } catch (error) {
       console.error('가게 삭제 실패:', error);
-      const errorMsg = error.response?.data?.message || '가게 삭제에 실패했습니다.';
-      alert(`가게 삭제 실패: ${errorMsg}`);
+      alert(`가게 삭제 실패: ${getErrorMessage(error, '가게 삭제에 실패했습니다.')}`);
     }
   };
 
@@ -155,29 +126,18 @@ export default function OwnerStorePage() {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('accessToken');
-
       // 1. 먼저 기존 카테고리 목록을 조회
-      const existingCategoriesResponse = await axios.get('/api/categories', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const existingCategoryNames = existingCategoriesResponse.data.map((cat: any) => cat.name);
+      const existingCategoryNames = (await storeApi.getCategories()).map((cat) => cat.name);
 
       // 2. 선택된 카테고리 중 존재하지 않는 카테고리를 찾아서 생성
       for (const categoryName of formData.categoryNames) {
         if (!existingCategoryNames.includes(categoryName)) {
-          await axios.post(
-            '/api/categories',
-            { name: categoryName },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          await storeApi.createCategory(categoryName);
         }
       }
 
       // 3. 모든 카테고리가 준비되면 스토어 등록
-      await axios.post('/api/stores', formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await storeApi.createStore(formData);
       alert('가게가 등록되었습니다. 관리자 승인 후 운영이 가능합니다.');
       setShowForm(false);
       setFormData({
@@ -192,12 +152,9 @@ export default function OwnerStorePage() {
         chefId: user?.id || 0,
       });
       loadStores();
-    } catch (error: any) {
+    } catch (error) {
       console.error('가게 등록 실패:', error);
-      console.error('Error response:', error.response);
-      console.error('Request data:', formData);
-      const errorMsg = error.response?.data?.message || error.message || '가게 등록에 실패했습니다.';
-      alert(`가게 등록 실패: ${errorMsg}\nStatus: ${error.response?.status}`);
+      alert(`가게 등록 실패: ${getErrorMessage(error, '가게 등록에 실패했습니다.')}`);
     } finally {
       setIsLoading(false);
     }
@@ -207,13 +164,13 @@ export default function OwnerStorePage() {
     return null;
   }
 
-  const statusLabels = {
+  const statusLabels: Record<StoreStatus, string> = {
     PENDING: '승인 대기',
     APPROVED: '승인됨',
     REJECTED: '거부됨',
   };
 
-  const statusColors = {
+  const statusColors: Record<StoreStatus, string> = {
     PENDING: 'bg-yellow-100 text-yellow-800',
     APPROVED: 'bg-green-100 text-green-800',
     REJECTED: 'bg-red-100 text-red-800',
@@ -272,7 +229,7 @@ export default function OwnerStorePage() {
                 required
               />
               <p className="mt-1 text-xs text-gray-500">
-                현재 서비스 지역: 종로구 (주소에 "종로구"가 포함되어야 합니다)
+                현재 서비스 지역: 종로구 (주소에 &quot;종로구&quot;가 포함되어야 합니다)
               </p>
             </div>
 
@@ -407,14 +364,16 @@ export default function OwnerStorePage() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900">{store.name}</h3>
-                  <p className="text-gray-600 mt-1">{store.description}</p>
+                  {store.description && (
+                    <p className="text-gray-600 mt-1">{store.description}</p>
+                  )}
                 </div>
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    statusColors[store.status]
+                    statusColors[store.status ?? 'PENDING']
                   }`}
                 >
-                  {statusLabels[store.status]}
+                  {statusLabels[store.status ?? 'PENDING']}
                 </span>
               </div>
 

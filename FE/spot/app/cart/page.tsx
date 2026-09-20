@@ -3,6 +3,7 @@
 import React, {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
+import axios from 'axios';
 import {useCartStore} from '@/store/cartStore';
 import {useAuthStore} from '@/store/authStore';
 import {orderApi} from '@/lib/orders';
@@ -25,25 +26,6 @@ export default function CartPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'cart' | 'checkout'>('cart');
 
-  // 장바구니 데이터 유효성 검사
-  React.useEffect(() => {
-    if (cart && cart.items.length > 0) {
-      console.log('=== 장바구니 검증 시작 ===');
-      console.log('장바구니 전체:', cart);
-      console.log('아이템 개수:', cart.items.length);
-
-      cart.items.forEach((item, index) => {
-        console.log(`아이템 ${index}:`, {
-          hasMenu: !!item.menu,
-          menu: item.menu,
-          menuId: item.menu?.id,
-          quantity: item.quantity,
-          selectedOptions: item.selectedOptions
-        });
-      });
-    }
-  }, [cart]);
-
   const handleCheckout = () => {
     // 2. 스토어가 로드되지 않았다면 아무것도 하지 않거나 로딩 처리를 합니다.
     if (!hasHydrated) return;
@@ -61,8 +43,6 @@ export default function CartPage() {
   }
 
   const handleOrder = async () => {
-    console.log('[Debug] handleOrder 호출 - cart:', cart, 'user:', user);
-
     if (!cart) {
       alert('장바구니가 비어있습니다.');
       return;
@@ -90,16 +70,12 @@ export default function CartPage() {
     try {
       // 0. 빌링키 존재 여부 확인
       const hasBillingKey = await paymentApi.checkBillingKeyExists();
-      console.log(hasBillingKey);
-      
-      // 1. 주문 생성
-      console.log('장바구니 원본 데이터:', cart);
 
+      // 1. 주문 생성
       // 장바구니 데이터 검증
       const invalidItems = cart.items.filter(item => !item.menu || !item.menu.id);
       if (invalidItems.length > 0) {
         console.error('유효하지 않은 장바구니 아이템:', invalidItems);
-        console.error('전체 장바구니:', cart);
 
         // 자동으로 장바구니 초기화
         if (window.confirm('장바구니에 잘못된 데이터가 있습니다. 장바구니를 비우고 새로 시작하시겠습니까?')) {
@@ -110,23 +86,9 @@ export default function CartPage() {
         return;
       }
 
-      console.log('장바구니 아이템들:', cart.items.map(item => ({
-        menuId: item.menu.id,
-        menuName: item.menu.name,
-        quantity: item.quantity,
-        selectedOptions: item.selectedOptions
-      })));
-
       const orderData = {
         storeId: cart.storeId,
         orderItems: cart.items.map((item) => {
-          console.log('처리 중인 아이템:', {
-            menuId: item.menu?.id,
-            menuIdType: typeof item.menu?.id,
-            hasMenu: !!item.menu,
-            menuObject: item.menu
-          });
-
           if (!item.menu || !item.menu.id) {
             throw new Error(`유효하지 않은 메뉴 데이터: ${JSON.stringify(item)}`);
           }
@@ -147,10 +109,8 @@ export default function CartPage() {
         ...(request && { request }),
       };
 
-      console.log('주문 데이터:', JSON.stringify(orderData, null, 2));
-
       const order = await orderApi.createOrder(orderData);
-      console.log("@@");
+
       // 2. 결제 진행
       if (hasBillingKey) {
 
@@ -186,30 +146,25 @@ export default function CartPage() {
         // 빌링키 발급 요청
         const customerKey = `customer_${user.id}_${Date.now()}`;
 
-        console.log('=== requestBillingAuth 호출 ===');
-        console.log('customerKey:', customerKey);
-        console.log('customerName:', user.username);
-
-        const response = await tossPayments.requestBillingAuth('카드', {
+        await tossPayments.requestBillingAuth('카드', {
           customerKey: customerKey,
           customerName: user.username,
           successUrl: `${window.location.origin}/mypage/billing/success?orderId=${order.orderId}&paymentMethod=${paymentMethod}`,
           failUrl: `${window.location.origin}/payemnts/fail`,
         });
 
-        console.log('=== requestBillingAuth 응답 ===');
-        console.log(response);
-
         // 토스 결제창이 열리면 이 이후 코드는 실행되지 않음
         // billing success 페이지에서 빌링키 저장 후 결제 처리
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Order failed:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
 
-      const errorMessage = error.response?.data?.message || error.message || '주문에 실패했습니다.';
-      alert(`주문 실패: ${errorMessage}`);
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.message || error.message
+        : error instanceof Error
+          ? error.message
+          : undefined;
+      alert(`주문 실패: ${errorMessage || '주문에 실패했습니다.'}`);
     } finally {
       setIsLoading(false);
     }

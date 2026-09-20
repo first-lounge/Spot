@@ -127,7 +127,7 @@ export function Header() {
                   href="/mypage"
                   className="text-gray-600 hover:text-orange-500 text-sm font-medium"
                 >
-                  {user.nickname}님
+                  {user.nickname || user.username}님
                 </Link>
                 <button
                   onClick={handleLogout}

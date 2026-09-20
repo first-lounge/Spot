@@ -9,26 +9,32 @@ import type {OrderResponse, OrderStatus} from '@/types';
 
 const statusLabels: Record<OrderStatus, string> = {
   PAYMENT_PENDING: '결제 대기',
+  PAYMENT_FAILED: '결제 실패',
   PENDING: '주문 접수',
   ACCEPTED: '주문 수락',
+  REJECT_PENDING: '거절 처리 중',
   REJECTED: '주문 거절',
   COOKING: '조리 중',
   READY: '픽업 준비 완료',
   COMPLETED: '픽업 완료',
+  CANCEL_PENDING: '취소 처리 중',
   CANCELLED: '주문 취소',
-  PAYMENT_FAILED: '결제 실패',
+  REFUND_ERROR: '환불 확인 필요',
 };
 
 const statusColors: Record<OrderStatus, string> = {
   PAYMENT_PENDING: 'bg-yellow-100 text-yellow-800',
+  PAYMENT_FAILED: 'bg-red-100 text-red-800',
   PENDING: 'bg-blue-100 text-blue-800',
   ACCEPTED: 'bg-green-100 text-green-800',
+  REJECT_PENDING: 'bg-orange-100 text-orange-800',
   REJECTED: 'bg-red-100 text-red-800',
   COOKING: 'bg-orange-100 text-orange-800',
   READY: 'bg-purple-100 text-purple-800',
   COMPLETED: 'bg-gray-100 text-gray-800',
+  CANCEL_PENDING: 'bg-orange-100 text-orange-800',
   CANCELLED: 'bg-red-100 text-red-800',
-  PAYMENT_FAILED: 'bg-red-100 text-red-800',
+  REFUND_ERROR: 'bg-red-100 text-red-800',
 };
 
 export default function OrdersPage() {

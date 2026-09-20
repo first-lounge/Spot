@@ -105,9 +105,16 @@ function SearchContent() {
                     {store.roadAddress} {store.addressDetail}
                   </p>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">
-                      {store.openTime} - {store.closeTime}
-                    </span>
+                    {/* 검색 응답(StoreListResponse)에는 영업시간이 없다 */}
+                    {store.openTime && store.closeTime ? (
+                      <span className="text-gray-600">
+                        {store.openTime} - {store.closeTime}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">
+                        {store.categoryNames?.join(' · ') || ''}
+                      </span>
+                    )}
                   </div>
                 </div>
               </Link>

@@ -21,6 +21,12 @@ interface CartState {
   removeItem: (menuId: string) => void;
   updateQuantity: (menuId: string, quantity: number) => void;
   clearCart: () => void;
+  /**
+   * 로그인한 사용자에게 장바구니를 귀속시킨다.
+   * - 주인이 없으면(비로그인 때 담음) 이 사용자 것으로
+   * - 다른 사용자 것이면 비운다 (같은 브라우저에서 계정을 바꿔 로그인한 경우)
+   */
+  claimCart: (userId: number) => void;
   getTotal: () => number;
   getItemCount: () => number;
   setHasHydrated: (value: boolean) => void;
@@ -35,15 +41,6 @@ export const useCartStore = create<CartState>()(
       setHasHydrated: (value) => set({ hasHydrated: value }),
 
       addItem: (storeId, storeName, menu, quantity, options) => {
-        console.log('[CartStore] addItem 호출됨:', {
-          storeId,
-          storeName,
-          menu,
-          menuId: menu?.id,
-          quantity,
-          options
-        });
-
         const { cart } = get();
 
         // 다른 가게의 메뉴가 있으면 장바구니 비우기
@@ -58,16 +55,8 @@ export const useCartStore = create<CartState>()(
         const currentCart = get().cart;
         const newItem: CartItem = { menu, quantity, selectedOptions: options };
 
-        console.log('[CartStore] 생성된 아이템:', newItem);
-
         if (!currentCart) {
-          const newCart = {
-            storeId,
-            storeName,
-            items: [newItem],
-          };
-          console.log('[CartStore] 새 장바구니 생성:', newCart);
-          set({ cart: newCart });
+          set({ cart: { storeId, storeName, items: [newItem] } });
           return;
         }
 
@@ -79,17 +68,13 @@ export const useCartStore = create<CartState>()(
         );
 
         if (existingIndex >= 0) {
-          const updatedItems = [...currentCart.items];
-          updatedItems[existingIndex].quantity += quantity;
-          console.log('[CartStore] 기존 아이템 수량 증가:', updatedItems[existingIndex]);
+          // 기존 아이템 객체를 직접 수정하지 않고 새 객체로 교체 (불변성 유지)
+          const updatedItems = currentCart.items.map((item, index) =>
+            index === existingIndex ? { ...item, quantity: item.quantity + quantity } : item
+          );
           set({ cart: { ...currentCart, items: updatedItems } });
         } else {
-          const updatedCart = {
-            ...currentCart,
-            items: [...currentCart.items, newItem],
-          };
-          console.log('[CartStore] 새 아이템 추가:', updatedCart);
-          set({ cart: updatedCart });
+          set({ cart: { ...currentCart, items: [...currentCart.items, newItem] } });
         }
       },
 
@@ -122,6 +107,16 @@ export const useCartStore = create<CartState>()(
 
       clearCart: () => set({ cart: null }),
 
+      claimCart: (userId) => {
+        const { cart } = get();
+        if (!cart) return;
+        if (cart.userId == null) {
+          set({ cart: { ...cart, userId } });
+        } else if (cart.userId !== userId) {
+          set({ cart: null });
+        }
+      },
+
       getTotal: () => {
         const { cart } = get();
         if (!cart) return 0;
@@ -146,12 +141,11 @@ export const useCartStore = create<CartState>()(
       storage: createJSONStorage(() => getStorage()),
       onRehydrateStorage: () => {
         return (state) => {
-          console.log('[CartStore] Rehydration 시작, 복원된 데이터:', state);
-
           // 복원된 데이터 검증
+          // (이전 코드는 `item[0].menu || item.menu[0].id` 로 잘못 접근해 항상 예외가 나거나 검증이 안 됐다)
           if (state?.cart?.items) {
             const invalidItems = state.cart.items.filter(
-              (item: any) => !item[0].menu || !item.menu[0].id
+              (item: Partial<CartItem> | null | undefined) => !item?.menu || !item.menu.id
             );
 
             if (invalidItems.length > 0) {

@@ -2,6 +2,7 @@
 
 import {useState} from 'react';
 import {reviewApi} from '@/lib/review';
+import {getApiErrorMessage} from '@/lib/api';
 import {useAuth} from '@/store/authStore';
 import Button from '@/components/ui/Button';
 
@@ -41,10 +42,9 @@ export function ReviewWriteForm({ storeId, onSuccess }: ReviewWriteFormProps) {
       setRating(0);
       setContent('');
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error) {
       console.error('리뷰 작성 실패:', error);
-      const errorMsg = error.response?.data?.message || '리뷰 작성에 실패했습니다.';
-      alert(errorMsg);
+      alert(getApiErrorMessage(error, '리뷰 작성에 실패했습니다.'));
     } finally {
       setIsSubmitting(false);
     }

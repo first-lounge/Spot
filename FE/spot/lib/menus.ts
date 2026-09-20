@@ -21,17 +21,6 @@ export const menuApi = {
   // 가게의 메뉴 목록 조회
   getMenus: async (storeId: string): Promise<Menu[]> => {
     const response = await api.get<ApiResponse<Menu[]>>(`/api/stores/${storeId}/menus`);
-    console.log('메뉴 목록 조회 응답:', response.data);
-    console.log('메뉴 목록 조회 result:', response.data.result);
-
-    // 각 메뉴의 id를 확인
-    if (response.data.result) {
-      response.data.result.forEach((menu, index) => {
-        console.log(`메뉴 ${index}:`, menu);
-        console.log(`메뉴 ${index} id:`, menu.id);
-      });
-    }
-
     return response.data.result;
   },
 
@@ -52,8 +41,6 @@ export const menuApi = {
       imageUrl: menuData.imageUrl?.trim() || defaultImageUrl,
     };
 
-    console.log('메뉴 생성 요청 데이터:', requestData);
-
     const response = await api.post<ApiResponse<Menu>>(
       `/api/stores/${storeId}/menus`,
       requestData
@@ -70,9 +57,8 @@ export const menuApi = {
       imageUrl: menuData.imageUrl?.trim() || defaultImageUrl,
     };
 
-    console.log('메뉴 수정 요청 데이터:', requestData);
-
-    await api.put(`/api/stores/${storeId}/menus/${menuId}`, requestData);
+    // 백엔드 MenuController 는 @PatchMapping — PUT 이면 405
+    await api.patch(`/api/stores/${storeId}/menus/${menuId}`, requestData);
   },
 
   // 메뉴 삭제
@@ -82,9 +68,6 @@ export const menuApi = {
 
   // 메뉴 옵션 추가
   addMenuOption: async (storeId: string, menuId: string, optionData: CreateMenuOptionRequest): Promise<MenuOption> => {
-    console.log('옵션 추가 API 호출:', { storeId, menuId, optionData });
-    console.log('옵션 추가 URL:', `/api/stores/${storeId}/menus/${menuId}/options`);
-
     if (!menuId || menuId === 'undefined') {
       throw new Error(`유효하지 않은 menuId: ${menuId}`);
     }
@@ -98,7 +81,8 @@ export const menuApi = {
 
   // 메뉴 옵션 수정
   updateMenuOption: async (storeId: string, menuId: string, optionId: string, optionData: Partial<CreateMenuOptionRequest>): Promise<void> => {
-    await api.put(`/api/stores/${storeId}/menus/${menuId}/options/${optionId}`, optionData);
+    // 백엔드 MenuOptionController 는 @PatchMapping — PUT 이면 405
+    await api.patch(`/api/stores/${storeId}/menus/${menuId}/options/${optionId}`, optionData);
   },
 
   // 메뉴 옵션 삭제
