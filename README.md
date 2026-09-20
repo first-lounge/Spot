@@ -138,17 +138,20 @@ TOSS_SECRET_KEY=
 
 ## Application Flow
 
-![](./docs/application/image/spot-application.png)
+![Spot 전체 동작 흐름](./docs/architecture/spot-architecture.svg)
+
+> 인터랙티브 버전(요청 경로 · 주문/결제 흐름 · 워크플로 오케스트레이션 탭):
+> `docs/architecture/spot-architecture.html`
 
 ### 서비스 구성
 
-| 서비스          | 포트 | 역할                         |
-| --------------- | ---- | ---------------------------- |
-| API Gateway     | 8080 | 라우팅, 인증/인가            |
-| User Service    | 8081 | 회원 가입, 로그인, 정보 수정 |
-| Order Service   | 8082 | 주문 생성, 주문 조회         |
-| Store Service   | 8083 | 매장 및 메뉴 조회            |
-| Payment Service | 8084 | 결제 처리, PG 연동           |
+| 서비스          | 포트 | 역할                             |
+| --------------- | ---- | -------------------------------- |
+| API Gateway     | 8080 | 라우팅 (인증은 각 서비스가 검증) |
+| User Service    | 8081 | 회원 가입, 로그인, 정보 수정     |
+| Order Service   | 8082 | 주문 생성, 주문 조회             |
+| Store Service   | 8083 | 매장 및 메뉴 조회                |
+| Payment Service | 8084 | 결제 처리, PG 연동               |
 
 ### 주요 흐름
 
