@@ -6,18 +6,17 @@ data "aws_caller_identity" "current" {}
 module "network" {
   source = "../../modules/network"
 
-  name_prefix               = local.name_prefix
-  common_tags               = local.common_tags
-  service_region            = var.region
-  vpc_cidr                  = var.vpc_cidr
-  availability_zones        = var.availability_zones
-  public_subnet_cidrs       = var.public_subnet_cidrs
-  private_subnet_cidrs      = var.private_subnet_cidrs
-  db_subnet_cidrs           = var.db_subnet_cidrs
-  nat_sg_id                 = module.security.nat_sg_id
-  enable_nat_instance       = var.enable_nat_instance
-  enable_nat_gateway        = var.enable_nat_gateway
-  enable_interface_endpoint = var.enable_interface_endpoint
+  name_prefix          = local.name_prefix
+  common_tags          = local.common_tags
+  service_region       = var.region
+  vpc_cidr             = var.vpc_cidr
+  availability_zones   = var.availability_zones
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
+  db_subnet_cidrs      = var.db_subnet_cidrs
+  nat_instance_sg_id   = module.security.nat_instance_sg_id
+  enable_nat_instance  = var.enable_nat_instance
+  enable_nat_gateway   = var.enable_nat_gateway
 }
 
 # =============================================================================

@@ -31,7 +31,7 @@ resource "aws_security_group" "alb_sg" {
 }
 
 # NAT Instance
-resource "aws_security_group" "nat_sg" {
+resource "aws_security_group" "nat_instance_sg" {
   count = var.enable_nat_instance ? 1 : 0
 
   name   = "${var.name_prefix}-nat-sg"
@@ -86,7 +86,7 @@ resource "aws_security_group_rule" "nat_ingress_vpc" {
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = [var.vpc_cidr]
-  security_group_id = aws_security_group.nat_sg[0].id
+  security_group_id = aws_security_group.nat_instance_sg[0].id
 }
 
 # NAT Instance ← IGW
@@ -98,7 +98,7 @@ resource "aws_security_group_rule" "nat_egress_igw" {
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.nat_sg[0].id
+  security_group_id = aws_security_group.nat_instance_sg[0].id
 }
 
 # -------- EKS Node Group --------

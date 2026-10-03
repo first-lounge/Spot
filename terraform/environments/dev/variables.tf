@@ -37,11 +37,6 @@ variable "enable_nat_gateway" {
   type        = bool
 }
 
-variable "enable_interface_endpoint" {
-  description = "VPC 인터페이스 엔드포인트 활성화 여부"
-  type        = bool
-}
-
 variable "vpc_cidr" {
   description = "VPC CIDR 블록"
   type        = string

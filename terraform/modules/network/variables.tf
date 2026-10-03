@@ -9,7 +9,6 @@ variable "common_tags" {
   default     = {}
 }
 
-
 variable "service_region" {
   description = "AWS 서비스 리전"
   type        = string
@@ -40,17 +39,13 @@ variable "db_subnet_cidrs" {
   type        = map(string)
 }
 
-variable "nat_sg_id" {
+variable "nat_instance_sg_id" {
   description = "NAT Instance SG ID"
   type        = string
+  default     = null
 }
 
 # 환경별로 값이 변경되는 변수
-variable "enable_interface_endpoint" {
-  description = "VPC 인터페이스 엔드포인트 활성화 여부"
-  type        = bool
-}
-
 variable "enable_nat_instance" {
   description = "NAT Instance 활성화 여부"
   type        = bool
