@@ -23,3 +23,12 @@ variable "vpc_id" {
   description = "VPC ID"
   type        = string
 }
+
+variable "alb_target_ports" {
+  description = "ALB가 트래픽을 spot-gateway, kafka-ui, temporal-ui, grafana, ArgoCD 로 보낼 때 필요한 포트 번호"
+  type        = map(number)
+  default = {
+    "app"     = 8080
+    "grafana" = 3000
+  }
+}

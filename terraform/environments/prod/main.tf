@@ -17,3 +17,16 @@ module "network" {
   enable_nat_instance  = var.enable_nat_instance
   enable_nat_gateway   = var.enable_nat_gateway
 }
+
+# =============================================================================
+# Security (SG, IAM)
+# =============================================================================
+module "security" {
+  source = "../../modules/security"
+
+  name_prefix         = local.name_prefix
+  common_tags         = local.common_tags
+  vpc_cidr            = var.vpc_cidr
+  vpc_id              = module.network.vpc_id
+  enable_nat_instance = var.enable_nat_instance
+}
