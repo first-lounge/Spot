@@ -242,6 +242,7 @@ variable "toss_customer_key" {
 variable "cluster_name" {
   description = "EKS 클러스터 이름"
   type        = string
+  default     = "spot-dev-cluster"
 }
 
 variable "cluster_version" {
@@ -258,31 +259,13 @@ variable "public_access_cidrs" {
 variable "instance_types" {
   description = "EC2 인스턴스 유형"
   type        = list(string)
-}
-
-variable "capacity_type" {
-  description = "인스턴스 구매 방식"
-  type        = string
-}
-
-variable "desired_size" {
-  description = "노드 희망 개수"
-  type        = number
-}
-
-variable "max_size" {
-  description = "노드 최대 개수"
-  type        = number
-}
-
-variable "min_size" {
-  description = "노드 최소 개수"
-  type        = number
+  default     = ["t3.large", "t3a.large"]
 }
 
 variable "volume_size" {
   description = "EBS 용량 크기"
   type        = number
+  default     = 30
 }
 
 # =============================================================================

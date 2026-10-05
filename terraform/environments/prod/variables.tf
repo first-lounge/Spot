@@ -114,15 +114,6 @@ variable "availability_zones" {
 # }
 
 # # =============================================================================
-# # ALB DNS / 도메인 이름
-# # =============================================================================
-# variable "domain_name" {
-#   description = "도메인 이름"
-#   type        = string
-#   default     = "hbksv.com"
-# }
-
-# # =============================================================================
 # # WAF 모듈
 # # =============================================================================
 # variable "waf_rate_limit" {
@@ -231,54 +222,37 @@ variable "availability_zones" {
 #   default     = "customer_1"
 # }
 
-# # =============================================================================
-# # EKS 모듈
-# # =============================================================================
-# variable "cluster_name" {
-#   description = "EKS 클러스터 이름"
-#   type        = string
-# }
+# =============================================================================
+# EKS 모듈
+# =============================================================================
+variable "cluster_name" {
+  description = "EKS 클러스터 이름"
+  type        = string
+  default     = "spot-prod-cluster"
+}
 
-# variable "cluster_version" {
-#   description = "EKS 클러스터 버전"
-#   type        = string
-#   default     = "1.35"
-# }
+variable "cluster_version" {
+  description = "EKS 클러스터 버전"
+  type        = string
+  default     = "1.35"
+}
 
-# variable "public_access_cidrs" {
-#   description = "EKS 클러스터 접속 허용 IP"
-#   type        = list(string)
-# }
+variable "public_access_cidrs" {
+  description = "EKS 클러스터 접속 허용 IP"
+  type        = list(string)
+}
 
-# variable "instance_types" {
-#   description = "EC2 인스턴스 유형"
-#   type        = list(string)
-# }
+variable "instance_types" {
+  description = "EC2 인스턴스 유형"
+  type        = list(string)
+  default     = ["t3.large", "t3a.large"]
+}
 
-# variable "capacity_type" {
-#   description = "인스턴스 구매 방식"
-#   type        = string
-# }
-
-# variable "desired_size" {
-#   description = "노드 희망 개수"
-#   type        = number
-# }
-
-# variable "max_size" {
-#   description = "노드 최대 개수"
-#   type        = number
-# }
-
-# variable "min_size" {
-#   description = "노드 최소 개수"
-#   type        = number
-# }
-
-# variable "volume_size" {
-#   description = "EBS 용량 크기"
-#   type        = number
-# }
+variable "volume_size" {
+  description = "EBS 용량 크기"
+  type        = number
+  default     = 50
+}
 
 # # =============================================================================
 # # DNS
@@ -297,11 +271,17 @@ variable "availability_zones" {
 #   type        = string
 # }
 
-# # =============================================================================
-# # Route53
-# # =============================================================================
-# variable "zone_force_destroy" {
-#   description = "zone destroy 시 남은 레코드까지 강제 삭제(dev만 true, prod는 false)"
-#   type        = bool
-#   default     = false
-# }
+# =============================================================================
+# Route53
+# =============================================================================
+variable "zone_force_destroy" {
+  description = "zone destroy 시 남은 레코드까지 강제 삭제"
+  type        = bool
+  default     = true
+}
+
+variable "domain_name" {
+  description = "도메인 이름"
+  type        = string
+  default     = "hbksv.com"
+}

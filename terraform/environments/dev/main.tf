@@ -69,12 +69,8 @@ module "eks" {
   subnet_ids          = module.network.private_subnet_ids
   public_access_cidrs = var.public_access_cidrs
 
-  min_size     = var.min_size
-  max_size     = var.max_size
-  desired_size = var.desired_size
-
+  node_groups    = local.node_groups
   instance_types = var.instance_types
-  capacity_type  = var.capacity_type
   volume_size    = var.volume_size
 
   # IRSA (EKS Addons)
