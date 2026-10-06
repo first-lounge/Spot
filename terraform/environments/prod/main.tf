@@ -61,9 +61,12 @@ module "eks" {
   volume_size    = var.volume_size
 
   # IRSA (EKS Addons)
-  hosted_zone_id = module.route53.hosted_zone_id
-  account_id     = data.aws_caller_identity.current.account_id
-  region         = var.region
+  hosted_zone_id           = module.route53.hosted_zone_id
+  account_id               = data.aws_caller_identity.current.account_id
+  region                   = var.region
+  enable_rds_secret_access = local.rds_settings.manage_master_user_password
+  rds_secret_arn           = module.rds.rds_secret_arn
+  rds_kms_arn              = module.kms.rds_kms_arn
 
   depends_on = [module.network, module.security]
 }
@@ -92,4 +95,25 @@ module "kms" {
   name_prefix = local.name_prefix
   common_tags = local.common_tags
   account_id  = data.aws_caller_identity.current.account_id
+}
+
+# =============================================================================
+# RDS
+# =============================================================================
+module "rds" {
+  source = "../../modules/rds"
+
+  # 공통
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  # RDS 설정
+  rds_settings  = local.rds_settings
+  rds_instances = local.rds_instances
+  username      = var.db_username
+  rds_kms_arn   = module.kms.rds_kms_arn
+
+  # DB 네트워크
+  db_subnet_ids = module.network.db_subnet_ids
+  rds_sg_id     = module.security.rds_sg_id
 }

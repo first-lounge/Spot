@@ -93,31 +93,6 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "manage_master_user_password" {
-  description = "Secrets Manager용 DB 비밀번호"
-  type        = bool
-}
-
-variable "db_instance_class" {
-  description = "RDS 인스턴스 클래스"
-  type        = string
-}
-
-variable "db_allocated_storage" {
-  description = "RDS 스토리지 크기 (GB)"
-  type        = number
-}
-
-variable "db_engine" {
-  description = "DB 엔진"
-  type        = string
-}
-
-variable "db_engine_version" {
-  description = "PostgreSQL 버전"
-  type        = string
-}
-
 # =============================================================================
 # ALB DNS / 도메인 이름
 # =============================================================================
@@ -243,12 +218,6 @@ variable "cluster_name" {
   description = "EKS 클러스터 이름"
   type        = string
   default     = "spot-dev-cluster"
-}
-
-variable "cluster_version" {
-  description = "EKS 클러스터 버전"
-  type        = string
-  default     = "1.35"
 }
 
 variable "public_access_cidrs" {

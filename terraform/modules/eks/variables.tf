@@ -142,6 +142,7 @@ variable "ebs_csi_version" {
   default     = "v1.66.0-eksbuild.1"
 }
 
+# IRSA
 variable "hosted_zone_id" {
   description = "Route53 Hosted Zone ID"
   type        = string
@@ -155,4 +156,22 @@ variable "account_id" {
 variable "region" {
   description = "AWS 리전"
   type        = string
+}
+
+# external-secrets
+variable "enable_rds_secret_access" {
+  description = "true면 RDS 시크릿 읽기 + CMK 복호화 권한 추가"
+  type        = bool
+}
+
+variable "rds_secret_arn" {
+  description = "RDS 인스턴스별 Secret ARN"
+  type        = map(string)
+  default     = {}
+}
+
+variable "rds_kms_arn" {
+  description = "RDS용 KMS 키 ARN"
+  type        = string
+  default     = null
 }

@@ -60,9 +60,19 @@ variable "toss_secret_key" {
 # =============================================================================
 # 동적 인프라 값 (String으로 저장)
 # =============================================================================
-variable "db_endpoint" {
-  description = "RDS 엔드포인트 (Terraform이 생성 후 자동 저장)"
+variable "services" {
+  description = "Spot 앱 서비스"
+  type        = set(string)
+}
+
+variable "rds_host" {
+  description = "RDS Host 이름"
   type        = string
+}
+
+variable "rds_endpoints" {
+  description = "RDS 엔드포인트 (Terraform이 생성 후 자동 저장)"
+  type        = map(string)
 }
 
 variable "redis_endpoint" {

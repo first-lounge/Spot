@@ -78,40 +78,14 @@ variable "availability_zones" {
   }
 }
 
-# # =============================================================================
-# # RDS 모듈
-# # =============================================================================
-# variable "db_username" {
-#   description = "데이터베이스 사용자 이름"
-#   type        = string
-#   sensitive   = true
-# }
-
-# variable "db_password" {
-#   description = "데이터베이스 비밀번호"
-#   type        = string
-#   sensitive   = true
-# }
-
-# variable "db_instance_class" {
-#   description = "RDS 인스턴스 클래스"
-#   type        = string
-# }
-
-# variable "db_allocated_storage" {
-#   description = "RDS 스토리지 크기 (GB)"
-#   type        = number
-# }
-
-# variable "db_engine" {
-#   description = "DB 엔진"
-#   type        = string
-# }
-
-# variable "db_engine_version" {
-#   description = "PostgreSQL 버전"
-#   type        = string
-# }
+# =============================================================================
+# RDS 모듈
+# =============================================================================
+variable "db_username" {
+  description = "데이터베이스 사용자 이름"
+  type        = string
+  sensitive   = true
+}
 
 # # =============================================================================
 # # WAF 모듈
@@ -229,12 +203,6 @@ variable "cluster_name" {
   description = "EKS 클러스터 이름"
   type        = string
   default     = "spot-prod-cluster"
-}
-
-variable "cluster_version" {
-  description = "EKS 클러스터 버전"
-  type        = string
-  default     = "1.35"
 }
 
 variable "public_access_cidrs" {

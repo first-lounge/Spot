@@ -74,9 +74,10 @@ module "eks" {
   volume_size    = var.volume_size
 
   # IRSA (EKS Addons)
-  hosted_zone_id = module.route53.hosted_zone_id
-  account_id     = data.aws_caller_identity.current.account_id
-  region         = var.region
+  hosted_zone_id           = module.route53.hosted_zone_id
+  account_id               = data.aws_caller_identity.current.account_id
+  region                   = var.region
+  enable_rds_secret_access = local.rds_settings.manage_master_user_password
 
   depends_on = [module.network, module.security]
 }
@@ -105,13 +106,10 @@ module "rds" {
   common_tags = local.common_tags
 
   # DB 설정
-  engine                      = var.db_engine
-  engine_version              = var.db_engine_version
-  instance_class              = var.db_instance_class
-  allocated_storage           = var.db_allocated_storage
-  username                    = var.db_username
-  password                    = var.db_password
-  manage_master_user_password = var.manage_master_user_password
+  rds_settings  = local.rds_settings
+  rds_instances = local.rds_instances
+  username      = var.db_username
+  password      = var.db_password
 
   # DB 네트워크
   db_subnet_ids = module.network.db_subnet_ids
@@ -212,6 +210,8 @@ module "parameter_store" {
   jwt_secret      = var.jwt_secret
   toss_secret_key = var.toss_secret_key
 
-  db_endpoint    = module.rds.rds_endpoint
+  services       = local.services
+  rds_host       = module.rds.rds_endpoint["shared"]
+  rds_endpoints  = local.rds_endpoints
   redis_endpoint = module.redis.redis_reader_endpoint
 }

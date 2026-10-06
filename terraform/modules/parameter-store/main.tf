@@ -2,8 +2,7 @@
 # Parameter Store 
 # =============================================================================
 locals {
-  prefix      = "/${var.project}/${var.environment}"
-  db_services = toset(["user", "order", "payment", "store"])
+  prefix = "/${var.project}/${var.environment}"
 }
 
 # 민감 정보(SecureString)
@@ -88,10 +87,10 @@ resource "aws_ssm_parameter" "toss_secret_key" {
 # =============================================================================
 # 동적 인프라 값 (String)
 #  =============================================================================
-resource "aws_ssm_parameter" "db_endpoint" {
+resource "aws_ssm_parameter" "rds_endpoint" {
   name        = "${local.prefix}/database/endpoint"
   type        = "String"
-  value       = var.db_endpoint
+  value       = var.rds_host
   description = "RDS endpoint (auto-populated by Terraform)"
 
   tags = merge(var.common_tags, {
@@ -102,12 +101,12 @@ resource "aws_ssm_parameter" "db_endpoint" {
 }
 
 resource "aws_ssm_parameter" "db_service_url" {
-  for_each = local.db_services
+  for_each = var.services
 
   name        = "${local.prefix}/database/${each.key}/url"
   type        = "String"
   description = "RDS URL for spot-${each.key}"
-  value       = "jdbc:postgresql://${var.db_endpoint}:5432/spot_${each.key}"
+  value       = "jdbc:postgresql://${var.rds_endpoints[each.key]}:5432/spot_${each.key}"
 
   tags = merge(var.common_tags, {
     Name     = "${var.project}-${var.environment}-${each.key}-db-url"

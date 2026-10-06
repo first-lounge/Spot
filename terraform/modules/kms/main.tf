@@ -61,3 +61,41 @@ resource "aws_kms_alias" "ebs" {
   name          = "alias/${var.name_prefix}-ebs"
   target_key_id = aws_kms_key.ebs.key_id
 }
+
+# =============================================================================
+# RDS
+# =============================================================================
+resource "aws_kms_key" "rds" {
+  description             = "KMS key for spot RDS storage and master user secret"
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Id      = "${var.name_prefix}-rds-key-policy"
+    Statement = [
+      {
+        Sid    = "Enable IAM User Permissions"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${var.account_id}:root"
+        },
+        Action   = "kms:*"
+        Resource = "*"
+      }
+    ]
+  })
+
+  # # 운영 전환 시
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
+
+  tags = merge(var.common_tags, {
+    Name = "${var.name_prefix}-rds-encryption"
+  })
+}
+
+resource "aws_kms_alias" "rds" {
+  name          = "alias/${var.name_prefix}-rds"
+  target_key_id = aws_kms_key.rds.key_id
+}

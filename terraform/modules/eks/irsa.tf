@@ -63,17 +63,36 @@ resource "aws_iam_policy" "external_secrets_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "ssm:GetParameter*"
-        ],
-        Resource = [
-          "arn:aws:ssm:${var.region}:${var.account_id}:parameter/${var.project}/${var.environment}/*"
-        ]
-      }
-    ]
+    Statement = concat(
+      [
+        {
+          Sid    = "GetParameterStore"
+          Effect = "Allow",
+          Action = [
+            "ssm:GetParameter*"
+          ],
+          Resource = [
+            "arn:aws:ssm:${var.region}:${var.account_id}:parameter/${var.project}/${var.environment}/*"
+          ]
+        }
+      ],
+      var.enable_rds_secret_access ? [
+        {
+          Sid    = "ReadRdsSecret"
+          Effect = "Allow",
+          Action = [
+            "secretsmanager:GetSecretValue"
+          ],
+          Resource = values(var.rds_secret_arn)
+        },
+        {
+          Sid      = "DecryptWithCMK"
+          Effect   = "Allow",
+          Action   = ["kms:Decrypt"],
+          Resource = [var.rds_kms_arn]
+        }
+      ] : []
+    )
   })
 }
 
