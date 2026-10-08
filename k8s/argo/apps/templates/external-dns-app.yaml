@@ -17,7 +17,7 @@ spec:
         releaseName: external-dns
         parameters:
             - name: serviceAccount.name
-              value: "external-dns"
+              value: "external-dns-sa"
             - name: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
               value: "arn:aws:iam::164076841262:role/spot-dev-external_dns-role"
             - name: domainFilters[0]
