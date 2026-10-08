@@ -18,7 +18,10 @@ spring:
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
       port: ${SPRING_DATA_REDIS_PORT:6379}
+      ssl:
+        enabled: ${SPRING_DATA_REDIS_SSL_ENABLED:false}
 
   temporal:
     connection:

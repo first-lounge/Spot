@@ -8,14 +8,14 @@ output "acm_certificate_arn" {
   value       = module.acm.aws_acm_certificate_arn
 }
 
-output "rds_endpoint" {
-  description = "RDS 엔드포인트"
-  value       = module.rds.rds_endpoint
+output "rds_host" {
+  description = "RDS Host"
+  value       = module.rds.rds_host
 }
 
-output "redis_primary_endpoint" {
+output "elasticache_primary_endpoint" {
   description = "Redis 쓰기용 엔드포인트"
-  value       = module.redis.redis_primary_endpoint
+  value       = module.elasticache.elasticache_primary_endpoint
 }
 
 output "waf_acl_arn" {

@@ -53,6 +53,8 @@ locals {
 # RDS 설정
 # =============================================================================
 locals {
+  services = ["user", "order", "payment", "store"]
+
   rds_settings = {
     # Parameter Group
     log_min_duration_statement = 1000

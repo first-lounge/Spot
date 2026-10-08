@@ -14,27 +14,65 @@ spec:
         app: rds-relay
     spec:
       containers:
-        - name: relay
+        - name: user
           image: alpine/socat
-          resources:
-            requests:
-              cpu: "10m"
-              memory: "32Mi"
-            limits:
-              cpu: "50m"
-              memory: "64Mi"
-          command:
-            [
-              "/bin/sh",
-              "-c",
-              "socat TCP-LISTEN:5432,fork,reuseaddr TCP:${DB_HOST}:5432",
-            ]
+          command: ["socat"]
+          args: ["TCP-LISTEN:5433,fork,reuseaddr", "TCP:$(DB_HOST):5432"]
           env:
             - name: DB_HOST
               valueFrom:
-                secretKeyRef:
-                  name: infra-secrets
-                  key: DB_HOST
+                secretKeyRef: { name: infra-secrets, key: USER_DB_HOST }
+          resources:
+            requests: { cpu: "10m", memory: "16Mi" }
+            limits: { cpu: "50m", memory: "64Mi" }
+
+        - name: order
+          image: alpine/socat
+          command: ["socat"]
+          args: ["TCP-LISTEN:5434,fork,reuseaddr", "TCP:$(DB_HOST):5432"]
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef: { name: infra-secrets, key: ORDER_DB_HOST }
+          resources:
+            requests: { cpu: "10m", memory: "16Mi" }
+            limits: { cpu: "50m", memory: "64Mi" }
+
+        - name: store
+          image: alpine/socat
+          command: ["socat"]
+          args: ["TCP-LISTEN:5435,fork,reuseaddr", "TCP:$(DB_HOST):5432"]
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef: { name: infra-secrets, key: STORE_DB_HOST }
+          resources:
+            requests: { cpu: "10m", memory: "16Mi" }
+            limits: { cpu: "50m", memory: "64Mi" }
+
+        - name: payment
+          image: alpine/socat
+          command: ["socat"]
+          args: ["TCP-LISTEN:5436,fork,reuseaddr", "TCP:$(DB_HOST):5432"]
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef: { name: infra-secrets, key: PAYMENT_DB_HOST }
+          resources:
+            requests: { cpu: "10m", memory: "16Mi" }
+            limits: { cpu: "50m", memory: "64Mi" }
+
+        - name: temporal
+          image: alpine/socat
+          command: ["socat"]
+          args: ["TCP-LISTEN:5437,fork,reuseaddr", "TCP:$(DB_HOST):5432"]
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef: { name: infra-secrets, key: TEMPORAL_DB_HOST }
+          resources:
+            requests: { cpu: "10m", memory: "16Mi" }
+            limits: { cpu: "50m", memory: "64Mi" }
 ---
 apiVersion: v1
 kind: Service
@@ -43,7 +81,21 @@ metadata:
   namespace: infra
 spec:
   ports:
-    - port: 5432
-      targetPort: 5432
+    - name: user
+      port: 5433
+      targetPort: 5433
+    - name: order
+      port: 5434
+      targetPort: 5434
+    - name: store
+      port: 5435
+      targetPort: 5435
+    - name: payment
+      port: 5436
+      targetPort: 5436
+    - name: temporal
+      port: 5437
+      targetPort: 5437
+
   selector:
     app: rds-relay

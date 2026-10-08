@@ -17,7 +17,7 @@ resource "aws_security_group" "rds_sg" {
 }
 
 # Redis (Private)
-resource "aws_security_group" "redis_sg" {
+resource "aws_security_group" "elasticache_sg" {
   name   = "${var.name_prefix}-redis-sg"
   vpc_id = var.vpc_id
   tags   = merge(var.common_tags, { Name = "${var.name_prefix}-redis-sg" })
@@ -154,13 +154,13 @@ resource "aws_security_group_rule" "rds_ingress_node" {
 # -------- Redis --------
 
 # EKS Node → Redis
-resource "aws_security_group_rule" "redis_ingress_node" {
+resource "aws_security_group_rule" "elasticache_ingress_node" {
   type                     = "ingress"
   from_port                = 6379
   to_port                  = 6379
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.eks_node_sg.id
-  security_group_id        = aws_security_group.redis_sg.id
+  security_group_id        = aws_security_group.elasticache_sg.id
 }
 
 # =============================================================================

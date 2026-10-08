@@ -81,11 +81,37 @@ variable "availability_zones" {
 # =============================================================================
 # RDS 모듈
 # =============================================================================
-variable "db_username" {
+variable "rds_username" {
   description = "데이터베이스 사용자 이름"
   type        = string
   sensitive   = true
 }
+
+# =============================================================================
+# Redis (ElastiCache) 모듈
+# =============================================================================
+variable "elasticache_node_type" {
+  description = "Redis 노드 타입"
+  type        = string
+}
+
+# Prod 환경에서는 복제본
+variable "elasticache_num_cache_clusters" {
+  description = "Redis 클러스터 수 (1=단일, 2+=복제본)"
+  type        = number
+}
+
+variable "enable_elasticache_auth" {
+  description = "Redis Auth 사용 여부"
+  type        = bool
+  default     = true
+}
+
+# # 운영 전환 시
+# variable "elasticache_password_version" {
+#   description = "Write-Only용 ElastiCache 비밀번호 버전"
+#   type        = number
+# }
 
 # # =============================================================================
 # # WAF 모듈
@@ -116,30 +142,6 @@ variable "db_username" {
 # }
 
 # # =============================================================================
-# # Redis (ElastiCache) 모듈
-# # =============================================================================
-# variable "redis_engine" {
-#   description = "Redis 엔진"
-#   type        = string
-# }
-
-# variable "redis_node_type" {
-#   description = "Redis 노드 타입"
-#   type        = string
-# }
-
-# # dev 환경에서는 단일 노드
-# variable "redis_num_cache_clusters" {
-#   description = "Redis 클러스터 수 (1=단일, 2+=복제본)"
-#   type        = number
-# }
-
-# variable "redis_engine_version" {
-#   description = "Redis 엔진 버전"
-#   type        = string
-# }
-
-# # =============================================================================
 # # Monitoring 모듈
 # # =============================================================================
 # variable "alert_email" {
@@ -147,54 +149,36 @@ variable "db_username" {
 #   type        = string
 # }
 
-# # =============================================================================
-# # SSM 모듈
-# # =============================================================================
+# =============================================================================
+# Parameter Store 모듈
+# =============================================================================
 
-# # JWT
-# variable "jwt_secret" {
-#   description = "JWT 시크릿 키"
-#   type        = string
-#   sensitive   = true
-# }
+# JWT
+variable "jwt_secret" {
+  description = "JWT 시크릿 키"
+  type        = string
+  sensitive   = true
+}
 
-# variable "jwt_expire_ms" {
-#   description = "JWT 만료 시간 (밀리초)"
-#   type        = number
-#   default     = 3600000
-# }
+# Mail
+variable "mail_username" {
+  description = "SMTP 사용자 이름 (Gmail)"
+  type        = string
+  sensitive   = true
+}
 
-# variable "refresh_token_expire_days" {
-#   description = "리프레시 토큰 만료 일수"
-#   type        = number
-#   default     = 14
-# }
+variable "mail_password" {
+  description = "SMTP 비밀번호 (Gmail 앱 비밀번호)"
+  type        = string
+  sensitive   = true
+}
 
-# # Mail
-# variable "mail_username" {
-#   description = "SMTP 사용자 이름 (Gmail)"
-#   type        = string
-#   sensitive   = true
-# }
-
-# variable "mail_password" {
-#   description = "SMTP 비밀번호 (Gmail 앱 비밀번호)"
-#   type        = string
-#   sensitive   = true
-# }
-
-# # Toss Payments
-# variable "toss_secret_key" {
-#   description = "Toss Payments 시크릿 키"
-#   type        = string
-#   sensitive   = true
-# }
-
-# variable "toss_customer_key" {
-#   description = "Toss Payments 고객 키"
-#   type        = string
-#   default     = "customer_1"
-# }
+# Toss Payments
+variable "toss_secret_key" {
+  description = "Toss Payments 시크릿 키"
+  type        = string
+  sensitive   = true
+}
 
 # =============================================================================
 # EKS 모듈

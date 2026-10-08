@@ -81,13 +81,13 @@ variable "availability_zones" {
 # =============================================================================
 # RDS 모듈
 # =============================================================================
-variable "db_username" {
+variable "rds_username" {
   description = "데이터베이스 사용자 이름"
   type        = string
   sensitive   = true
 }
 
-variable "db_password" {
+variable "rds_password" {
   description = "데이터베이스 비밀번호"
   type        = string
   sensitive   = true
@@ -133,25 +133,15 @@ variable "s3_log_expiration_days" {
 # =============================================================================
 # Redis (ElastiCache) 모듈
 # =============================================================================
-variable "redis_engine" {
-  description = "Redis 엔진"
-  type        = string
-}
-
-variable "redis_node_type" {
+variable "elasticache_node_type" {
   description = "Redis 노드 타입"
   type        = string
 }
 
 # dev 환경에서는 단일 노드
-variable "redis_num_cache_clusters" {
+variable "elasticache_num_cache_clusters" {
   description = "Redis 클러스터 수 (1=단일, 2+=복제본)"
   type        = number
-}
-
-variable "redis_engine_version" {
-  description = "Redis 엔진 버전"
-  type        = string
 }
 
 # =============================================================================
@@ -173,18 +163,6 @@ variable "jwt_secret" {
   sensitive   = true
 }
 
-variable "jwt_expire_ms" {
-  description = "JWT 만료 시간 (밀리초)"
-  type        = number
-  default     = 3600000
-}
-
-variable "refresh_token_expire_days" {
-  description = "리프레시 토큰 만료 일수"
-  type        = number
-  default     = 14
-}
-
 # Mail
 variable "mail_username" {
   description = "SMTP 사용자 이름 (Gmail)"
@@ -203,12 +181,6 @@ variable "toss_secret_key" {
   description = "Toss Payments 시크릿 키"
   type        = string
   sensitive   = true
-}
-
-variable "toss_customer_key" {
-  description = "Toss Payments 고객 키"
-  type        = string
-  default     = "customer_1"
 }
 
 # =============================================================================

@@ -52,7 +52,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: infra-secrets
-                  key: DB_HOST
+                  key: TEMPORAL_DB_HOST
             - name: DB_PORT
               value: "5432"
             - name: POSTGRES_USER

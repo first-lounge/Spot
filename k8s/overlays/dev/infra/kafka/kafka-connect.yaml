@@ -34,31 +34,26 @@ spec:
       enableServiceLinks: false
     connectContainer:
       env:
-        - name: DB_HOST
+        - name: ORDER_DB_HOST
           valueFrom:
-            secretKeyRef:
-              name: infra-secrets
-              key: DB_HOST
+            secretKeyRef: { name: infra-secrets, key: ORDER_DB_HOST }
         - name: DB_NAME_ORDER
           valueFrom:
-            configMapKeyRef:
-              name: infra-env
-              key: DB_NAME_ORDER
+            configMapKeyRef: { name: infra-env, key: DB_NAME_ORDER }
+        - name: PAYMENT_DB_HOST
+          valueFrom:
+            secretKeyRef: { name: infra-secrets, key: PAYMENT_DB_HOST }
         - name: DB_NAME_PAYMENT
           valueFrom:
-            configMapKeyRef:
-              name: infra-env
-              key: DB_NAME_PAYMENT
+            configMapKeyRef: { name: infra-env, key: DB_NAME_PAYMENT }
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:
-              name: infra-secrets
-              key: SPRING_DATASOURCE_USERNAME
+              { name: infra-secrets, key: SPRING_DATASOURCE_USERNAME }
         - name: SPRING_DATASOURCE_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: infra-secrets
-              key: SPRING_DATASOURCE_PASSWORD
+              { name: infra-secrets, key: SPRING_DATASOURCE_PASSWORD }
 
   resources:
     requests:

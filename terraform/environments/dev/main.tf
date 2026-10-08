@@ -108,8 +108,8 @@ module "rds" {
   # DB 설정
   rds_settings  = local.rds_settings
   rds_instances = local.rds_instances
-  username      = var.db_username
-  password      = var.db_password
+  username      = var.rds_username
+  password      = var.rds_password
 
   # DB 네트워크
   db_subnet_ids = module.network.db_subnet_ids
@@ -119,22 +119,43 @@ module "rds" {
 # =============================================================================
 # Redis
 # =============================================================================
-module "redis" {
-  source = "../../modules/redis"
+module "elasticache" {
+  source = "../../modules/elasticache"
 
   # 공통
   name_prefix = local.name_prefix
   common_tags = local.common_tags
 
   # Redis 네트워크
-  db_subnet_ids = module.network.db_subnet_ids
-  redis_sg_id   = module.security.redis_sg_id
+  db_subnet_ids     = module.network.db_subnet_ids
+  elasticache_sg_id = module.security.elasticache_sg_id
 
   # Redis 설정
-  engine             = var.redis_engine
-  engine_version     = var.redis_engine_version
-  node_type          = var.redis_node_type
-  num_cache_clusters = var.redis_num_cache_clusters
+  node_type          = var.elasticache_node_type
+  num_cache_clusters = var.elasticache_num_cache_clusters
+}
+
+# =============================================================================
+# SSM Parameter Store
+# =============================================================================
+module "parameter_store" {
+  source = "../../modules/parameter-store"
+
+  common_tags = local.common_tags
+  project     = var.project
+  environment = var.environment
+
+  rds_username      = var.rds_username
+  enable_rds_secret = local.rds_settings.manage_master_user_password
+  rds_password      = var.rds_password
+  mail_username     = var.mail_username
+  mail_password     = var.mail_password
+  jwt_secret        = var.jwt_secret
+  toss_secret_key   = var.toss_secret_key
+
+  services             = local.services
+  rds_host             = local.rds_host
+  elasticache_endpoint = module.elasticache.elasticache_primary_endpoint
 }
 
 # =============================================================================
@@ -193,25 +214,3 @@ module "github_oidc" {
   service_region = var.region
 }
 
-# =============================================================================
-# SSM Parameter Store
-# =============================================================================
-module "parameter_store" {
-  source = "../../modules/parameter-store"
-
-  common_tags = local.common_tags
-  project     = var.project
-  environment = var.environment
-
-  db_username     = var.db_username
-  db_password     = var.db_password
-  mail_username   = var.mail_username
-  mail_password   = var.mail_password
-  jwt_secret      = var.jwt_secret
-  toss_secret_key = var.toss_secret_key
-
-  services       = local.services
-  rds_host       = module.rds.rds_endpoint["shared"]
-  rds_endpoints  = local.rds_endpoints
-  redis_endpoint = module.redis.redis_reader_endpoint
-}

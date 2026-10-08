@@ -17,7 +17,7 @@
 | github-oidc | GitHub Action OIDC                                            |
 | network     | VPC, Nat Instance, Route Table, IGW(Internet GateWay)         |
 | rds         | 단일 RDS (Dev)                                                |
-| redis       | 단일 Redis (Dev)                                              |
+| elasticache | 단일 Redis (Dev)                                              |
 | route53     | A 레코드로 DNS 등록                                           |
 | s3          | ALB 로그 기록 저장                                            |
 | security    | SG 규칙, EKS IAM Role 설정                                    |

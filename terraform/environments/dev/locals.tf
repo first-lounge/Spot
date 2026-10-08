@@ -33,7 +33,7 @@ locals {
 locals {
   services = ["user", "order", "payment", "store"]
 
-  rds_endpoints = { for svc in local.services : svc => one(values(module.rds.rds_endpoint)) }
+  rds_host = { for svc in concat(local.services, ["temporal"]) : svc => one(values(module.rds.rds_host)) }
 
   rds_settings = {
     # Parameter Group

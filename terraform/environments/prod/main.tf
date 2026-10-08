@@ -110,10 +110,59 @@ module "rds" {
   # RDS 설정
   rds_settings  = local.rds_settings
   rds_instances = local.rds_instances
-  username      = var.db_username
+  username      = var.rds_username
   rds_kms_arn   = module.kms.rds_kms_arn
 
   # DB 네트워크
   db_subnet_ids = module.network.db_subnet_ids
   rds_sg_id     = module.security.rds_sg_id
+}
+
+# =============================================================================
+# Redis
+# =============================================================================
+module "elasticache" {
+  source = "../../modules/elasticache"
+
+  # 공통
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  # Redis 네트워크
+  db_subnet_ids     = module.network.db_subnet_ids
+  elasticache_sg_id = module.security.elasticache_sg_id
+
+  # Redis 설정
+  node_type               = var.elasticache_node_type
+  num_cache_clusters      = var.elasticache_num_cache_clusters
+  enable_elasticache_auth = var.enable_elasticache_auth
+
+  # # 운영 전환 시
+  # elasticache_password_version = var.elasticache_password_version
+}
+
+# =============================================================================
+# SSM Parameter Store
+# =============================================================================
+module "parameter_store" {
+  source = "../../modules/parameter-store"
+
+  common_tags = local.common_tags
+  project     = var.project
+  environment = var.environment
+
+  rds_username      = var.rds_username
+  enable_rds_secret = local.rds_settings.manage_master_user_password
+  mail_username     = var.mail_username
+  mail_password     = var.mail_password
+  jwt_secret        = var.jwt_secret
+  toss_secret_key   = var.toss_secret_key
+
+  services = local.services
+  rds_host = module.rds.rds_host
+
+  elasticache_endpoint    = module.elasticache.elasticache_primary_endpoint
+  enable_elasticache_auth = var.enable_elasticache_auth
+  elasticache_password    = module.elasticache.elasticache_password
+  # elasticache_password_version = var.elasticache_password_version  # 운영 전환 시
 }

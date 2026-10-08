@@ -3,8 +3,8 @@ output "rds_arn" {
   value       = { for k, s in aws_db_instance.this : k => s.arn }
 }
 
-output "rds_endpoint" {
-  description = "RDS 엔드포인트"
+output "rds_host" {
+  description = "RDS Host 이름"
   value       = { for k, s in aws_db_instance.this : k => s.address }
 }
 

@@ -6,11 +6,11 @@ locals {
 }
 
 # 민감 정보(SecureString)
-resource "aws_ssm_parameter" "db_username" {
+resource "aws_ssm_parameter" "rds_username" {
+  description = "Database username"
   name        = "${local.prefix}/database/username"
   type        = "SecureString"
-  value       = var.db_username
-  description = "Database username"
+  value       = var.rds_username
 
   tags = merge(var.common_tags, {
     Name     = "${var.project}-${var.environment}-db-username"
@@ -19,11 +19,13 @@ resource "aws_ssm_parameter" "db_username" {
   })
 }
 
-resource "aws_ssm_parameter" "db_password" {
+resource "aws_ssm_parameter" "rds_password" {
+  count = var.enable_rds_secret ? 0 : 1
+
+  description = "Database password"
   name        = "${local.prefix}/database/password"
   type        = "SecureString"
-  value       = var.db_password
-  description = "Database password"
+  value       = var.rds_password
 
   tags = merge(var.common_tags, {
     Name     = "${var.project}-${var.environment}-db-password"
@@ -33,10 +35,10 @@ resource "aws_ssm_parameter" "db_password" {
 }
 
 resource "aws_ssm_parameter" "jwt_secret" {
+  description = "JWT secret key"
   name        = "${local.prefix}/jwt/secret"
   type        = "SecureString"
   value       = var.jwt_secret
-  description = "JWT secret key"
 
   tags = merge(var.common_tags, {
     Name     = "${var.project}-${var.environment}-jwt-secret"
@@ -46,10 +48,10 @@ resource "aws_ssm_parameter" "jwt_secret" {
 }
 
 resource "aws_ssm_parameter" "mail_username" {
+  description = "SMTP username"
   name        = "${local.prefix}/mail/username"
   type        = "SecureString"
   value       = var.mail_username
-  description = "SMTP username"
 
   tags = merge(var.common_tags, {
     Name     = "${var.project}-${var.environment}-mail-username"
@@ -59,10 +61,10 @@ resource "aws_ssm_parameter" "mail_username" {
 }
 
 resource "aws_ssm_parameter" "mail_password" {
+  description = "SMTP password"
   name        = "${local.prefix}/mail/password"
   type        = "SecureString"
   value       = var.mail_password
-  description = "SMTP password"
 
   tags = merge(var.common_tags, {
     Name     = "${var.project}-${var.environment}-mail-password"
@@ -72,10 +74,10 @@ resource "aws_ssm_parameter" "mail_password" {
 }
 
 resource "aws_ssm_parameter" "toss_secret_key" {
+  description = "Toss Payments secret key"
   name        = "${local.prefix}/toss/secret_key"
   type        = "SecureString"
   value       = var.toss_secret_key
-  description = "Toss Payments secret key"
 
   tags = merge(var.common_tags, {
     Name     = "${var.project}-${var.environment}-toss-secret-key"
@@ -87,43 +89,64 @@ resource "aws_ssm_parameter" "toss_secret_key" {
 # =============================================================================
 # 동적 인프라 값 (String)
 #  =============================================================================
-resource "aws_ssm_parameter" "rds_endpoint" {
-  name        = "${local.prefix}/database/endpoint"
+resource "aws_ssm_parameter" "rds_host" {
+  for_each = var.rds_host
+
+  description = "RDS Host (auto-populated by Terraform)"
+  name        = "${local.prefix}/database/${each.key}/host"
   type        = "String"
-  value       = var.rds_host
-  description = "RDS endpoint (auto-populated by Terraform)"
+  value       = each.value
 
   tags = merge(var.common_tags, {
-    Name     = "${var.project}-${var.environment}-db-endpoint"
+    Name     = "${var.project}-${var.environment}-${each.key}-rds-host"
     Category = "database"
     Type     = "infrastructure"
   })
 }
 
-resource "aws_ssm_parameter" "db_service_url" {
+resource "aws_ssm_parameter" "rds_service_url" {
   for_each = var.services
 
+  description = "RDS URL for spot-${each.key}"
   name        = "${local.prefix}/database/${each.key}/url"
   type        = "String"
-  description = "RDS URL for spot-${each.key}"
-  value       = "jdbc:postgresql://${var.rds_endpoints[each.key]}:5432/spot_${each.key}"
+  value       = "jdbc:postgresql://${var.rds_host[each.key]}:5432/spot_${each.key}"
 
   tags = merge(var.common_tags, {
-    Name     = "${var.project}-${var.environment}-${each.key}-db-url"
+    Name     = "${var.project}-${var.environment}-${each.key}-rds-url"
     Category = "database"
     Type     = "infrastructure"
   })
 }
 
-resource "aws_ssm_parameter" "redis_endpoint" {
+resource "aws_ssm_parameter" "elasticache_endpoint" {
+  description = "Redis endpoint (auto-populated by Terraform)"
   name        = "${local.prefix}/cache/redis_endpoint"
   type        = "String"
-  value       = var.redis_endpoint
-  description = "Redis endpoint (auto-populated by Terraform)"
+  value       = var.elasticache_endpoint
 
   tags = merge(var.common_tags, {
-    Name     = "${var.project}-${var.environment}-redis-endpoint"
+    Name     = "${var.project}-${var.environment}-elasticache-endpoint"
     Category = "cache"
     Type     = "infrastructure"
+  })
+}
+
+resource "aws_ssm_parameter" "elasticache_password" {
+  count = var.enable_elasticache_auth ? 1 : 0
+
+  description = "ElastiCache Password"
+  name        = "${local.prefix}/cache/redis_password"
+  type        = "SecureString"
+  value       = var.elasticache_password # 운영 전환 시 삭제
+
+  # # 운영 전환 시
+  # value_wo         = var.elasticache_password
+  # value_wo_version = var.elasticache_password_version
+
+  tags = merge(var.common_tags, {
+    Name     = "${var.project}-${var.environment}-elasticache-password"
+    Category = "cache"
+    Type     = "secret"
   })
 }
