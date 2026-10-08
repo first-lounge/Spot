@@ -38,6 +38,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "logs" {
 }
 
 # 로그 수명 주기 정책 - 오래된 로그 자동 삭제
+# noncurrent_version_expiration => Prod 구축 시 필수
 resource "aws_s3_bucket_lifecycle_configuration" "logs" {
   bucket = aws_s3_bucket.logs.id
 
@@ -51,8 +52,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs" {
   }
 }
 
-# 로그 버킷 정책 (ALB Access, CloudWatch,)
-# 추가 예정 : CloudTrail, RDS
+# 로그 버킷 정책 (ALB Access, CloudWatch, )
+# 추가 예정 : CloudTrail
 resource "aws_s3_bucket_policy" "logs" {
   bucket = aws_s3_bucket.logs.id
 
@@ -83,7 +84,7 @@ resource "aws_s3_bucket_policy" "logs" {
           Service = "logdelivery.elasticloadbalancing.amazonaws.com"
         }
         Action   = "s3:PutObject"
-        Resource = "${aws_s3_bucket.logs.arn}/alb/AWSLogs/${var.account_id}/*"
+        Resource = "${aws_s3_bucket.logs.arn}/alb-access-logs/AWSLogs/${var.account_id}/*"
       },
 
       # CloudWatch
@@ -114,8 +115,6 @@ resource "aws_s3_bucket_policy" "logs" {
       }
 
       # CloudTrail
-
-      # RDS
     ]
   })
 }
