@@ -1,7 +1,10 @@
 data "aws_caller_identity" "current" {}
 
+# =============================================================================
+# tfstate
+# =============================================================================
 resource "aws_kms_key" "tfstate" {
-  description             = "KMS key for spot-tfstate-bucket"
+  description             = "KMS key for spot tfstate bucket"
   enable_key_rotation     = true
   deletion_window_in_days = 30
   policy = jsonencode({
