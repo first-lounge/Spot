@@ -24,8 +24,15 @@ variable "enable_versioning" {
   default     = false # Dev: 비활성화 / Prod: true
 }
 
-variable "log_retention_days" {
-  description = "로그 보관 기간 (일)"
+variable "s3_log_expiration_days" {
+  description = "로그 만료 기간 (일)"
   type        = number
-  default     = 30 # Dev 기준
+  default     = 7 # Dev, Prod 모두
 }
+
+# # 운영 전환 시
+# variable "s3_log_transition_days" {
+#   description = "로그를 Glacier로 이동하는 일수"
+#   type        = number
+#   default     = 30
+# }
