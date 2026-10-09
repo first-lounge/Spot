@@ -81,8 +81,10 @@ module "route53" {
   name_prefix = local.name_prefix
   common_tags = local.common_tags
 
-  domain_name        = var.domain_name
-  zone_force_destroy = var.zone_force_destroy
+  domain_name = var.domain_name
+
+  # # 운영 전환 시 주석 해제
+  # zone_force_destroy = var.zone_force_destroy
 }
 
 # =============================================================================

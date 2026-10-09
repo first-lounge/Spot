@@ -209,11 +209,13 @@ variable "enable_versioning" {
 # =============================================================================
 # Route53 모듈
 # =============================================================================
-variable "zone_force_destroy" {
-  description = "zone destroy 시 남은 레코드까지 강제 삭제"
-  type        = bool
-  default     = true
-}
+
+# # 운영 전환 시
+# variable "zone_force_destroy" {
+#   description = "zone destroy 시 남은 레코드까지 강제 삭제"
+#   type        = bool
+#   default = false
+# }
 
 variable "domain_name" {
   description = "도메인 이름"
