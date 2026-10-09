@@ -79,6 +79,32 @@ variable "availability_zones" {
 }
 
 # =============================================================================
+# EKS 모듈
+# =============================================================================
+variable "cluster_name" {
+  description = "EKS 클러스터 이름"
+  type        = string
+  default     = "spot-prod-cluster"
+}
+
+variable "public_access_cidrs" {
+  description = "EKS 클러스터 접속 허용 IP"
+  type        = list(string)
+}
+
+variable "instance_types" {
+  description = "EC2 인스턴스 유형"
+  type        = list(string)
+  default     = ["t3.large", "t3a.large"]
+}
+
+variable "volume_size" {
+  description = "EBS 용량 크기"
+  type        = number
+  default     = 50
+}
+
+# =============================================================================
 # RDS 모듈
 # =============================================================================
 variable "rds_username" {
@@ -113,42 +139,6 @@ variable "enable_elasticache_auth" {
 #   type        = number
 # }
 
-# # =============================================================================
-# # WAF 모듈
-# # =============================================================================
-# variable "waf_rate_limit" {
-#   description = "5분당 최대 요청 수 (Rate Limiting)"
-#   type        = number
-# }
-
-# variable "waf_log_retention_days" {
-#   description = "WAF 로그 보관 일수"
-#   type        = number
-# }
-
-# # =============================================================================
-# # S3 모듈
-# # =============================================================================
-# variable "s3_log_transition_days" {
-#   description = "로그를 Glacier로 이동하는 일수"
-#   type        = number
-#   default     = 30
-# }
-
-# variable "s3_log_expiration_days" {
-#   description = "로그 삭제 일수"
-#   type        = number
-#   default     = 90
-# }
-
-# # =============================================================================
-# # Monitoring 모듈
-# # =============================================================================
-# variable "alert_email" {
-#   description = "알람 알림 받을 이메일 (빈 값이면 구독 안함)"
-#   type        = string
-# }
-
 # =============================================================================
 # Parameter Store 모듈
 # =============================================================================
@@ -181,30 +171,63 @@ variable "toss_secret_key" {
 }
 
 # =============================================================================
-# EKS 모듈
+# WAF 모듈
 # =============================================================================
-variable "cluster_name" {
-  description = "EKS 클러스터 이름"
-  type        = string
-  default     = "spot-prod-cluster"
-}
-
-variable "public_access_cidrs" {
-  description = "EKS 클러스터 접속 허용 IP"
-  type        = list(string)
-}
-
-variable "instance_types" {
-  description = "EC2 인스턴스 유형"
-  type        = list(string)
-  default     = ["t3.large", "t3a.large"]
-}
-
-variable "volume_size" {
-  description = "EBS 용량 크기"
+variable "waf_rate_limit" {
+  description = "5분당 최대 요청 수 (Rate Limiting)"
   type        = number
-  default     = 50
 }
+
+variable "waf_log_retention_days" {
+  description = "WAF 로그 보관 일수"
+  type        = number
+}
+
+# =============================================================================
+# S3 모듈
+# =============================================================================
+variable "enable_versioning" {
+  description = "S3 버저닝 활성화 여부"
+  type        = bool
+  default     = true
+}
+
+# # 운영 전환 시
+# variable "s3_log_expiration_days" {
+#   description = "로그 만료 기간 (일)"
+#   type        = number
+#   default     = 120
+# }
+
+# variable "s3_log_transition_days" {
+#   description = "로그를 Glacier로 이동하는 일수"
+#   type        = number
+#   default     = 30
+# }
+
+
+# =============================================================================
+# Route53 모듈
+# =============================================================================
+variable "zone_force_destroy" {
+  description = "zone destroy 시 남은 레코드까지 강제 삭제"
+  type        = bool
+  default     = true
+}
+
+variable "domain_name" {
+  description = "도메인 이름"
+  type        = string
+  default     = "hbksv.com"
+}
+
+# # =============================================================================
+# # Alarm 모듈
+# # =============================================================================
+# variable "alert_email" {
+#   description = "알람 알림 받을 이메일 (빈 값이면 구독 안함)"
+#   type        = string
+# }
 
 # # =============================================================================
 # # DNS
@@ -222,18 +245,3 @@ variable "volume_size" {
 #   description = "Github 브랜치"
 #   type        = string
 # }
-
-# =============================================================================
-# Route53
-# =============================================================================
-variable "zone_force_destroy" {
-  description = "zone destroy 시 남은 레코드까지 강제 삭제"
-  type        = bool
-  default     = true
-}
-
-variable "domain_name" {
-  description = "도메인 이름"
-  type        = string
-  default     = "hbksv.com"
-}

@@ -1,35 +1,50 @@
 # [0] 프로젝트 환경
 environment: dev
+
 # [1] AWS Ingress 설정 (기본값: AWS ALB)
 ingress:
   className: 'alb'
   aws:
     enabled: true
+
   # ALB 로그 저장용 S3 버킷 이름
   bucket: spot-dev-logs
+
   subs:
     spot:
       hostname: spot
   annotations:
-    # ALB 설정
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip # IP 모드
-    # 헬스 체크
-    alb.ingress.kubernetes.io/success-codes: 200
     # 모든 서비스가 하나의 ALB를 공유
     alb.ingress.kubernetes.io/group.name: spot-ingress
-    # WAF
-    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:ap-northeast-2:164076841262:regional/webacl/spot-dev-waf/ef52470b-f182-4b2b-b840-092a009ed787
+
+    # ALB 설정
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    
+    # IP 모드
+    alb.ingress.kubernetes.io/target-type: ip 
+    
     # HTTPS/HTTP 설정
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+
+    # 리다이렉트
     alb.ingress.kubernetes.io/ssl-redirect: 443
+
+    # ALB에 할당해야 하는 보안 정책
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09
+
+    # 헬스 체크
+    alb.ingress.kubernetes.io/success-codes: 200
+    
     # 태그 설정
-    alb.ingress.kubernetes.io/tags: Name=spot-alb, Environment=dev,Team=spot, ManagedBy=terraform
+    alb.ingress.kubernetes.io/tags: Name=spot-dev-alb, Environment=dev,Team=spot, ManagedBy=lbc
+
 # [2] 도메인 (AWS)
 domain: hbksv.com
+
 # [3] Deployment 설정
 global:
   repository: 164076841262.dkr.ecr.ap-northeast-2.amazonaws.com
+
 # [4] app 목록
 apps:
   gateway:
@@ -38,24 +53,28 @@ apps:
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
     smokePath: /actuator/health
+    
   user:
     imageTag: "d4fb1d59"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
     smokePath: /actuator/health
+
   store:
     imageTag: "d4fb1d59"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 180
     smokePath: /actuator/health
+
   order:
     imageTag: "d4fb1d59"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 300
     smokePath: /actuator/health
+    
   payment:
     imageTag: "d4fb1d59"
     rollout: true

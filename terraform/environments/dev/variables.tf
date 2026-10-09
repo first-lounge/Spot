@@ -103,34 +103,6 @@ variable "domain_name" {
 }
 
 # =============================================================================
-# WAF 모듈
-# =============================================================================
-variable "waf_rate_limit" {
-  description = "5분당 최대 요청 수 (Rate Limiting)"
-  type        = number
-}
-
-variable "waf_log_retention_days" {
-  description = "WAF 로그 보관 일수"
-  type        = number
-}
-
-# =============================================================================
-# S3 모듈
-# =============================================================================
-variable "s3_log_transition_days" {
-  description = "로그를 Glacier로 이동하는 일수"
-  type        = number
-  default     = 30
-}
-
-variable "s3_log_expiration_days" {
-  description = "로그 삭제 일수"
-  type        = number
-  default     = 90
-}
-
-# =============================================================================
 # Redis (ElastiCache) 모듈
 # =============================================================================
 variable "elasticache_node_type" {

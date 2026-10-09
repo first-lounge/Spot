@@ -164,5 +164,52 @@ module "parameter_store" {
   elasticache_endpoint    = module.elasticache.elasticache_primary_endpoint
   enable_elasticache_auth = var.enable_elasticache_auth
   elasticache_password    = module.elasticache.elasticache_password
-  # elasticache_password_version = var.elasticache_password_version  # 운영 전환 시
+
+  # # 운영 전환 시
+  # elasticache_password_version = var.elasticache_password_version  
+}
+
+# =============================================================================
+# WAF
+# =============================================================================
+module "waf" {
+  source = "../../modules/waf"
+
+  # 공통
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  rate_limit         = var.waf_rate_limit
+  log_retention_days = var.waf_log_retention_days
+}
+
+# =============================================================================
+# S3
+# =============================================================================
+module "s3" {
+  source = "../../modules/s3"
+
+  name_prefix       = local.name_prefix
+  common_tags       = local.common_tags
+  account_id        = data.aws_caller_identity.current.account_id
+  region            = var.region
+  enable_versioning = var.enable_versioning
+
+  # # 운영 전환 시
+  # s3_log_expiration_days = var.s3_log_expiration_days
+  # s3_log_transition_days = var.s3_log_transition_days
+}
+
+# =============================================================================
+# ACM
+# =============================================================================
+module "acm" {
+  source = "../../modules/acm"
+
+  # 공통
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  domain_name = var.domain_name
+  zone_id     = module.route53.hosted_zone_id
 }

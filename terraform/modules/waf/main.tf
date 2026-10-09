@@ -1,7 +1,7 @@
 # =============================================================================
 # WAF Web ALB (EKS Ingress via AWS Load Balancer Controller)
 # =============================================================================
-resource "aws_wafv2_web_acl" "waf" {
+resource "aws_wafv2_web_acl" "this" {
   name        = "${var.name_prefix}-waf"
   description = "WAF for ALB - EKS Ingress"
   scope       = "REGIONAL"
@@ -111,9 +111,23 @@ resource "aws_wafv2_web_acl" "waf" {
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-waf" })
 }
 
+data "aws_lbs" "alb" {
+  tags = {
+    Name        = "${var.name_prefix}-alb",
+    Environment = var.common_tags["Environment"]
+  }
+}
+
+resource "aws_wafv2_web_acl_association" "this" {
+  for_each = data.aws_lbs.alb.arns
+
+  resource_arn = each.value
+  web_acl_arn  = aws_wafv2_web_acl.this.arn
+}
+
 # =============================================================================
 # CloudWatch Log Group for WAF logs
-# NOTE: WAF requires the log group name to start with "aws-waf-logs-"
+# CloudWatch Logs로 로그 보내려면 로그 그룹 이름이 반드시 "aws-waf-logs-"로 시작해야 함
 # =============================================================================
 resource "aws_cloudwatch_log_group" "waf_log" {
   name              = "aws-waf-logs-${var.name_prefix}"
@@ -125,7 +139,7 @@ resource "aws_cloudwatch_log_group" "waf_log" {
 # Allow WAF to write logs to CloudWatch Logs
 # =============================================================================
 resource "aws_cloudwatch_log_resource_policy" "waf_policy" {
-  policy_name = "aws-waf-logs-${var.name_prefix}"
+  policy_name = "${var.name_prefix}-aws-waf-log-policy"
 
   policy_document = jsonencode({
     Version = "2012-10-17"
@@ -149,7 +163,7 @@ resource "aws_wafv2_web_acl_logging_configuration" "waf" {
   log_destination_configs = [aws_cloudwatch_log_group.waf_log.arn]
 
   # 어떤 WAF의 로그를 보낼지
-  resource_arn = aws_wafv2_web_acl.waf.arn
+  resource_arn = aws_wafv2_web_acl.this.arn
 
   # Policy 생성 후 연결되도록 설정
   depends_on = [aws_cloudwatch_log_resource_policy.waf_policy]

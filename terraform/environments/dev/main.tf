@@ -159,20 +159,6 @@ module "parameter_store" {
 }
 
 # =============================================================================
-# WAF
-# =============================================================================
-module "waf" {
-  source = "../../modules/waf"
-
-  # 공통
-  name_prefix = local.name_prefix
-  common_tags = local.common_tags
-
-  rate_limit         = var.waf_rate_limit
-  log_retention_days = var.waf_log_retention_days
-}
-
-# =============================================================================
 # Route53
 # =============================================================================
 module "route53" {
