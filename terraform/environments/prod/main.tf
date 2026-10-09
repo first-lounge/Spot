@@ -215,3 +215,29 @@ module "acm" {
   domain_name = var.domain_name
   zone_id     = module.route53.hosted_zone_id
 }
+
+# =============================================================================
+# ECR
+# =============================================================================
+module "ecr" {
+  source = "../../modules/ecr"
+
+  # 공통
+  name_prefix   = local.name_prefix
+  common_tags   = local.common_tags
+  services_name = var.services
+}
+
+# =============================================================================
+# Github OIDC
+# =============================================================================
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  git_branch     = var.git_branch
+  account_id     = data.aws_caller_identity.current.account_id
+  service_region = var.region
+}
