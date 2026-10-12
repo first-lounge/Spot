@@ -241,3 +241,23 @@ module "github_oidc" {
   account_id     = data.aws_caller_identity.current.account_id
   service_region = var.region
 }
+
+# =============================================================================
+# Alarm (CloudWatch)
+# =============================================================================
+module "alarm" {
+  source = "../../modules/alarm"
+
+  # 공통
+  project     = var.project
+  environment = var.environment
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  rds_identifiers       = module.rds.rds_identifiers
+  rds_allocated_storage = local.rds_settings.allocated_storage
+  rds_max_connection    = local.rds_settings.max_connections
+  rds_instances         = local.rds_instances
+
+  elasticache_ids = module.elasticache.elasticache_ids
+}
