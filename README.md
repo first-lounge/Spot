@@ -170,16 +170,20 @@ TOSS_SECRET_KEY=
 
 ## Infrastructure
 
-AWS Dev 환경 기준입니다. Terraform으로 프로비저닝하며 EKS 위에서 운영됩니다. (Prod 환경은 추후 구성 예정)
+AWS Prod 환경 기준입니다. Terraform으로 프로비저닝하며 EKS 위에 배포됩니다.
 
-![](./docs/infra/image/3차-Dev.png)
+![](./docs/infra/image/3차%20아키텍처.png)
 
 ### 네트워크 구성
 
 - **Region**: ap-northeast-2 (서울)
-- **VPC**: 10.0.0.0/16, 2개의 Availability Zone (AZ-a, AZ-c)
-- **Public Subnet**: NAT Instance, ALB
-- **Private Subnet**: EKS, RDS, ElastiCache
+- **VPC**: 10.1.0.0/16, 2개의 Availability Zone (AZ-a, AZ-c)
+- **Public Subnet** (10.1.3.0/24, 10.1.4.0/24): ALB, NAT Gateway (AZ별 1개)
+- **Private Subnet** (10.1.31.0/24, 10.1.41.0/24): EKS 워커 노드
+  - AZ마다 별도 라우팅 테이블로 같은 AZ의 NAT Gateway를 사용 (한 AZ 장애가 다른 AZ의 외부 통신에 영향을 주지 않음)
+- **DB Subnet** (10.1.5.0/24, 10.1.6.0/24): RDS, ElastiCache
+  - 인터넷 경로(0.0.0.0/0) 없음, VPC 내부에서만 접근
+- **VPC Endpoint**: S3 Gateway Endpoint (ECR 이미지 레이어 등 S3 트래픽이 NAT Gateway를 거치지 않음)
 
 ### 트래픽 흐름
 
