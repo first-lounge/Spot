@@ -60,6 +60,7 @@ locals {
 
   rds_settings = {
     # Parameter Group
+    max_connections            = 200
     log_min_duration_statement = 1000
     log_connections            = 1
     log_disconnections         = 1

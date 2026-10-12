@@ -65,6 +65,7 @@ variable "rds_settings" {
   description = "환경별 RDS 설정"
   type = object({
     # Parameter Group
+    max_connections            = number # 인스턴스에 허용되는 동시 클라이언트 연결 수
     log_min_duration_statement = number # 이 시간(ms) 이상 걸린 쿼리 기록
     log_connections            = number # 성공한 연결 기록 (0/1)
     log_disconnections         = number # 세션 종료·기간 기록 (0/1)

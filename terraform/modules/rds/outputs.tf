@@ -12,3 +12,8 @@ output "rds_secret_arn" {
   description = "RDS 인스턴스별 Secret ARN"
   value       = { for k, s in aws_db_instance.this : k => s.master_user_secret[0].secret_arn if length(s.master_user_secret) > 0 }
 }
+
+output "rds_identifiers" {
+  description = "RDS 인스턴스별 이름"
+  value       = { for k, s in aws_db_instance.this : k => s.identifier }
+}

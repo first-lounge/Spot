@@ -22,7 +22,7 @@ resource "aws_db_parameter_group" "rds_pg_16" {
   # ── 정적 파라미터 (재부팅 필요) ──────────────────
   parameter {
     name         = "max_connections"
-    value        = "200"
+    value        = var.rds_settings.max_connections
     apply_method = "pending-reboot"
   }
 

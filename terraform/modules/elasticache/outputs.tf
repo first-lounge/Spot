@@ -12,3 +12,12 @@ output "elasticache_password" {
   # ephemeral   = true 
   # value       = var.enable_elasticache_auth ? ephemeral.random_password.this[0].result : null 
 }
+
+output "elasticache_ids" {
+  description = "ElastiCache 노드별 ID"
+  value = {
+    for i in range(1, var.num_cache_clusters + 1) :
+    format("node%d", i) => format("%s-%03d", aws_elasticache_replication_group.this.replication_group_id, i)
+  }
+
+}
