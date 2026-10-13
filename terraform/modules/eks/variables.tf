@@ -18,6 +18,7 @@ variable "environment" {
   description = "환경 (dev, prod)"
   type        = string
 }
+
 variable "cluster_name" {
   description = "EKS 클러스터 이름"
   type        = string
@@ -68,10 +69,32 @@ variable "enabled_cluster_log_types" {
   default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 }
 
-# Node Launch Template
+# Node Group
+variable "node_groups" {
+  description = "환경별 Node Group 설정"
+  type = map(object({
+    taints = list(object({
+      key    = string
+      value  = optional(string)
+      effect = string
+    }))
+    workload      = string
+    capacity_type = string
+    desired_size  = number
+    max_size      = number
+    min_size      = number
+  }))
+}
+
 variable "volume_size" {
   description = "EBS 크기"
   type        = number
+}
+
+variable "ebs_kms_arn" {
+  description = "KMS 키 ARN"
+  type        = string
+  default     = null
 }
 
 variable "node_group_sg_id" {
@@ -79,7 +102,6 @@ variable "node_group_sg_id" {
   type        = string
 }
 
-# Node
 variable "node_group_role_arn" {
   description = "EKS 노드 그룹 Role ARN"
   type        = string
@@ -95,51 +117,32 @@ variable "instance_types" {
   type        = list(string)
 }
 
-variable "capacity_type" {
-  description = "인스턴스 구매 방식"
-  type        = string
-}
-
-variable "desired_size" {
-  description = "노드 희망 개수"
-  type        = number
-}
-
-variable "max_size" {
-  description = "노드 최대 개수"
-  type        = number
-}
-
-variable "min_size" {
-  description = "노드 최소 개수"
-  type        = number
-}
-
 # EKS Addons
 variable "vpc_cni_version" {
   description = "EKS Addon VPC CNI 버전"
   type        = string
-  default     = ""
+  default     = "v1.22.4-eksbuild.3"
 }
 
 variable "core_dns_version" {
   description = "EKS Addon Core DNS 버전"
   type        = string
-  default     = ""
+  default     = "v1.13.2-eksbuild.24"
 }
 
 variable "kube_proxy_version" {
   description = "EKS Addon Kube Proxy 버전"
   type        = string
-  default     = ""
+  default     = "v1.35.3-eksbuild.29"
 }
 
 variable "ebs_csi_version" {
   description = "EKS Addon EBS CSI 버전"
   type        = string
-  default     = ""
+  default     = "v1.66.0-eksbuild.1"
 }
 
+# IRSA
 variable "hosted_zone_id" {
   description = "Route53 Hosted Zone ID"
   type        = string
@@ -153,4 +156,22 @@ variable "account_id" {
 variable "region" {
   description = "AWS 리전"
   type        = string
+}
+
+# external-secrets
+variable "enable_rds_secret_access" {
+  description = "true면 RDS 시크릿 읽기 + CMK 복호화 권한 추가"
+  type        = bool
+}
+
+variable "rds_secret_arn" {
+  description = "RDS 인스턴스별 Secret ARN"
+  type        = map(string)
+  default     = {}
+}
+
+variable "rds_kms_arn" {
+  description = "RDS용 KMS 키 ARN"
+  type        = string
+  default     = null
 }

@@ -7,7 +7,7 @@ metadata:
   namespace: {{ $sub.namespace }}
   annotations:
   {{- if $.Values.ingress.aws.enabled }}
-    alb.ingress.kubernetes.io/load-balancer-attributes: "access_logs.s3.enabled=true,access_logs.s3.bucket={{ $.Values.ingress.bucket }},access_logs.s3.prefix=alb"
+    alb.ingress.kubernetes.io/load-balancer-attributes: "access_logs.s3.enabled=true,access_logs.s3.bucket={{ $.Values.ingress.bucket }},access_logs.s3.prefix=alb-access-logs"
     alb.ingress.kubernetes.io/healthcheck-path: {{ $sub.healthPath | default "/" | quote }}
   {{- range $k, $value := $.Values.ingress.annotations }}
     {{- /* annotations의 각 key의 value가 존재하는 경우 */ -}}

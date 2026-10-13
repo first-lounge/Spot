@@ -3,8 +3,8 @@
 # =============================================================================
 resource "aws_vpc" "spot_vpc" {
   cidr_block           = var.vpc_cidr
-  enable_dns_support   = true
-  enable_dns_hostnames = true
+  enable_dns_support   = true # VPC 안에서 AWS가 제공하는 DNS 서버를 쓸 수 있게 하는 스위치
+  enable_dns_hostnames = true # VPC 안의 리소스에 이름을 붙여주는 스위치
   tags                 = merge(var.common_tags, { Name = "${var.name_prefix}-vpc" })
 }
 
@@ -12,48 +12,11 @@ resource "aws_vpc" "spot_vpc" {
 # VPC Gateway Endpoint
 # =============================================================================
 resource "aws_vpc_endpoint" "s3" {
-  vpc_id       = aws_vpc.spot_vpc.id
-  service_name = "com.amazonaws.${var.service_region}.s3"
-  route_table_ids = [
-    aws_route_table.public_rt.id,
-    aws_route_table.private_rt.id
-  ]
+  vpc_id          = aws_vpc.spot_vpc.id
+  service_name    = "com.amazonaws.${var.service_region}.s3"
+  route_table_ids = [for s in aws_route_table.private_rt : s.id]
 
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-s3-endpoint" })
-}
-
-# =============================================================================
-# VPC Interface Endpoint (Prod)
-# =============================================================================
-
-# ecr.api: ECR API 호출용
-resource "aws_vpc_endpoint" "ecr_api" {
-  count             = var.enable_interface_endpoint ? 1 : 0
-  vpc_id            = aws_vpc.spot_vpc.id
-  service_name      = "com.amazonaws.${var.service_region}.ecr.api"
-  vpc_endpoint_type = "Interface"
-
-  security_group_ids = [
-    # TODO: Endpoint SG 추가 (VPC CIDR → 443 허용)
-  ]
-
-  private_dns_enabled = true
-  tags                = merge(var.common_tags, { Name = "${var.name_prefix}-ecr-api-endpoint" })
-}
-
-# ecr.dkr: 이미지 pull용
-resource "aws_vpc_endpoint" "ecr_dkr" {
-  count             = var.enable_interface_endpoint ? 1 : 0
-  vpc_id            = aws_vpc.spot_vpc.id
-  service_name      = "com.amazonaws.${var.service_region}.ecr.dkr"
-  vpc_endpoint_type = "Interface"
-
-  security_group_ids = [
-
-  ]
-
-  private_dns_enabled = true
-  tags                = merge(var.common_tags, { Name = "${var.name_prefix}-ecr-dkr-endpoint" })
 }
 
 # =============================================================================
@@ -62,11 +25,11 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
 
 # Public   
 resource "aws_subnet" "public" {
-  for_each                = var.public_subnet_cidrs
-  vpc_id                  = aws_vpc.spot_vpc.id
-  availability_zone       = var.availability_zones[each.key]
-  cidr_block              = each.value
-  map_public_ip_on_launch = true
+  for_each          = var.public_subnet_cidrs
+  vpc_id            = aws_vpc.spot_vpc.id
+  availability_zone = var.availability_zones[each.key]
+  cidr_block        = each.value
+
   tags = merge(var.common_tags, {
     Name                     = "${var.name_prefix}-public-${each.key}"
     "kubernetes.io/role/elb" = "1"
@@ -79,6 +42,7 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.spot_vpc.id
   availability_zone = var.availability_zones[each.key]
   cidr_block        = each.value
+
   tags = merge(var.common_tags, {
     Name                              = "${var.name_prefix}-private-${each.key}"
     "kubernetes.io/role/internal-elb" = "1"
@@ -91,6 +55,7 @@ resource "aws_subnet" "db" {
   vpc_id            = aws_vpc.spot_vpc.id
   availability_zone = var.availability_zones[each.key]
   cidr_block        = each.value
+
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-db-${each.key}"
   })
@@ -131,7 +96,7 @@ resource "aws_instance" "nat_instance" {
   count                       = var.enable_nat_instance ? 1 : 0
   ami                         = data.aws_ami.nat.id
   instance_type               = "t3.micro"
-  vpc_security_group_ids      = [var.nat_sg_id]
+  vpc_security_group_ids      = [var.nat_instance_sg_id]
   subnet_id                   = aws_subnet.public["a"].id
   associate_public_ip_address = true
   source_dest_check           = false
@@ -186,7 +151,7 @@ resource "aws_nat_gateway" "nat_gateway" {
 # Route Table
 # =============================================================================
 
-# Public
+# Public Subnet
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.spot_vpc.id
   tags   = merge(var.common_tags, { Name = "${var.name_prefix}-public-rt" })
@@ -204,22 +169,23 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public_rt.id
 }
 
-# Private
+# Private Subnet
 resource "aws_route_table" "private_rt" {
-  vpc_id = aws_vpc.spot_vpc.id
-  tags   = merge(var.common_tags, { Name = "${var.name_prefix}-private-rt" })
+  for_each = var.private_subnet_cidrs
+  vpc_id   = aws_vpc.spot_vpc.id
+  tags     = merge(var.common_tags, { Name = "${var.name_prefix}-private-rt-${each.key}" })
 }
 
 resource "aws_route" "private_nat_instance" {
   count                  = var.enable_nat_instance ? 1 : 0
-  route_table_id         = aws_route_table.private_rt.id
+  route_table_id         = aws_route_table.private_rt["a"].id
   destination_cidr_block = "0.0.0.0/0"
   network_interface_id   = aws_instance.nat_instance[0].primary_network_interface_id
 }
 
 resource "aws_route" "private_nat_gw" {
   for_each               = var.enable_nat_gateway ? var.availability_zones : {}
-  route_table_id         = aws_route_table.private_rt.id
+  route_table_id         = aws_route_table.private_rt[each.key].id
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.nat_gateway[each.key].id
 }
@@ -227,11 +193,17 @@ resource "aws_route" "private_nat_gw" {
 resource "aws_route_table_association" "private" {
   for_each       = var.private_subnet_cidrs
   subnet_id      = aws_subnet.private[each.key].id
-  route_table_id = aws_route_table.private_rt.id
+  route_table_id = aws_route_table.private_rt[each.key].id
+}
+
+# DB Subnet
+resource "aws_route_table" "db_rt" {
+  vpc_id = aws_vpc.spot_vpc.id
+  tags   = merge(var.common_tags, { Name = "${var.name_prefix}-db-rt" })
 }
 
 resource "aws_route_table_association" "db" {
   for_each       = var.db_subnet_cidrs
   subnet_id      = aws_subnet.db[each.key].id
-  route_table_id = aws_route_table.private_rt.id
+  route_table_id = aws_route_table.db_rt.id
 }

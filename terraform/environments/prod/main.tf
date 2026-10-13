@@ -1,0 +1,263 @@
+data "aws_caller_identity" "current" {}
+
+# =============================================================================
+# Network (VPC, CIDR, Subnet, IGW, Route Table, NAT GW)
+# =============================================================================
+module "network" {
+  source = "../../modules/network"
+
+  name_prefix          = local.name_prefix
+  common_tags          = local.common_tags
+  service_region       = var.region
+  vpc_cidr             = var.vpc_cidr
+  availability_zones   = var.availability_zones
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
+  db_subnet_cidrs      = var.db_subnet_cidrs
+  enable_nat_instance  = var.enable_nat_instance
+  enable_nat_gateway   = var.enable_nat_gateway
+}
+
+# =============================================================================
+# Security (SG, IAM)
+# =============================================================================
+module "security" {
+  source = "../../modules/security"
+
+  name_prefix         = local.name_prefix
+  common_tags         = local.common_tags
+  vpc_cidr            = var.vpc_cidr
+  vpc_id              = module.network.vpc_id
+  enable_nat_instance = var.enable_nat_instance
+}
+
+# =============================================================================
+# EKS (Cluster, Node Group, Add-Ons, IRSA, SA, LBC)
+# =============================================================================
+module "eks" {
+  source = "../../modules/eks"
+
+  # 공통
+  project      = var.project
+  environment  = var.environment
+  name_prefix  = local.name_prefix
+  common_tags  = local.common_tags
+  cluster_name = var.cluster_name
+
+  # Cluster
+  cluster_role_arn = module.security.cluster_role_arn
+  admin_role_arn   = data.aws_caller_identity.current.arn
+
+  # Node Group
+  ebs_kms_arn         = module.kms.ebs_kms_arn
+  node_group_role_arn = module.security.node_group_role_arn
+  node_group_sg_id    = module.security.node_group_sg_id
+  node_subnet_ids     = module.network.private_subnet_ids
+  subnet_ids          = module.network.private_subnet_ids
+  public_access_cidrs = var.public_access_cidrs
+
+  node_groups    = local.node_groups
+  instance_types = var.instance_types
+  volume_size    = var.volume_size
+
+  # IRSA (EKS Addons)
+  hosted_zone_id           = module.route53.hosted_zone_id
+  account_id               = data.aws_caller_identity.current.account_id
+  region                   = var.region
+  enable_rds_secret_access = local.rds_settings.manage_master_user_password
+  rds_secret_arn           = module.rds.rds_secret_arn
+  rds_kms_arn              = module.kms.rds_kms_arn
+
+  depends_on = [module.network, module.security]
+}
+
+# =============================================================================
+# Route53
+# =============================================================================
+module "route53" {
+  source = "../../modules/route53"
+
+  # 공통
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  domain_name = var.domain_name
+
+  # # 운영 전환 시 주석 해제
+  # zone_force_destroy = var.zone_force_destroy
+}
+
+# =============================================================================
+# KMS
+# =============================================================================
+module "kms" {
+  source = "../../modules/kms"
+
+  # 공통
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+  account_id  = data.aws_caller_identity.current.account_id
+}
+
+# =============================================================================
+# RDS
+# =============================================================================
+module "rds" {
+  source = "../../modules/rds"
+
+  # 공통
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  # RDS 설정
+  rds_settings  = local.rds_settings
+  rds_instances = local.rds_instances
+  username      = var.rds_username
+  rds_kms_arn   = module.kms.rds_kms_arn
+
+  # DB 네트워크
+  db_subnet_ids = module.network.db_subnet_ids
+  rds_sg_id     = module.security.rds_sg_id
+}
+
+# =============================================================================
+# Redis
+# =============================================================================
+module "elasticache" {
+  source = "../../modules/elasticache"
+
+  # 공통
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  # Redis 네트워크
+  db_subnet_ids     = module.network.db_subnet_ids
+  elasticache_sg_id = module.security.elasticache_sg_id
+
+  # Redis 설정
+  node_type               = var.elasticache_node_type
+  num_cache_clusters      = var.elasticache_num_cache_clusters
+  enable_elasticache_auth = var.enable_elasticache_auth
+
+  # # 운영 전환 시
+  # elasticache_password_version = var.elasticache_password_version
+}
+
+# =============================================================================
+# SSM Parameter Store
+# =============================================================================
+module "parameter_store" {
+  source = "../../modules/parameter-store"
+
+  common_tags = local.common_tags
+  project     = var.project
+  environment = var.environment
+
+  rds_username      = var.rds_username
+  enable_rds_secret = local.rds_settings.manage_master_user_password
+  mail_username     = var.mail_username
+  mail_password     = var.mail_password
+  jwt_secret        = var.jwt_secret
+  toss_secret_key   = var.toss_secret_key
+
+  services = local.services
+  rds_host = module.rds.rds_host
+
+  elasticache_endpoint    = module.elasticache.elasticache_primary_endpoint
+  enable_elasticache_auth = var.enable_elasticache_auth
+  elasticache_password    = module.elasticache.elasticache_password
+
+  # # 운영 전환 시
+  # elasticache_password_version = var.elasticache_password_version  
+}
+
+# =============================================================================
+# WAF
+# =============================================================================
+module "waf" {
+  source = "../../modules/waf"
+
+  # 공통
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  rate_limit         = var.waf_rate_limit
+  log_retention_days = var.waf_log_retention_days
+}
+
+# =============================================================================
+# S3
+# =============================================================================
+module "s3" {
+  source = "../../modules/s3"
+
+  name_prefix       = local.name_prefix
+  common_tags       = local.common_tags
+  account_id        = data.aws_caller_identity.current.account_id
+  region            = var.region
+  enable_versioning = var.enable_versioning
+
+  # # 운영 전환 시
+  # s3_log_expiration_days = var.s3_log_expiration_days
+  # s3_log_transition_days = var.s3_log_transition_days
+}
+
+# =============================================================================
+# ACM
+# =============================================================================
+module "acm" {
+  source = "../../modules/acm"
+
+  # 공통
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  domain_name = var.domain_name
+  zone_id     = module.route53.hosted_zone_id
+}
+
+# =============================================================================
+# ECR
+# =============================================================================
+module "ecr" {
+  source = "../../modules/ecr"
+
+  # 공통
+  name_prefix   = local.name_prefix
+  common_tags   = local.common_tags
+  services_name = var.services
+}
+
+# =============================================================================
+# Github OIDC
+# =============================================================================
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  git_branch     = var.git_branch
+  account_id     = data.aws_caller_identity.current.account_id
+  service_region = var.region
+}
+
+# =============================================================================
+# Alarm (CloudWatch)
+# =============================================================================
+module "alarm" {
+  source = "../../modules/alarm"
+
+  # 공통
+  project     = var.project
+  environment = var.environment
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
+  rds_identifiers       = module.rds.rds_identifiers
+  rds_allocated_storage = local.rds_settings.allocated_storage
+  rds_max_connection    = local.rds_settings.max_connections
+  rds_instances         = local.rds_instances
+
+  elasticache_ids = module.elasticache.elasticache_ids
+}

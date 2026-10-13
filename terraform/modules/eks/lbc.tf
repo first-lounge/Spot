@@ -1,4 +1,4 @@
-﻿# =============================================================================
+# =============================================================================
 # AWS Load Balancer Controller (Helm)
 # =============================================================================
 resource "helm_release" "aws_lbc" {
@@ -23,20 +23,37 @@ resource "helm_release" "aws_lbc" {
     value = local.irsa_roles["lbc"].sa_name
   }
 
-  depends_on = [aws_eks_access_policy_association.master]
+  set {
+    name  = "tolerations[0].key"
+    value = "CriticalAddonsOnly"
+  }
+
+  set {
+    name  = "tolerations[0].operator"
+    value = "Exists"
+  }
+
+  dynamic "set" {
+    for_each = local.has_etc_group ? [1] : []
+
+    content {
+      name  = "nodeSelector.workload"
+      value = "etc"
+    }
+  }
+
+  depends_on = [aws_eks_access_policy_association.master, aws_eks_node_group.this]
 }
 
 # =============================================================================
-# Service Account (AWS LBC + EBS CSI)
+# Service Account (AWS LBC)
 # =============================================================================
-resource "kubernetes_service_account_v1" "sa" {
-  for_each = local.irsa_roles
-
+resource "kubernetes_service_account_v1" "lbc_sa" {
   metadata {
-    name      = each.value.sa_name
+    name      = "aws-load-balancer-controller-sa"
     namespace = "kube-system"
     annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.irsa[each.key].arn
+      "eks.amazonaws.com/role-arn" = aws_iam_role.irsa["lbc"].arn
     }
   }
 

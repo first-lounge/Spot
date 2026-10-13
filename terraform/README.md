@@ -17,7 +17,7 @@
 | github-oidc | GitHub Action OIDC                                            |
 | network     | VPC, Nat Instance, Route Table, IGW(Internet GateWay)         |
 | rds         | 단일 RDS (Dev)                                                |
-| redis       | 단일 Redis (Dev)                                              |
+| elasticache | 단일 Redis (Dev)                                              |
 | route53     | A 레코드로 DNS 등록                                           |
 | s3          | ALB 로그 기록 저장                                            |
 | security    | SG 규칙, EKS IAM Role 설정                                    |
@@ -32,12 +32,10 @@
 
 2. terraform/environments/dev로 이동 ⇒ terraform apply (VPC/EKS/RDS 등 EKS 인프라)
 
-3. k8s/deploy의 update-waf.sh 실행 ⇒ diff 확인 ⇒ PR로 dev merge (WAF ARN 값 수정 및 git 업데이트)
+3. terraform/environments/argo로 이동 ⇒ terraform apply — ArgoCD 설치 + root App (여기서 ALB 생성됨)
 
-4. terraform/environments/argo로 이동 ⇒ terraform apply — ArgoCD 설치 + root App (여기서 ALB 생성됨)
+4. (prod만) ALB가 생긴 것을 확인한 뒤 terraform/environments/prod에서 한 번 더 terraform apply (WAF 연결)
 ```
-
-> ⚠️ **3번(WAF ARN 갱신·머지)은 반드시 4번(argo apply)보다 먼저 완료해야 합니다.** spot-app이 첫 sync 진행 시, 새 WAF ARN이 dev 브랜치에 merge돼 있지 않으면 에러가 발생하기 때문입니다.
 
 ### Destroy
 

@@ -30,7 +30,7 @@ resource "aws_iam_policy" "lbc" {
 # External-DNS Policy
 resource "aws_iam_policy" "external_dns_policy" {
   name        = "${var.name_prefix}-external-dns-policy"
-  description = "External DNS policy for Spot Dev"
+  description = "External DNS policy for Spot ${var.environment}"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -59,21 +59,40 @@ resource "aws_iam_policy" "external_dns_policy" {
 # External-Secrets Policy
 resource "aws_iam_policy" "external_secrets_policy" {
   name        = "${var.name_prefix}-external-secrets-policy"
-  description = "External Secrets policy for Spot Dev"
+  description = "External Secrets policy for Spot ${var.environment}"
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "ssm:GetParameter*"
-        ],
-        Resource = [
-          "arn:aws:ssm:${var.region}:${var.account_id}:parameter/${var.project}/${var.environment}/*"
-        ]
-      }
-    ]
+    Statement = concat(
+      [
+        {
+          Sid    = "GetParameterStore"
+          Effect = "Allow",
+          Action = [
+            "ssm:GetParameter*"
+          ],
+          Resource = [
+            "arn:aws:ssm:${var.region}:${var.account_id}:parameter/${var.project}/${var.environment}/*"
+          ]
+        }
+      ],
+      var.enable_rds_secret_access ? [
+        {
+          Sid    = "ReadRdsSecret"
+          Effect = "Allow",
+          Action = [
+            "secretsmanager:GetSecretValue"
+          ],
+          Resource = values(var.rds_secret_arn)
+        },
+        {
+          Sid      = "DecryptWithCMK"
+          Effect   = "Allow",
+          Action   = ["kms:Decrypt"],
+          Resource = [var.rds_kms_arn]
+        }
+      ] : []
+    )
   })
 }
 
@@ -84,7 +103,7 @@ locals {
   irsa_roles = {
     lbc = {
       namespace = "kube-system"
-      sa_name   = "aws-load-balancer-controller"
+      sa_name   = "aws-load-balancer-controller-sa"
     }
     ebs_csi = {
       namespace = "kube-system"
@@ -92,11 +111,11 @@ locals {
     }
     eso = {
       namespace = "external-secrets"
-      sa_name   = "external-secrets"
+      sa_name   = "external-secrets-sa"
     }
     external_dns = {
       namespace = "external-dns"
-      sa_name   = "external-dns"
+      sa_name   = "external-dns-sa"
     }
   }
 }

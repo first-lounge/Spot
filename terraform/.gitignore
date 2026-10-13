@@ -18,3 +18,5 @@ terraform.rc
 
 # Generated files
 *.zip
+__pycache__/
+test_local.py

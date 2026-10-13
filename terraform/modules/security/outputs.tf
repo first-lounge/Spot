@@ -1,5 +1,5 @@
-output "nat_sg_id" {
-  value = var.enable_nat_instance ? aws_security_group.nat_sg[0].id : null
+output "nat_instance_sg_id" {
+  value = var.enable_nat_instance ? aws_security_group.nat_instance_sg[0].id : null
 }
 
 output "node_group_sg_id" {
@@ -10,8 +10,8 @@ output "rds_sg_id" {
   value = aws_security_group.rds_sg.id
 }
 
-output "redis_sg_id" {
-  value = aws_security_group.redis_sg.id
+output "elasticache_sg_id" {
+  value = aws_security_group.elasticache_sg.id
 }
 
 output "cluster_role_arn" {

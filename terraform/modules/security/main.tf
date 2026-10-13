@@ -17,7 +17,7 @@ resource "aws_security_group" "rds_sg" {
 }
 
 # Redis (Private)
-resource "aws_security_group" "redis_sg" {
+resource "aws_security_group" "elasticache_sg" {
   name   = "${var.name_prefix}-redis-sg"
   vpc_id = var.vpc_id
   tags   = merge(var.common_tags, { Name = "${var.name_prefix}-redis-sg" })
@@ -31,7 +31,7 @@ resource "aws_security_group" "alb_sg" {
 }
 
 # NAT Instance
-resource "aws_security_group" "nat_sg" {
+resource "aws_security_group" "nat_instance_sg" {
   count = var.enable_nat_instance ? 1 : 0
 
   name   = "${var.name_prefix}-nat-sg"
@@ -45,7 +45,7 @@ resource "aws_security_group" "nat_sg" {
 
 # -------- ALB --------
 
-# ALB ← HTTP
+# HTTP → ALB
 resource "aws_security_group_rule" "alb_ingress_http" {
   type              = "ingress"
   from_port         = 80
@@ -55,7 +55,7 @@ resource "aws_security_group_rule" "alb_ingress_http" {
   security_group_id = aws_security_group.alb_sg.id
 }
 
-# ALB ← HTTPS
+# HTTPS → ALB
 resource "aws_security_group_rule" "alb_ingress_https" {
   type              = "ingress"
   from_port         = 443
@@ -67,9 +67,12 @@ resource "aws_security_group_rule" "alb_ingress_https" {
 
 # ALB → EKS 노드
 resource "aws_security_group_rule" "alb_egress_node" {
+  for_each = var.alb_target_ports
+
+  description              = "Port for ${each.key}"
   type                     = "egress"
-  from_port                = 80
-  to_port                  = 80
+  from_port                = each.value
+  to_port                  = each.value
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.eks_node_sg.id
   security_group_id        = aws_security_group.alb_sg.id
@@ -77,7 +80,7 @@ resource "aws_security_group_rule" "alb_egress_node" {
 
 # -------- NAT Instance --------
 
-# NAT Instance ← VPC
+# VPC → NAT Instance
 resource "aws_security_group_rule" "nat_ingress_vpc" {
   count = var.enable_nat_instance ? 1 : 0
 
@@ -86,10 +89,10 @@ resource "aws_security_group_rule" "nat_ingress_vpc" {
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = [var.vpc_cidr]
-  security_group_id = aws_security_group.nat_sg[0].id
+  security_group_id = aws_security_group.nat_instance_sg[0].id
 }
 
-# NAT Instance ← IGW
+# NAT Instance → IGW
 resource "aws_security_group_rule" "nat_egress_igw" {
   count = var.enable_nat_instance ? 1 : 0
 
@@ -98,16 +101,19 @@ resource "aws_security_group_rule" "nat_egress_igw" {
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.nat_sg[0].id
+  security_group_id = aws_security_group.nat_instance_sg[0].id
 }
 
 # -------- EKS Node Group --------
 
-# EKS Node ← ALB 
+# ALB  → EKS Node
 resource "aws_security_group_rule" "node_ingress_alb" {
+  for_each = var.alb_target_ports
+
+  description              = "Port for ${each.key}"
   type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
+  from_port                = each.value
+  to_port                  = each.value
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.alb_sg.id
   security_group_id        = aws_security_group.eks_node_sg.id
@@ -135,7 +141,7 @@ resource "aws_security_group_rule" "node_egress" {
 
 # -------- RDS --------
 
-# RDS ← EKS Node
+# EKS Node → RDS
 resource "aws_security_group_rule" "rds_ingress_node" {
   type                     = "ingress"
   from_port                = 5432
@@ -147,14 +153,14 @@ resource "aws_security_group_rule" "rds_ingress_node" {
 
 # -------- Redis --------
 
-# Redis ← EKS Node
-resource "aws_security_group_rule" "redis_ingress_node" {
+# EKS Node → Redis
+resource "aws_security_group_rule" "elasticache_ingress_node" {
   type                     = "ingress"
   from_port                = 6379
   to_port                  = 6379
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.eks_node_sg.id
-  security_group_id        = aws_security_group.redis_sg.id
+  security_group_id        = aws_security_group.elasticache_sg.id
 }
 
 # =============================================================================
@@ -179,12 +185,12 @@ resource "aws_iam_role" "eks_cluster" {
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-eks-cluster-role" })
 }
 
-resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSClusterPolicy" {
+resource "aws_iam_role_policy_attachment" "AmazonEKSClusterPolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
   role       = aws_iam_role.eks_cluster.name
 }
 
-resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSVPCResourceController" {
+resource "aws_iam_role_policy_attachment" "AmazonEKSVPCResourceController" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
   role       = aws_iam_role.eks_cluster.name
 }
@@ -207,22 +213,22 @@ resource "aws_iam_role" "eks_nodegroup" {
   tags = merge(var.common_tags, { Name = "${var.name_prefix}-eks-nodegroup-role" })
 }
 
-resource "aws_iam_role_policy_attachment" "cluster_AmazonEKS_CNI_Policy" {
+resource "aws_iam_role_policy_attachment" "AmazonEKS_CNI_Policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
   role       = aws_iam_role.eks_nodegroup.name
 }
 
-resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSWorkerNodePolicy" {
+resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = aws_iam_role.eks_nodegroup.name
 }
 
-resource "aws_iam_role_policy_attachment" "cluster_AmazonSSMManagedInstanceCore" {
+resource "aws_iam_role_policy_attachment" "AmazonSSMManagedInstanceCore" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   role       = aws_iam_role.eks_nodegroup.name
 }
 
-resource "aws_iam_role_policy_attachment" "cluster_AmazonEC2ContainerRegistryReadOnly" {
+resource "aws_iam_role_policy_attachment" "AmazonEC2ContainerRegistryReadOnly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.eks_nodegroup.name
 }

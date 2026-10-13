@@ -9,7 +9,7 @@ resource "aws_ecr_repository" "kafka" {
     scan_on_push = true
   }
 
-  force_delete = true # 테스트 진행할 때만 사용
+  force_delete = true # Dev, Prod 모두 사용, 운영 전환 시 false로 변경
 
   tags = merge(var.common_tags, {
     Name    = "${var.name_prefix}-ecr-kafka"
@@ -27,7 +27,7 @@ resource "aws_ecr_repository" "services" {
     scan_on_push = true
   }
 
-  force_delete = true # Dev에서만 사용
+  force_delete = true # Dev, Prod 모두 사용, 운영 전환 시 false로 변경
 
   tags = merge(var.common_tags, {
     Name    = "${var.name_prefix}-ecr-${each.key}"

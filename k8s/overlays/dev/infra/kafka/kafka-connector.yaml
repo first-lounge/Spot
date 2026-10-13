@@ -10,7 +10,7 @@ spec:
   class: io.debezium.connector.postgresql.PostgresConnector
   tasksMax: 1
   config:
-    database.hostname: "${env:DB_HOST}"
+    database.hostname: "${env:ORDER_DB_HOST}"
     database.port: "5432"
     database.user: "${env:SPRING_DATASOURCE_USERNAME}"
     database.password: "${env:SPRING_DATASOURCE_PASSWORD}"
@@ -52,7 +52,7 @@ spec:
   class: io.debezium.connector.postgresql.PostgresConnector
   tasksMax: 1
   config:
-    database.hostname: "${env:DB_HOST}"
+    database.hostname: "${env:PAYMENT_DB_HOST}"
     database.port: "5432"
     database.user: "${env:SPRING_DATASOURCE_USERNAME}"
     database.password: "${env:SPRING_DATASOURCE_PASSWORD}"

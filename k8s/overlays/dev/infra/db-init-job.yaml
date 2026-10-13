@@ -42,7 +42,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: infra-secrets
-                  key: DB_HOST
+                  key: USER_DB_HOST
             - name: PGUSER
               valueFrom:
                 secretKeyRef:

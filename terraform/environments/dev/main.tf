@@ -6,18 +6,17 @@ data "aws_caller_identity" "current" {}
 module "network" {
   source = "../../modules/network"
 
-  name_prefix               = local.name_prefix
-  common_tags               = local.common_tags
-  service_region            = var.region
-  vpc_cidr                  = var.vpc_cidr
-  availability_zones        = var.availability_zones
-  public_subnet_cidrs       = var.public_subnet_cidrs
-  private_subnet_cidrs      = var.private_subnet_cidrs
-  db_subnet_cidrs           = var.db_subnet_cidrs
-  nat_sg_id                 = module.security.nat_sg_id
-  enable_nat_instance       = var.enable_nat_instance
-  enable_nat_gateway        = var.enable_nat_gateway
-  enable_interface_endpoint = var.enable_interface_endpoint
+  name_prefix          = local.name_prefix
+  common_tags          = local.common_tags
+  service_region       = var.region
+  vpc_cidr             = var.vpc_cidr
+  availability_zones   = var.availability_zones
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
+  db_subnet_cidrs      = var.db_subnet_cidrs
+  nat_instance_sg_id   = module.security.nat_instance_sg_id
+  enable_nat_instance  = var.enable_nat_instance
+  enable_nat_gateway   = var.enable_nat_gateway
 }
 
 # =============================================================================
@@ -70,18 +69,15 @@ module "eks" {
   subnet_ids          = module.network.private_subnet_ids
   public_access_cidrs = var.public_access_cidrs
 
-  min_size     = var.min_size
-  max_size     = var.max_size
-  desired_size = var.desired_size
-
+  node_groups    = local.node_groups
   instance_types = var.instance_types
-  capacity_type  = var.capacity_type
   volume_size    = var.volume_size
 
   # IRSA (EKS Addons)
-  hosted_zone_id = module.route53.hosted_zone_id
-  account_id     = data.aws_caller_identity.current.account_id
-  region         = var.region
+  hosted_zone_id           = module.route53.hosted_zone_id
+  account_id               = data.aws_caller_identity.current.account_id
+  region                   = var.region
+  enable_rds_secret_access = local.rds_settings.manage_master_user_password
 
   depends_on = [module.network, module.security]
 }
@@ -110,13 +106,10 @@ module "rds" {
   common_tags = local.common_tags
 
   # DB 설정
-  engine                      = var.db_engine
-  engine_version              = var.db_engine_version
-  instance_class              = var.db_instance_class
-  allocated_storage           = var.db_allocated_storage
-  username                    = var.db_username
-  password                    = var.db_password
-  manage_master_user_password = var.manage_master_user_password
+  rds_settings  = local.rds_settings
+  rds_instances = local.rds_instances
+  username      = var.rds_username
+  password      = var.rds_password
 
   # DB 네트워크
   db_subnet_ids = module.network.db_subnet_ids
@@ -126,36 +119,43 @@ module "rds" {
 # =============================================================================
 # Redis
 # =============================================================================
-module "redis" {
-  source = "../../modules/redis"
+module "elasticache" {
+  source = "../../modules/elasticache"
 
   # 공통
   name_prefix = local.name_prefix
   common_tags = local.common_tags
 
   # Redis 네트워크
-  db_subnet_ids = module.network.db_subnet_ids
-  redis_sg_id   = module.security.redis_sg_id
+  db_subnet_ids     = module.network.db_subnet_ids
+  elasticache_sg_id = module.security.elasticache_sg_id
 
   # Redis 설정
-  engine             = var.redis_engine
-  engine_version     = var.redis_engine_version
-  node_type          = var.redis_node_type
-  num_cache_clusters = var.redis_num_cache_clusters
+  node_type          = var.elasticache_node_type
+  num_cache_clusters = var.elasticache_num_cache_clusters
 }
 
 # =============================================================================
-# WAF
+# SSM Parameter Store
 # =============================================================================
-module "waf" {
-  source = "../../modules/waf"
+module "parameter_store" {
+  source = "../../modules/parameter-store"
 
-  # 공통
-  name_prefix = local.name_prefix
   common_tags = local.common_tags
+  project     = var.project
+  environment = var.environment
 
-  rate_limit         = var.waf_rate_limit
-  log_retention_days = var.waf_log_retention_days
+  rds_username      = var.rds_username
+  enable_rds_secret = local.rds_settings.manage_master_user_password
+  rds_password      = var.rds_password
+  mail_username     = var.mail_username
+  mail_password     = var.mail_password
+  jwt_secret        = var.jwt_secret
+  toss_secret_key   = var.toss_secret_key
+
+  services             = local.services
+  rds_host             = local.rds_host
+  elasticache_endpoint = module.elasticache.elasticache_primary_endpoint
 }
 
 # =============================================================================
@@ -168,8 +168,7 @@ module "route53" {
   name_prefix = local.name_prefix
   common_tags = local.common_tags
 
-  domain_name        = var.domain_name
-  zone_force_destroy = var.zone_force_destroy
+  domain_name = var.domain_name
 }
 
 # =============================================================================
@@ -200,23 +199,3 @@ module "github_oidc" {
   service_region = var.region
 }
 
-# =============================================================================
-# SSM Parameter Store
-# =============================================================================
-module "parameter_store" {
-  source = "../../modules/parameter-store"
-
-  common_tags = local.common_tags
-  project     = var.project
-  environment = var.environment
-
-  db_username     = var.db_username
-  db_password     = var.db_password
-  mail_username   = var.mail_username
-  mail_password   = var.mail_password
-  jwt_secret      = var.jwt_secret
-  toss_secret_key = var.toss_secret_key
-
-  db_endpoint    = module.rds.rds_endpoint
-  redis_endpoint = module.redis.redis_reader_endpoint
-}

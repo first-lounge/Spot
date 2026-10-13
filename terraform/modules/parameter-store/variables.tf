@@ -21,16 +21,22 @@ variable "common_tags" {
 # =============================================================================
 # 민감 정보 (SecureString으로 저장)
 # =============================================================================
-variable "db_username" {
+variable "rds_username" {
   description = "데이터베이스 유저명"
   type        = string
   sensitive   = true
 }
 
-variable "db_password" {
+variable "enable_rds_secret" {
+  description = "Secrets Manager 사용 여부"
+  type        = bool
+}
+
+variable "rds_password" {
   description = "데이터베이스 비밀번호"
   type        = string
   sensitive   = true
+  default     = null
 }
 
 variable "jwt_secret" {
@@ -60,12 +66,38 @@ variable "toss_secret_key" {
 # =============================================================================
 # 동적 인프라 값 (String으로 저장)
 # =============================================================================
-variable "db_endpoint" {
-  description = "RDS 엔드포인트 (Terraform이 생성 후 자동 저장)"
-  type        = string
+variable "services" {
+  description = "Spot 앱 서비스"
+  type        = set(string)
 }
 
-variable "redis_endpoint" {
+variable "rds_host" {
+  description = "RDS Host 이름"
+  type        = map(string)
+}
+
+variable "elasticache_endpoint" {
   description = "Redis 엔드포인트 (Terraform이 생성 후 자동 저장)"
   type        = string
 }
+
+variable "enable_elasticache_auth" {
+  description = "Redis Auth 사용 여부"
+  type        = bool
+  default     = false
+}
+
+variable "elasticache_password" {
+  description = "Redis 비밀번호"
+  type        = string
+  sensitive   = true
+  default     = null
+  # ephemeral = true  # 운영 전환 시
+}
+
+# # 운영 전환 시
+# variable "elasticache_password_version" {
+#   description = "Write-Only용 ElastiCache 비밀번호 버전"
+#   type        = number
+#   default     = 0
+# }

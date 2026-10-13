@@ -8,8 +8,8 @@ resource "aws_s3_bucket" "logs" {
   tags          = merge(var.common_tags, { Name = "${var.name_prefix}-s3-logs" })
 }
 
-# log 파일 실수로 지웠을 때 복구
-resource "aws_s3_bucket_versioning" "logs" {
+# S3 버저닝: log 파일 실수로 지웠을 때 복구
+resource "aws_s3_bucket_versioning" "versioning" {
   bucket = aws_s3_bucket.logs.id
   versioning_configuration {
     status = var.enable_versioning ? "Enabled" : "Suspended"
@@ -37,22 +37,40 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "logs" {
   }
 }
 
-# 로그 수명 주기 정책 - 오래된 로그 자동 삭제
+# 로그 수명 주기 정책 (7일 후 삭제)
+# 운영 전환 시 -> 일정 기간 지난 로그는 Glacier로 이동
 resource "aws_s3_bucket_lifecycle_configuration" "logs" {
+  depends_on = [aws_s3_bucket_versioning.versioning]
+
   bucket = aws_s3_bucket.logs.id
 
   rule {
-    id     = "expire-logs"
-    status = "Enabled"
+    id = "expire-logs"
+
+    filter {
+      prefix = "alb-access-logs/"
+    }
 
     expiration {
-      days = var.log_retention_days
+      days = var.s3_log_expiration_days
     }
+
+    noncurrent_version_expiration {
+      noncurrent_days = 1
+    }
+
+    # # 운영 전환 시
+    # transition {
+    #   days          = var.s3_log_transition_days
+    #   storage_class = "GLACIER_IR"
+    # }
+
+    status = "Enabled"
   }
 }
 
-# 로그 버킷 정책 (ALB Access, CloudWatch,)
-# 추가 예정 : CloudTrail, RDS
+# 로그 버킷 정책 (ALB Access, CloudWatch, )
+# 추가 예정 : CloudTrail
 resource "aws_s3_bucket_policy" "logs" {
   bucket = aws_s3_bucket.logs.id
 
@@ -83,7 +101,7 @@ resource "aws_s3_bucket_policy" "logs" {
           Service = "logdelivery.elasticloadbalancing.amazonaws.com"
         }
         Action   = "s3:PutObject"
-        Resource = "${aws_s3_bucket.logs.arn}/alb/AWSLogs/${var.account_id}/*"
+        Resource = "${aws_s3_bucket.logs.arn}/alb-access-logs/AWSLogs/${var.account_id}/*"
       },
 
       # CloudWatch
@@ -114,8 +132,6 @@ resource "aws_s3_bucket_policy" "logs" {
       }
 
       # CloudTrail
-
-      # RDS
     ]
   })
 }
