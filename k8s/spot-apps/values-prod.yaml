@@ -58,6 +58,13 @@ global:
       value: backend
       effect: NoSchedule
 
+  ## topology 분산 제약 조건
+  topologySpread:
+    - topologyKey: topology.kubernetes.io/zone  # AZ 분산
+      whenUnsatisfiable: DoNotSchedule
+    - topologyKey: kubernetes.io/hostname  # 노드 분산
+      whenUnsatisfiable: ScheduleAnyway
+
   ## Pod 개수 (gateway 제외)
   replicas: 3
 

@@ -26,6 +26,19 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with $.Values.global.topologySpread }}
+      topologySpreadConstraints:
+        {{- range . }}
+        - maxSkew: 1
+          topologyKey: {{ .topologyKey }}
+          whenUnsatisfiable: {{ .whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              app: {{ $val.name }}
+          matchLabelKeys:
+            - rollouts-pod-template-hash
+        {{- end }}
+      {{- end }}
       containers:
         - name: {{ $val.name }}
           image: "{{ $.Values.global.repository }}/{{ $val.name }}:{{ $val.imageTag }}"

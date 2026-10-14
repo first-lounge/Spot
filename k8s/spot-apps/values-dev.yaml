@@ -54,6 +54,9 @@ global:
   nodeSelector: {}
   tolerations: []
 
+  ## topology 분산 제약 조건
+  topologySpread: []
+
 # [4] app 목록
 apps:
   gateway:
