@@ -58,9 +58,13 @@ global:
       value: backend
       effect: NoSchedule
 
+  ## Pod 개수 (gateway 제외)
+  replicas: 3
+
 # [4] app 목록
 apps:
   gateway:
+    replicas: 2
     imageTag: ""
     rollout: true
     autoPromotionEnabled: false

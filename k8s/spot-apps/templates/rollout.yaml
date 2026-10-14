@@ -9,7 +9,7 @@ metadata:
   labels:
     app: {{ $val.name }}
 spec:
-  replicas: {{ $.Values.global.replicas }}
+  replicas: {{ $val.replicas | default $.Values.global.replicas | default 1 }}
   selector:
     matchLabels:
       app: {{ $val.name }}
