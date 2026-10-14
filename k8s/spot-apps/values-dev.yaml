@@ -13,6 +13,7 @@ ingress:
   subs:
     spot:
       hostname: spot
+
   annotations:
     # 모든 서비스가 하나의 ALB를 공유
     alb.ingress.kubernetes.io/group.name: spot-ingress
@@ -28,6 +29,9 @@ ingress:
 
     # 리다이렉트
     alb.ingress.kubernetes.io/ssl-redirect: 443
+
+    # ALB 보안 그룹
+    alb.ingress.kubernetes.io/security-groups: "spot-dev-alb-sg"
 
     # ALB에 할당해야 하는 보안 정책
     alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09
