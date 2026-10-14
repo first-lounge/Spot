@@ -45,9 +45,14 @@ ingress:
 # [2] 도메인 (AWS)
 domain: hbksv.com
 
-# [3] Deployment 설정
+# [3] 공통 설정
 global:
+  ## ECR 레포지토리
   repository: 164076841262.dkr.ecr.ap-northeast-2.amazonaws.com
+
+  ## nodeSelector & toleration 설정
+  nodeSelector: {}
+  tolerations: []
 
 # [4] app 목록
 apps:
