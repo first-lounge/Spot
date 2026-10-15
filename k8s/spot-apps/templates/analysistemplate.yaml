@@ -15,6 +15,14 @@ spec:
             backoffLimit: 1
             template:
               spec:
+                {{- with $.Values.global.nodeSelector }}
+                nodeSelector:
+                  {{- toYaml . | nindent 18 }}
+                {{- end }}
+                {{- with $.Values.global.tolerations }}
+                tolerations:
+                  {{- toYaml . | nindent 18 }}
+                {{- end }}
                 restartPolicy: Never
                 containers:
                   - name: {{ $val.name }}-smoke-test

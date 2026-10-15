@@ -9,7 +9,7 @@ metadata:
   labels:
     app: {{ $val.name }}
 spec:
-  replicas: {{ $.Values.global.replicas }}
+  replicas: {{ $val.replicas | default $.Values.global.replicas | default 1 }}
   selector:
     matchLabels:
       app: {{ $val.name }}
@@ -18,6 +18,27 @@ spec:
       labels:
         app: {{ $val.name }}
     spec:
+      {{- with $.Values.global.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.global.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.global.topologySpread }}
+      topologySpreadConstraints:
+        {{- range . }}
+        - maxSkew: 1
+          topologyKey: {{ .topologyKey }}
+          whenUnsatisfiable: {{ .whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              app: {{ $val.name }}
+          matchLabelKeys:
+            - rollouts-pod-template-hash
+        {{- end }}
+      {{- end }}
       containers:
         - name: {{ $val.name }}
           image: "{{ $.Values.global.repository }}/{{ $val.name }}:{{ $val.imageTag }}"
@@ -29,12 +50,14 @@ spec:
               value: {{ $.Values.env.activeProfile }}
             - name: LOGGING_CONFIG
               value: {{ $.Values.env.loggingConfig }}
-            {{- if and $.Values.environment ($val.dbEnabled) }}
-            - name: SPRING_DATASOURCE_URL
+            {{- if $val.dbEnabled }}            
+            {{- range $.Values.global.db }}
+            - name: {{ .name }}
               valueFrom:
                 secretKeyRef:
                   name: spot-{{ $key }}-secrets
-                  key: SPRING_DATASOURCE_URL
+                  key: {{ .name }}
+            {{- end }}
             {{- end }}
 
           # 어플리케이션 환경 변수

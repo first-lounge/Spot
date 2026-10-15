@@ -1,0 +1,113 @@
+# [0] 프로젝트 환경
+environment: prod
+
+# [1] AWS Ingress 설정 (기본값: AWS ALB)
+ingress:
+  className: 'alb'
+  aws:
+    enabled: true
+
+  # ALB 로그 저장용 S3 버킷 이름
+  bucket: spot-prod-logs
+
+  subs:
+    spot:
+      hostname: spot
+
+  annotations:
+    # 모든 서비스가 하나의 ALB를 공유
+    alb.ingress.kubernetes.io/group.name: spot-ingress
+
+    # ALB 설정
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    
+    # IP 모드
+    alb.ingress.kubernetes.io/target-type: ip 
+    
+    # HTTPS/HTTP 설정
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+
+    # 리다이렉트
+    alb.ingress.kubernetes.io/ssl-redirect: 443
+
+    # ALB 보안 그룹
+    alb.ingress.kubernetes.io/security-groups: "spot-prod-alb-sg"
+
+    # ALB에 할당해야 하는 보안 정책
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09
+
+    # 헬스 체크
+    alb.ingress.kubernetes.io/success-codes: 200
+    
+    # 태그 설정
+    alb.ingress.kubernetes.io/tags: Name=spot-prod-alb, Environment=prod,Team=spot, ManagedBy=lbc
+
+# [2] 도메인 (AWS)
+domain: hbksv.com
+
+# [3] 공통 설정
+global:
+  ## ECR 레포지토리
+  repository: 164076841262.dkr.ecr.ap-northeast-2.amazonaws.com
+
+  ## nodeSelector & toleration 설정
+  nodeSelector:
+    workload: backend
+  tolerations:
+    - key: spot
+      value: backend
+      effect: NoSchedule
+
+  ## topology 분산 제약 조건
+  topologySpread:
+    - topologyKey: topology.kubernetes.io/zone  # AZ 분산
+      whenUnsatisfiable: DoNotSchedule
+    - topologyKey: kubernetes.io/hostname  # 노드 분산
+      whenUnsatisfiable: ScheduleAnyway
+
+  ## pod별 DB 이름과 키
+  db:
+    - name: SPRING_DATASOURCE_URL
+    - name: SPRING_DATASOURCE_USERNAME
+    - name: SPRING_DATASOURCE_PASSWORD
+
+  ## Pod 개수 (gateway 제외)
+  replicas: 3
+
+# [4] app 목록
+apps:
+  gateway:
+    replicas: 2
+    imageTag: ""
+    rollout: true
+    autoPromotionEnabled: false
+    scaleDownDelaySeconds: 3600
+    smokePath: /actuator/health
+    
+  user:
+    imageTag: ""
+    rollout: true
+    autoPromotionEnabled: false
+    scaleDownDelaySeconds: 3600
+    smokePath: /actuator/health
+
+  payment:
+    imageTag: ""
+    rollout: true
+    autoPromotionEnabled: false
+    scaleDownDelaySeconds: 3600
+    smokePath: /actuator/health
+
+  order:
+    imageTag: ""
+    rollout: true
+    autoPromotionEnabled: false
+    scaleDownDelaySeconds: 900
+    smokePath: /actuator/health
+    
+  store:
+    imageTag: ""
+    rollout: true
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 300
+    smokePath: /actuator/health

@@ -13,6 +13,7 @@ ingress:
   subs:
     spot:
       hostname: spot
+
   annotations:
     # 모든 서비스가 하나의 ALB를 공유
     alb.ingress.kubernetes.io/group.name: spot-ingress
@@ -29,6 +30,9 @@ ingress:
     # 리다이렉트
     alb.ingress.kubernetes.io/ssl-redirect: 443
 
+    # ALB 보안 그룹
+    alb.ingress.kubernetes.io/security-groups: "spot-dev-alb-sg"
+
     # ALB에 할당해야 하는 보안 정책
     alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09
 
@@ -41,9 +45,21 @@ ingress:
 # [2] 도메인 (AWS)
 domain: hbksv.com
 
-# [3] Deployment 설정
+# [3] 공통 설정
 global:
+  ## ECR 레포지토리
   repository: 164076841262.dkr.ecr.ap-northeast-2.amazonaws.com
+
+  ## nodeSelector & toleration 설정
+  nodeSelector: {}
+  tolerations: []
+
+  ## topology 분산 제약 조건
+  topologySpread: []
+
+  ## pod별 DB 이름과 키
+  db: 
+    - name: SPRING_DATASOURCE_URL
 
 # [4] app 목록
 apps:
