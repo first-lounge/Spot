@@ -57,6 +57,10 @@ global:
   ## topology 분산 제약 조건
   topologySpread: []
 
+  ## pod별 DB 이름과 키
+  db: 
+    - name: SPRING_DATASOURCE_URL
+
 # [4] app 목록
 apps:
   gateway:

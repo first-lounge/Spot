@@ -65,6 +65,12 @@ global:
     - topologyKey: kubernetes.io/hostname  # 노드 분산
       whenUnsatisfiable: ScheduleAnyway
 
+  ## pod별 DB 이름과 키
+  db:
+    - name: SPRING_DATASOURCE_URL
+    - name: SPRING_DATASOURCE_USERNAME
+    - name: SPRING_DATASOURCE_PASSWORD
+
   ## Pod 개수 (gateway 제외)
   replicas: 3
 
