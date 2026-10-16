@@ -78,6 +78,15 @@ resource "aws_iam_policy" "external_secrets_policy" {
       ],
       var.enable_rds_secret_access ? [
         {
+          Sid    = "SearchRdsSecret"
+          Effect = "Allow",
+          Action = [
+            "secretsmanager:BatchGetSecretValue",
+            "secretsmanager:ListSecrets"
+          ],
+          Resource = ["*"]
+        },
+        {
           Sid    = "ReadRdsSecret"
           Effect = "Allow",
           Action = [
