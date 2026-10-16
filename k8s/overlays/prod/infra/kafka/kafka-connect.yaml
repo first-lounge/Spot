@@ -1,0 +1,91 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaConnect
+metadata:
+  name: spot-connect
+  namespace: infra
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 4.0.0
+  replicas: 2
+  bootstrapServers: kafka-cluster-kafka-bootstrap.infra.svc.cluster.local:9092
+  image: 164076841262.dkr.ecr.ap-northeast-2.amazonaws.com/spot-kafka-connect:3.4.0
+  groupId: spot-connect-group
+  configStorageTopic: connect_configs
+  offsetStorageTopic: connect_offsets
+  statusStorageTopic: connect_status
+  config:
+    config.storage.replication.factor: 3
+    offset.storage.replication.factor: 3
+    status.storage.replication.factor: 3
+    key.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: false
+    value.converter.schemas.enable: false
+    config.providers: env
+    config.providers.env.class: org.apache.kafka.common.config.provider.EnvVarConfigProvider
+    log.level: WARN
+  template:
+    pod:
+      enableServiceLinks: false
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              strimzi.io/name: spot-connect-connect
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              strimzi.io/name: spot-connect-connect
+      tolerations:
+        - key: spot
+          operator: Equal
+          value: infra
+          effect: NoSchedule
+      affinity:
+        # 같은 노드 그룹(infra)에 배포
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: workload
+                    operator: In
+                    values: [infra]
+    connectContainer:
+      env:
+        - name: ORDER_DB_HOST
+          valueFrom:
+            secretKeyRef: { name: infra-secrets, key: ORDER_DB_HOST }
+        - name: ORDER_DB_NAME
+          valueFrom:
+            configMapKeyRef: { name: infra-env, key: ORDER_DB_NAME }
+        - name: ORDER_DB_USERNAME
+          valueFrom:
+            secretKeyRef: { name: infra-secrets, key: ORDER_DB_USERNAME }
+        - name: ORDER_DB_PASSWORD
+          valueFrom:
+            secretKeyRef: { name: infra-secrets, key: ORDER_DB_PASSWORD }
+
+        - name: PAYMENT_DB_HOST
+          valueFrom:
+            secretKeyRef: { name: infra-secrets, key: PAYMENT_DB_HOST }
+        - name: PAYMENT_DB_NAME
+          valueFrom:
+            configMapKeyRef: { name: infra-env, key: PAYMENT_DB_NAME }
+        - name: PAYMENT_DB_USERNAME
+          valueFrom:
+            secretKeyRef: { name: infra-secrets, key: PAYMENT_DB_USERNAME }
+        - name: PAYMENT_DB_PASSWORD
+          valueFrom:
+            secretKeyRef: { name: infra-secrets, key: PAYMENT_DB_PASSWORD }
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "750m"
+      memory: "1Gi"
