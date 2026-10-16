@@ -21,3 +21,7 @@ apps:
     name: monitoring
     sub: configs
     syncWave: 2
+
+# Prometheus
+prom:
+  targetRevision: 56.6.2
