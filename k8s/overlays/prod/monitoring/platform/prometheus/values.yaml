@@ -1,0 +1,71 @@
+# prometheus용 helm
+prometheusOperator:
+  tolerations:
+    - key: spot
+      operator: Equal
+      value: monitoring
+      effect: NoSchedule
+  admissionWebhooks:
+    patch:
+      tolerations:
+        - key: spot
+          operator: Equal
+          value: monitoring
+          effect: NoSchedule
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+
+    # retention 설정 (튜닝 가능)
+    retention: 10d
+
+    # toleration 설정
+    tolerations:
+      - key: spot
+        operator: Equal
+        value: monitoring
+        effect: NoSchedule
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+grafana:
+  enabled: false # 이미 Grafana 따로 쓰고 있으니까 OFF
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    replicas: 2
+    secrets: [monitoring-secrets]
+    tolerations:
+      - key: spot
+        operator: Equal
+        value: monitoring
+        effect: NoSchedule
+  config:
+    route: # 알림을 어느 주소로 보낼지
+      receiver: discord
+    receivers:
+      - name: "null"
+      - name: discord
+        discord_configs:
+          - webhook_url_file: /etc/alertmanager/secrets/monitoring-secrets/DISCORD_WEBHOOK_URL
+            send_resolved: true # 문제 해결 알림
+
+kubeStateMetrics:
+  enabled: true
+kube-state-metrics:
+  tolerations:
+    - key: spot
+      operator: Equal
+      value: monitoring
+      effect: NoSchedule
+
+nodeExporter:
+  enabled: true

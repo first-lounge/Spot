@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+
+resources:
+  # Loki
+  - loki/loki.yaml
+  - loki/loki-config.yaml
+
+  # fluent-bit
+  - fluent-bit/fluent-bit.yaml
+  - fluent-bit/fluent-bit-config.yaml
+
+  # grafana
+  - grafana/grafana.yaml
+
+configMapGenerator:
+  - name: grafana-config
+    files:
+      - grafana/datasources.yaml
+      - dashboards.yaml=grafana/dashboards-provider.yaml
+
+  # Prometheus - alertmanager
+  - name: grafana-dashboards-9578
+    files:
+      - alertmanager.json=grafana/dashboards/9578.json
+
+  - name: dashboards-k8s
+    files:
+      - k8s-dashboard.json=grafana/dashboards/15661.json # K8S Dashboard
+      - k8s-total.json=grafana/dashboards/15757.json # Kubernetes / Views / Global
+      - k8s-pods.json=grafana/dashboards/15760.json # Kubernetes / Views / Pods
+
+  - name: dashboards-infra
+    files:
+      - grafana/dashboards/kafka-broker.json # Kafka Broker
+      - grafana/dashboards/kafka-exporter.json # Kafka Exporter
+      - grafana/dashboards/temporal.json # Temporal
+
+  # Spot App Logs
+  - name: grafana-dashboards-spot
+    files:
+      - spot-logs.json=grafana/dashboards/spot-logs.json

@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: spot-store
+  namespace: monitoring
+  labels:
+    release: prom
+spec:
+  namespaceSelector:
+    matchNames:
+      - spot
+  selector:
+    matchLabels:
+      app: spot-store
+  endpoints:
+    - targetPort: 8083
+      path: /actuator/prometheus

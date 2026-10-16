@@ -12,7 +12,7 @@ spec:
   sources:
     - repoURL: "https://prometheus-community.github.io/helm-charts"
       chart: kube-prometheus-stack
-      targetRevision: 56.6.2
+      targetRevision: {{ .Values.prom.targetRevision }}
       helm:
         releaseName: prom
         valueFiles:
