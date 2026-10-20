@@ -31,6 +31,8 @@ data "aws_iam_policy_document" "ecr_push_document" {
   statement {
     actions = [
       "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",            # 기존 이미지 manifest 읽기
+      "ecr:GetDownloadUrlForLayer",   # 기존 layer 확인
       "ecr:InitiateLayerUpload",
       "ecr:UploadLayerPart",
       "ecr:CompleteLayerUpload",
