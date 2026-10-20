@@ -11,6 +11,10 @@ on:
 
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   AWS_REGION: ap-northeast-2
 
@@ -116,21 +120,19 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Docker 이미지 빌드
-      - name: Build Docker Image
-        id: build-img
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ needs.detect-changes.outputs.image_tag }}
-        run: docker build -t $REGISTRY/${{ matrix.service.name }}:$IMAGE_TAG ./${{ matrix.service.name }}
+      # Docker Buildx 설치
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-      # 이미지 push
-      - name: Push Image To ECR
-        id: push-img
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ needs.detect-changes.outputs.image_tag }}
-        run: docker push $REGISTRY/${{ matrix.service.name }}:$IMAGE_TAG
+      # 이미지 build & push
+      - name: Build & push
+        uses: docker/build-push-action@v7
+        with:
+          context: ./${{ matrix.service.name }}
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ matrix.service.name }}:${{ needs.detect-changes.outputs.image_tag }}
+          cache-from: type=gha,scope=${{ matrix.service.name }}
+          cache-to: type=gha,scope=${{ matrix.service.name }},ignore-error=true
 
   update-image:
     needs: [detect-changes, build-and-push]
