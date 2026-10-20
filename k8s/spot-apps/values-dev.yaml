@@ -1,98 +1,76 @@
 # [0] 프로젝트 환경
 environment: dev
-
 # [1] AWS Ingress 설정 (기본값: AWS ALB)
 ingress:
   className: 'alb'
   aws:
     enabled: true
-
   # ALB 로그 저장용 S3 버킷 이름
   bucket: spot-dev-logs
-
   subs:
     spot:
       hostname: spot
-
   annotations:
     # 모든 서비스가 하나의 ALB를 공유
     alb.ingress.kubernetes.io/group.name: spot-ingress
-
     # ALB 설정
     alb.ingress.kubernetes.io/scheme: internet-facing
-    
     # IP 모드
-    alb.ingress.kubernetes.io/target-type: ip 
-    
+    alb.ingress.kubernetes.io/target-type: ip
     # HTTPS/HTTP 설정
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
-
     # 리다이렉트
     alb.ingress.kubernetes.io/ssl-redirect: 443
-
     # ALB 보안 그룹
     alb.ingress.kubernetes.io/security-groups: "spot-dev-alb-sg"
-
     # ALB에 할당해야 하는 보안 정책
     alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09
-
     # 헬스 체크
     alb.ingress.kubernetes.io/success-codes: 200
-    
     # 태그 설정
     alb.ingress.kubernetes.io/tags: Name=spot-dev-alb, Environment=dev,Team=spot, ManagedBy=lbc
-
 # [2] 도메인 (AWS)
 domain: hbksv.com
-
 # [3] 공통 설정
 global:
   ## ECR 레포지토리
   repository: 164076841262.dkr.ecr.ap-northeast-2.amazonaws.com
-
   ## nodeSelector & toleration 설정
   nodeSelector: {}
   tolerations: []
-
   ## topology 분산 제약 조건
   topologySpread: []
-
   ## pod별 DB 이름과 키
-  db: 
+  db:
     - name: SPRING_DATASOURCE_URL
-
 # [4] app 목록
 apps:
   gateway:
-    imageTag: "d4fb1d59"
+    imageTag: "43511b27"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
     smokePath: /actuator/health
-    
   user:
-    imageTag: "d4fb1d59"
+    imageTag: "43511b27"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
     smokePath: /actuator/health
-
   store:
-    imageTag: "d4fb1d59"
+    imageTag: "43511b27"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 180
     smokePath: /actuator/health
-
   order:
-    imageTag: "d4fb1d59"
+    imageTag: "43511b27"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 300
     smokePath: /actuator/health
-    
   payment:
-    imageTag: "d4fb1d59"
+    imageTag: "43511b27"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
