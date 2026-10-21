@@ -22,8 +22,9 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      services: ${{ steps.filter.outputs.services }}
-      has_changes: ${{ steps.filter.outputs.has_changes }}
+      services_none: ${{ steps.filter.outputs.services_none }}
+      services_db: ${{ steps.filter.outputs.services_db }}
+      services_full: ${{ steps.filter.outputs.services_full }}
       k8s_changed: ${{ steps.filter.outputs.k8s_changed }}
 
     steps:
@@ -56,8 +57,9 @@ jobs:
             echo "Common files changed - all services will be checked"
           fi
 
-          SERVICES_JSON="["
-          FIRST=true
+          SERVICES_NONE=""
+          SERVICES_DB=""
+          SERVICES_FULL=""
 
           # *** 변경된 서비스 감지 *** #
           for service in "${!SERVICE_PORTS[@]}"; do
@@ -79,27 +81,23 @@ jobs:
             fi
 
             if [ "$SERVICE_CHANGED" = true ]; then
-              if [ "$FIRST" = true ]; then
-                FIRST=false
-              else
-                SERVICES_JSON+=","
-              fi
-
-              SERVICES_JSON+="{\"name\":\"${service}\",\"port\":${port}}"
+              case "$service" in
+                spot-gateway) SERVICES_NONE+="${service} ${port}"$'\n';;
+                spot-user|spot-store) SERVICES_DB+="${service} ${port}"$'\n' ;;
+                spot-order|spot-payment) SERVICES_FULL+="${service} ${port}"$'\n' ;;
+              esac
             fi
           done
 
-          SERVICES_JSON+="]"
+          NONE_JSON="$(printf '%s\n' "$SERVICES_NONE" | jq -R -sc 'split("\n") | map(select(length > 0) | split(" ") | {name: .[0], port: (.[1] | tonumber)})')"
 
-          echo "Detected changed services: $SERVICES_JSON"
+          DB_JSON="$(printf '%s\n' "$SERVICES_DB" | jq -R -sc 'split("\n") | map(select(length > 0) | split(" ") | {name: .[0], port: (.[1] | tonumber)})')"
 
-          if [ "$SERVICES_JSON" = "[]" ]; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "services=[]" >> $GITHUB_OUTPUT
-          else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "services=$SERVICES_JSON" >> $GITHUB_OUTPUT
-          fi
+          FULL_JSON="$(printf '%s\n' "$SERVICES_FULL" | jq -R -sc 'split("\n") | map(select(length > 0) | split(" ") | {name: .[0], port: (.[1] | tonumber)})')"
+
+          echo "services_none=$NONE_JSON" >> $GITHUB_OUTPUT
+          echo "services_db=$DB_JSON"     >> $GITHUB_OUTPUT
+          echo "services_full=$FULL_JSON" >> $GITHUB_OUTPUT
 
           # k8s 매니페스트 변경 여부 체크
           if echo "${CHANGED_FILES}" | grep -qE "^k8s/|^\.github/actions/test-k8s/"; then
@@ -109,14 +107,128 @@ jobs:
             echo "k8s_changed=false" >> $GITHUB_OUTPUT
           fi
 
-  build-and-test:
+  build-and-test-none:
     needs: detect-changes
-    if: needs.detect-changes.outputs.has_changes == 'true'
+    if: needs.detect-changes.outputs.services_none != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+        service: ${{ fromJson(needs.detect-changes.outputs.services_none) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java and Gradle
+        uses: ./.github/actions/setup-java-gradle
+        with:
+          working-directory: ${{ matrix.service.name }}
+
+      - name: Build and Test
+        uses: ./.github/actions/gradle-build-test
+        with:
+          working-directory: ${{ matrix.service.name }}
+
+      - name: Check application startup
+        uses: ./.github/actions/test-app-startup
+        with:
+          working-directory: ${{ matrix.service.name }}
+          services: ${{ matrix.service.name }}
+          health-port: ${{ matrix.service.port }}
+
+      - name: Upload build artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports-${{ matrix.service.name }}
+          path: |
+            ${{ matrix.service.name }}/build/reports/
+            ${{ matrix.service.name }}/build/test-results/
+
+  build-and-test-db:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services_db != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services_db) }}
+
+    env:
+      SPRING_JWT_SECRET: ${{ secrets.SPRING_JWT_SECRET }}
+      EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
+      EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+      TOSS_SECRET_KEY: ${{ secrets.TOSS_SECRET_KEY }}
+      TOSS_CUSTOMER_KEY: ${{ secrets.TOSS_CUSTOMER_KEY }}
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: myapp_db
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java and Gradle
+        uses: ./.github/actions/setup-java-gradle
+        with:
+          working-directory: ${{ matrix.service.name }}
+
+      - name: Build and Test
+        uses: ./.github/actions/gradle-build-test
+        with:
+          working-directory: ${{ matrix.service.name }}
+
+      - name: Check application startup
+        uses: ./.github/actions/test-app-startup
+        with:
+          working-directory: ${{ matrix.service.name }}
+          services: ${{ matrix.service.name }}
+          health-port: ${{ matrix.service.port }}
+
+      - name: Upload build artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports-${{ matrix.service.name }}
+          path: |
+            ${{ matrix.service.name }}/build/reports/
+            ${{ matrix.service.name }}/build/test-results/
+
+  build-and-test-full:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services_full != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services_full) }}
 
     env:
       SPRING_JWT_SECRET: ${{ secrets.SPRING_JWT_SECRET }}
