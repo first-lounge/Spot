@@ -48,14 +48,14 @@ public class PaymentApproveWorkflowImpl implements PaymentApproveWorkflow {
             saga.addCompensation(activities::refundByPaymentId, paymentId, "시스템 오류로 인한 자동 결제 취소");
             activities.publishSucceeded(paymentId);
 
-            log.info("[승인워크플로우] 완료 - PaymentID: {}", paymentId);
+            log.info("[결제승인워크플로우] 완료 - PaymentID: {}", paymentId);
             
         } catch (Exception e) {
-            log.error("[결제워크플로우] 결제 프로세스 중 에러 발생. ID: {}, 사유: {}", paymentId, e.getMessage());
+            log.error("[결제승인워크플로우] 결제 프로세스 중 에러 발생. ID: {}, 사유: {}", paymentId, e.getMessage());
             try {
                 saga.compensate();
             } catch (Exception ce) {
-                log.error("[결제사가패턴] 보상 트랜잭션 실행 중 치명적 실패!", ce);
+                log.error("[결제승인워크플로우] 보상 트랜잭션(사가 패턴) 실행 중 치명적 실패!", ce);
             }
             activities.recordStatus(paymentId, "ABORTED");
             activities.publishAuthRequired(paymentId, e.getMessage());
