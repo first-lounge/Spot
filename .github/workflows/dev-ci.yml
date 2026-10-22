@@ -122,31 +122,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Java and Gradle
-        uses: ./.github/actions/setup-java-gradle
+      - name: Service CI
+        uses: ./.github/actions/service-ci
         with:
-          working-directory: ${{ matrix.service.name }}
-
-      - name: Build and Test
-        uses: ./.github/actions/gradle-build-test
-        with:
-          working-directory: ${{ matrix.service.name }}
-
-      - name: Check application startup
-        uses: ./.github/actions/test-app-startup
-        with:
-          working-directory: ${{ matrix.service.name }}
-          services: ${{ matrix.service.name }}
-          health-port: ${{ matrix.service.port }}
-
-      - name: Upload build artifacts
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-reports-${{ matrix.service.name }}
-          path: |
-            ${{ matrix.service.name }}/build/reports/
-            ${{ matrix.service.name }}/build/test-results/
+          service-name: ${{ matrix.service.name }}
+          service-port: ${{ matrix.service.port }}
 
   build-and-test-db:
     needs: detect-changes
@@ -195,31 +175,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Java and Gradle
-        uses: ./.github/actions/setup-java-gradle
+      - name: Service CI
+        uses: ./.github/actions/service-ci
         with:
-          working-directory: ${{ matrix.service.name }}
-
-      - name: Build and Test
-        uses: ./.github/actions/gradle-build-test
-        with:
-          working-directory: ${{ matrix.service.name }}
-
-      - name: Check application startup
-        uses: ./.github/actions/test-app-startup
-        with:
-          working-directory: ${{ matrix.service.name }}
-          services: ${{ matrix.service.name }}
-          health-port: ${{ matrix.service.port }}
-
-      - name: Upload build artifacts
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-reports-${{ matrix.service.name }}
-          path: |
-            ${{ matrix.service.name }}/build/reports/
-            ${{ matrix.service.name }}/build/test-results/
+          service-name: ${{ matrix.service.name }}
+          service-port: ${{ matrix.service.port }}
 
   build-and-test-full:
     needs: detect-changes
@@ -312,31 +272,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Java and Gradle
-        uses: ./.github/actions/setup-java-gradle
+      - name: Service CI
+        uses: ./.github/actions/service-ci
         with:
-          working-directory: ${{ matrix.service.name }}
-
-      - name: Build and Test
-        uses: ./.github/actions/gradle-build-test
-        with:
-          working-directory: ${{ matrix.service.name }}
-
-      - name: Check application startup
-        uses: ./.github/actions/test-app-startup
-        with:
-          working-directory: ${{ matrix.service.name }}
-          services: ${{ matrix.service.name }}
-          health-port: ${{ matrix.service.port }}
-
-      - name: Upload build artifacts
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-reports-${{ matrix.service.name }}
-          path: |
-            ${{ matrix.service.name }}/build/reports/
-            ${{ matrix.service.name }}/build/test-results/
+          service-name: ${{ matrix.service.name }}
+          service-port: ${{ matrix.service.port }}
 
   check-k8s:
     needs: detect-changes

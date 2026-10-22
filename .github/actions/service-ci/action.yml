@@ -1,0 +1,37 @@
+name: "Service CI"
+description: "Build, test, and startup check for a service"
+
+inputs:
+  service-name:
+    required: true
+  service-port:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Java and Gradle
+      uses: ./.github/actions/setup-java-gradle
+      with:
+        working-directory: ${{ inputs.service-name }}
+
+    - name: Build and Test
+      uses: ./.github/actions/gradle-build-test
+      with:
+        working-directory: ${{ inputs.service-name }}
+
+    - name: Check application startup
+      uses: ./.github/actions/test-app-startup
+      with:
+        working-directory: ${{ inputs.service-name }}
+        services: ${{ inputs.service-name }}
+        health-port: ${{ inputs.service-port }}
+
+    - name: Upload build artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-reports-${{ inputs.service-name }}
+        path: |
+          ${{ inputs.service-name }}/build/reports/
+          ${{ inputs.service-name }}/build/test-results/
