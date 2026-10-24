@@ -1,2 +1,6 @@
 # 공통
 env: prod
+
+# Prometheus
+prom:
+  targetRevision: 91.0.0
