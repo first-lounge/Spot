@@ -8,5 +8,3 @@ resources:
   - kafka
   - rds-relay.yaml
   - storage-class.yaml
-  - temporal/temporal.yaml
-  - temporal/temporal-ui.yaml

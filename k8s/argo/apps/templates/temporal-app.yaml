@@ -1,0 +1,34 @@
+{{- if eq .Values.env "prod" }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: temporal-app
+  namespace: argocd
+  finalizers: # 기본 동작은 포어그라운드 삭제
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  sources:
+    - repoURL: "https://go.temporal.io/helm-charts" # Helm 저장소 주소
+      chart: temporal
+      targetRevision: 1.7.0
+      helm:
+        releaseName: temporal
+        valueFiles:
+          - $values/k8s/overlays/{{ .Values.env }}/infra/temporal/values.yaml
+    - repoURL: {{ .Values.global.repoURL }}
+      targetRevision: {{ .Values.global.targetRevision }}
+      ref: values
+  destination:
+    server: {{ .Values.global.destination.server }}
+    namespace: infra
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+{{- end }}
