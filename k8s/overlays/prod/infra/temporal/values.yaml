@@ -1,0 +1,213 @@
+server:
+  config:
+    logLevel: "warn"
+
+    # === DB 연결 ===
+    # 호스트 & 사용자명은 차트에 Secret 참조 칸이 없음 → 서버가 실행 시 env에서 읽음(config_template의 enable-template)
+    # DB 생성 & 스키마는 아래 extraObjects의 temporal-schema-setup Job이 담당
+    persistence:
+      numHistoryShards: 512
+      datastores:
+        default:
+          sql:
+            pluginName: postgres12
+            databaseName: spot_temporal
+            connectAddr: '{{ env "TEMPORAL_DB_HOST" }}:5432'
+            connectProtocol: tcp
+            user: '{{ env "TEMPORAL_DB_USERNAME" }}'
+            existingSecret: infra-secrets
+            secretKey: TEMPORAL_DB_PASSWORD
+            createDatabase: false
+            manageSchema: false
+            maxConns: 20
+            maxIdleConns: 20
+            maxConnLifetime: 1h
+            tls:
+              enabled: true
+              enableHostVerification: false
+        visibility:
+          sql:
+            pluginName: postgres12
+            databaseName: spot_visibility
+            connectAddr: '{{ env "TEMPORAL_DB_HOST" }}:5432'
+            connectProtocol: tcp
+            user: '{{ env "TEMPORAL_DB_USERNAME" }}'
+            existingSecret: infra-secrets
+            secretKey: TEMPORAL_DB_PASSWORD
+            createDatabase: false
+            manageSchema: false
+            maxConns: 20
+            maxIdleConns: 20
+            maxConnLifetime: 1h
+            tls:
+              enabled: true
+              enableHostVerification: false
+
+    namespaces:
+      create: true
+      namespace:
+        - name: default
+          retention: 24h
+
+  # 위 connectAddr·user의 {{ env }}가 읽는 값
+  additionalEnv:
+    - name: TEMPORAL_DB_HOST
+      valueFrom:
+        secretKeyRef: { name: infra-secrets, key: TEMPORAL_DB_HOST }
+    - name: TEMPORAL_DB_USERNAME
+      valueFrom:
+        secretKeyRef: { name: infra-secrets, key: TEMPORAL_DB_USERNAME }
+
+  # === 4개 서비스 공통 ===
+  nodeSelector:
+    workload: infra
+  tolerations:
+    - key: spot
+      value: infra
+      effect: NoSchedule
+
+  # === 서비스별 ===
+  frontend:
+    replicaCount: 2
+    resources:
+      requests: { cpu: "100m", memory: "256Mi" }
+      limits: { cpu: "500m", memory: "512Mi" }
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/instance: temporal
+            app.kubernetes.io/component: frontend
+
+  history:
+    replicaCount: 2
+    resources:
+      requests: { cpu: "200m", memory: "512Mi" }
+      limits: { cpu: "500m", memory: "1Gi" }
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/instance: temporal
+            app.kubernetes.io/component: history
+
+  matching:
+    replicaCount: 2
+    resources:
+      requests: { cpu: "100m", memory: "256Mi" }
+      limits: { cpu: "500m", memory: "512Mi" }
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/instance: temporal
+            app.kubernetes.io/component: matching
+
+  worker:
+    replicaCount: 1
+    resources:
+      requests: { cpu: "50m", memory: "128Mi" }
+      limits: { cpu: "200m", memory: "256Mi" }
+
+# === admintools ===
+# schema Job & namespace 생성 Job도 이 nodeSelector & tolerations를 따름
+admintools:
+  nodeSelector:
+    workload: infra
+  tolerations:
+    - key: spot
+      value: infra
+      effect: NoSchedule
+  resources:
+    requests: { cpu: "10m", memory: "32Mi" }
+    limits: { cpu: "100m", memory: "256Mi" }
+
+# === Temporal UI ===
+web:
+  service:
+    port: 80
+  nodeSelector:
+    workload: infra
+  tolerations:
+    - key: spot
+      value: infra
+      effect: NoSchedule
+  resources:
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits: { cpu: "500m", memory: "512Mi" }
+  additionalEnv:
+    - name: TEMPORAL_CORS_ALLOW_ORIGINS
+      value: "*"
+
+# === helm test 파드 ===
+test:
+  nodeSelector:
+    workload: infra
+  tolerations:
+    - key: spot
+      value: infra
+      effect: NoSchedule
+
+# === DB 생성 + 스키마 Job ===
+# 차트 schema Job은 connectAddr를 env에 그대로 넣어 {{ env }} 값이면 렌더 실패 → 직접 작성, Secret에서 읽음
+# Helm 훅 → ArgoCD PreSync로 서버 Deployment보다 먼저 실행
+extraObjects:
+  - |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: {{ .Release.Name }}-schema-setup
+      namespace: {{ .Release.Namespace }}
+      annotations:
+        helm.sh/hook: pre-install,pre-upgrade
+        helm.sh/hook-weight: "-1"
+        helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    spec:
+      backoffLimit: 100
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: OnFailure
+          nodeSelector:
+            {{- toYaml .Values.admintools.nodeSelector | nindent 12 }}
+          tolerations:
+            {{- toYaml .Values.admintools.tolerations | nindent 12 }}
+          containers:
+            - name: schema-setup
+              image: "{{ .Values.admintools.image.repository }}:{{ .Values.admintools.image.tag }}"
+              command: ["sh", "-c"]
+              args:
+                - |
+                  set -e
+                  setup() {
+                    export SQL_DATABASE="$1"
+                    temporal-sql-tool create-database
+                    temporal-sql-tool setup-schema -v 0.0
+                    temporal-sql-tool update-schema --schema-dir "/etc/temporal/schema/postgresql/v12/$2/versioned"
+                  }
+                  setup spot_temporal temporal
+                  setup spot_visibility visibility
+              env:
+                - name: SQL_PLUGIN
+                  value: postgres12
+                - name: SQL_HOST
+                  valueFrom:
+                    secretKeyRef: { name: infra-secrets, key: TEMPORAL_DB_HOST }
+                - name: SQL_PORT
+                  value: "5432"
+                - name: SQL_USER
+                  valueFrom:
+                    secretKeyRef: { name: infra-secrets, key: TEMPORAL_DB_USERNAME }
+                - name: SQL_PASSWORD
+                  valueFrom:
+                    secretKeyRef: { name: infra-secrets, key: TEMPORAL_DB_PASSWORD }
+                - name: SQL_TLS
+                  value: "true"
+                - name: SQL_TLS_DISABLE_HOST_VERIFICATION
+                  value: "true"
