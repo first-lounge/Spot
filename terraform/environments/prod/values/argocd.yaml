@@ -1,0 +1,27 @@
+global:
+  nodeSelector:
+    workload: "etc"
+  tolerations:
+    - key: "CriticalAddonsOnly"
+      effect: "NoSchedule"
+
+configs:
+  params:
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: "alb"
+    annotations:
+      alb.ingress.kubernetes.io/healthcheck-path: "/"
+      alb.ingress.kubernetes.io/group.name: "spot-ingress"
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+      alb.ingress.kubernetes.io/scheme: "internet-facing"
+      alb.ingress.kubernetes.io/security-groups: "spot-prod-alb-sg"
+      alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09"
+      alb.ingress.kubernetes.io/ssl-redirect: "443"
+      alb.ingress.kubernetes.io/success-codes: "200"
+      alb.ingress.kubernetes.io/tags: "Name=spot-prod-alb, Environment=prod,Team=spot, ManagedBy=lbc"
+      alb.ingress.kubernetes.io/target-type: "ip"
+    hostname: "argocd.hbksv.com"

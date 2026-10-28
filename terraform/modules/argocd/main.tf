@@ -1,17 +1,5 @@
 # =============================================================================
-# Kubectl Provider 명시
-# =============================================================================
-terraform {
-  required_providers {
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.19"
-    }
-  }
-}
-
-# =============================================================================
-# ArgoCD 설치 & 배포
+# ArgoCD 배포
 # =============================================================================
 resource "helm_release" "argocd" {
   name             = "argocd"
@@ -20,41 +8,19 @@ resource "helm_release" "argocd" {
   version          = "9.5.15"
   create_namespace = true
   namespace        = "argocd"
-
-  values = [
-    yamlencode({
-      configs = {
-        params = {
-          "server.insecure" : true
-        }
-      }
-
-      server = {
-        ingress = {
-          enabled          = true
-          ingressClassName = "alb"
-          annotations = {
-            "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
-            "alb.ingress.kubernetes.io/target-type"      = "ip"
-            "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\": 80}, {\"HTTPS\":443}]"
-            "alb.ingress.kubernetes.io/ssl-redirect"     = "443"
-            "alb.ingress.kubernetes.io/group.name"       = "spot-ingress"
-            "alb.ingress.kubernetes.io/healthcheck-path" = "/"
-            "alb.ingress.kubernetes.io/success-codes"    = "200"
-          }
-          hostname = "argocd.${var.domain_name}"
-        }
-      }
-    })
-  ]
-
+  values           = [file("${var.values_path}/argocd.yaml")]
 }
 
 # =============================================================================
 # Root Application
 # =============================================================================
-resource "kubectl_manifest" "application" {
-  yaml_body = file(var.root_app_path)
+resource "helm_release" "root_app" {
+  name       = "root-app"
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argocd-apps"
+  version    = "2.0.7"
+  namespace  = "argocd"
+  values     = [file("${var.values_path}/root-app.yaml")]
 
   depends_on = [helm_release.argocd]
 }
