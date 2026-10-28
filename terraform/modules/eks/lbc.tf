@@ -8,39 +8,35 @@ resource "helm_release" "aws_lbc" {
   chart      = "aws-load-balancer-controller"
   version    = "3.3.0"
 
-  set {
-    name  = "clusterName"
-    value = var.cluster_name
-  }
+  set = concat(
+    [
+      {
+        name  = "clusterName"
+        value = var.cluster_name
+      },
 
-  set {
-    name  = "serviceAccount.create"
-    value = "false"
-  }
+      {
+        name  = "serviceAccount.create"
+        value = "false"
+      },
 
-  set {
-    name  = "serviceAccount.name"
-    value = local.irsa_roles["lbc"].sa_name
-  }
+      {
+        name  = "serviceAccount.name"
+        value = local.irsa_roles["lbc"].sa_name
+      },
 
-  set {
-    name  = "tolerations[0].key"
-    value = "CriticalAddonsOnly"
-  }
+      {
+        name  = "tolerations[0].key"
+        value = "CriticalAddonsOnly"
+      },
 
-  set {
-    name  = "tolerations[0].operator"
-    value = "Exists"
-  }
-
-  dynamic "set" {
-    for_each = local.has_etc_group ? [1] : []
-
-    content {
-      name  = "nodeSelector.workload"
-      value = "etc"
-    }
-  }
+      {
+        name  = "tolerations[0].operator"
+        value = "Exists"
+      }
+    ],
+    local.has_etc_group ? [{ name = "nodeSelector.workload", value = "etc" }] : []
+  )
 
   depends_on = [aws_eks_access_policy_association.master, aws_eks_node_group.this]
 }
