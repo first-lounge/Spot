@@ -25,9 +25,10 @@ spec:
     server: {{ .Values.global.destination.server }}
     namespace: infra
   syncPolicy:
+    {{- with $.Values.global.syncPolicy.automated }}
     automated:
-      prune: true
-      selfHeal: true
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true

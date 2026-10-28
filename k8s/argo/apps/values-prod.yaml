@@ -1,6 +1,13 @@
 # 공통
 env: prod
 
+# # prod 환경 구축 완료 시 주석 해제
+# global:
+#   targetRevision: main
+
+#   syncPolicy:
+#     automated: null
+
 # Prometheus
 prom:
   targetRevision: 91.0.0

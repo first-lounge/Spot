@@ -7,6 +7,11 @@ global:
   destination:
     server: https://kubernetes.default.svc
 
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
 # application 목록
 apps:
   infra:

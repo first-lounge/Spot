@@ -16,6 +16,14 @@ spec:
       helm:
         releaseName: argo-rollouts
         parameters:
+            {{- if eq .Values.env "prod" }}
+            - name: controller.nodeSelector.workload
+              value: "etc"
+            - name: controller.tolerations[0].key
+              value: "CriticalAddonsOnly"
+            - name: controller.tolerations[0].effect
+              value: "NoSchedule"
+            {{- end }}
             # 대시보드 접속 시 인증이 없어 dev에선 X, 필요 시 port-forward
             - name: dashboard.enabled
               value: "false"
@@ -23,9 +31,10 @@ spec:
     server: {{ .Values.global.destination.server }}
     namespace: argo-rollouts
   syncPolicy:
+    {{- with $.Values.global.syncPolicy.automated }}
     automated:
-      prune: true
-      selfHeal: true
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
