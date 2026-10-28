@@ -167,6 +167,117 @@ resource "aws_cloudwatch_metric_alarm" "elasticache_eviction" {
 }
 
 # =============================================================================
+# ALB
+# =============================================================================
+
+data "aws_lbs" "alb_list" {
+  tags = {
+    Name        = "${var.name_prefix}-alb",
+    Environment = var.common_tags["Environment"]
+  }
+}
+
+data "aws_lb" "alb" {
+  count = length(data.aws_lbs.alb_list.arns) > 0 ? 1 : 0
+
+  arn = one(data.aws_lbs.alb_list.arns)
+}
+
+data "aws_lb_target_group" "target_group" {
+  count = length(data.aws_lbs.alb_list.arns) > 0 ? 1 : 0
+
+  tags = { "ingress.k8s.aws/resource" = "spot/spot-ing-spot-gateway:80" }
+}
+
+# Target에서 생성된 5XX 응답 개수
+resource "aws_cloudwatch_metric_alarm" "httpcode_target_count" {
+  count = length(data.aws_lbs.alb_list.arns) > 0 ? 1 : 0
+
+  alarm_name          = "${var.name_prefix}-target-5xx-count"
+  alarm_description   = "Spot-Gateway의 5XX 응답 개수"
+  namespace           = "AWS/ApplicationELB"
+  metric_name         = "HTTPCode_Target_5XX_Count"
+  dimensions          = { LoadBalancer = data.aws_lb.alb[0].arn_suffix, TargetGroup = data.aws_lb_target_group.target_group[0].arn_suffix }
+  statistic           = "Sum"
+  period              = 180
+  evaluation_periods  = 1
+  threshold           = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.this.arn]
+  ok_actions    = [aws_sns_topic.this.arn]
+
+  tags = merge(var.common_tags, { Name = "${var.name_prefix}-target-5xx-count" })
+}
+
+# ALB 헬스체크 기준으로 unhealthy 판정을 받은 Target 개수
+resource "aws_cloudwatch_metric_alarm" "unhealthy_host_count" {
+  count = length(data.aws_lbs.alb_list.arns) > 0 ? 1 : 0
+
+  alarm_name          = "${var.name_prefix}-unhealthy-host-count"
+  alarm_description   = "UnHealthy 판정을 받은 Target 개수"
+  namespace           = "AWS/ApplicationELB"
+  metric_name         = "UnHealthyHostCount"
+  dimensions          = { LoadBalancer = data.aws_lb.alb[0].arn_suffix, TargetGroup = data.aws_lb_target_group.target_group[0].arn_suffix }
+  statistic           = "Minimum"
+  period              = 60
+  evaluation_periods  = 2 # 최근 몇 개를 볼지
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.this.arn]
+  ok_actions    = [aws_sns_topic.this.arn]
+
+  tags = merge(var.common_tags, { Name = "${var.name_prefix}-unhealthy-host-count" })
+}
+
+# ALB가 요청을 넘긴 후 gateway가 응답을 시작할 때까지 걸린 시간(p95, 초)
+resource "aws_cloudwatch_metric_alarm" "target_response_time" {
+  count = length(data.aws_lbs.alb_list.arns) > 0 ? 1 : 0
+
+  alarm_name          = "${var.name_prefix}-target-response-time"
+  alarm_description   = "ALB가 요청을 넘긴 후 gateway가 응답을 시작할 때까지 걸린 시간(p95, 초)"
+  namespace           = "AWS/ApplicationELB"
+  metric_name         = "TargetResponseTime"
+  dimensions          = { LoadBalancer = data.aws_lb.alb[0].arn_suffix, TargetGroup = data.aws_lb_target_group.target_group[0].arn_suffix }
+  extended_statistic  = "p95"
+  period              = 60
+  evaluation_periods  = 5
+  threshold           = 2 # 초 (부하테스트 후 재조정)
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.this.arn]
+  ok_actions    = [aws_sns_topic.this.arn]
+
+  tags = merge(var.common_tags, { Name = "${var.name_prefix}-target-response-time" })
+}
+
+# ALB HTTP 5XX 서버 오류 개수
+resource "aws_cloudwatch_metric_alarm" "httpcode_elb_count" {
+  count = length(data.aws_lbs.alb_list.arns) > 0 ? 1 : 0
+
+  alarm_name          = "${var.name_prefix}-elb-5xx-count"
+  alarm_description   = "ALB HTTP 5XX 서버 오류 개수"
+  namespace           = "AWS/ApplicationELB"
+  metric_name         = "HTTPCode_ELB_5XX_Count"
+  dimensions          = { LoadBalancer = data.aws_lb.alb[0].arn_suffix }
+  statistic           = "Sum"
+  period              = 180
+  evaluation_periods  = 1
+  threshold           = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.this.arn]
+  ok_actions    = [aws_sns_topic.this.arn]
+
+  tags = merge(var.common_tags, { Name = "${var.name_prefix}-elb-5xx-count" })
+}
+
+# =============================================================================
 # SNS
 # =============================================================================
 resource "aws_sns_topic" "this" {
