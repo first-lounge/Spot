@@ -27,30 +27,55 @@
 
 ### Apply
 
-```
-1. terraform/environments/bootstrap로 이동 ⇒ terraform apply (최초 1회만, destroy 금지)
+- **Dev**
 
-2. terraform/environments/dev로 이동 ⇒ terraform apply (VPC/EKS/RDS 등 EKS 인프라)
+  ```
+  1. terraform/environments/bootstrap로 이동 ⇒ terraform apply (최초 1회만, destroy 금지)
 
-3. terraform/environments/argo로 이동 ⇒ terraform apply — ArgoCD 설치 + root App (여기서 ALB 생성됨)
+  2. terraform/environments/dev로 이동 ⇒ terraform apply (VPC/EKS/RDS 등 EKS 인프라 + ArgoCD 설치)
+  ```
 
-4. (prod만) ALB가 생긴 것을 확인한 뒤 terraform/environments/prod에서 한 번 더 terraform apply (WAF 연결)
-```
+- **Prod**
+
+  ```
+  1. terraform/environments/bootstrap로 이동 ⇒ terraform apply (최초 1회만, destroy 금지)
+
+  2. terraform/environments/prod로 이동 ⇒ terraform apply (VPC/EKS/RDS 등 EKS 인프라 + ArgoCD 설치)
+
+  3. spot-gateway 대상 그룹이 생긴 것을 확인한 뒤 terraform/environments/prod에서 한 번 더 terraform apply (WAF 연결 + ALB 알람)
+
+  ```
 
 ### Destroy
 
-```
-1. kubectl delete app root-dev -n argocd (root App 삭제 → finalizer cascade)
-2. terraform/environments/argo로 이동 ⇒ terraform destroy (ALB 자동 소멸)
-3. terraform/environments/dev로 이동 ⇒ terraform destroy
-```
+- **Dev**
+
+  ```
+  1. aws eks update-kubeconfig --name spot-dev-cluster --region ap-northeast-2
+
+  2. kubectl delete app root-dev -n argocd (root App 삭제 → finalizer cascade)
+
+  3. terraform/environments/dev로 이동 ⇒ terraform destroy
+  ```
+
+- **Prod**
+
+  ```
+  1. aws eks update-kubeconfig --name spot-prod-cluster --region ap-northeast-2
+
+  2. kubectl delete app root-prod -n argocd (root App 삭제 → finalizer cascade)
+
+  3. terraform/environments/prod로 이동 ⇒ terraform destroy
+  ```
 
 ## ArgoCD UI 접속
 
-1. 아래 명령어를 통해 비밀번호 확인
+- 아래 명령어를 통해 비밀번호 확인
 
-```
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
-```
+  ```
 
-2. https://argocd.hbksv.com 접속 ⇒ 아이디(=**admin**)와 비밀번호 입력
+  kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+
+  ```
+
+- https://argocd.hbksv.com 접속 ⇒ 아이디(=**admin**)와 비밀번호 입력
