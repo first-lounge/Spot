@@ -49,12 +49,10 @@ pom.xml.utils
 pom.xml.v
 release.properties
 
-
 ### IntelliJ IDEA ###
 *.iws
 *.iml
 *.ipr
-
 
 ### Eclipse ###
 .settings/
@@ -77,6 +75,9 @@ config/application-secret.yml
 /k8s/probe.sh
 
 *.txt
+
+### Terraform ###
+!terraform/**/*.yaml
 
 ### 개인 준비물 (팀 저장소 커밋 제외) ###
 ROADMAP.md

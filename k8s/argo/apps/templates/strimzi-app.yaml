@@ -18,13 +18,22 @@ spec:
         parameters:
             - name: "watchNamespaces[0]"
               value: "infra"
+            {{- if eq .Values.env "prod" }}
+            - name: nodeSelector.workload
+              value: "etc"
+            - name: tolerations[0].key
+              value: "CriticalAddonsOnly"
+            - name: tolerations[0].effect
+              value: "NoSchedule"
+            {{- end }}
   destination:
     server: {{ .Values.global.destination.server }}
     namespace: strimzi
   syncPolicy:
+    {{- with $.Values.global.syncPolicy.automated }}
     automated:
-      prune: true
-      selfHeal: true
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
