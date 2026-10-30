@@ -1,4 +1,4 @@
-# state 파일 저장
+# tfstate 파일 저장
 resource "aws_s3_bucket" "tfstate" {
   bucket = "spot-tfstate-bucket"
 
@@ -7,6 +7,20 @@ resource "aws_s3_bucket" "tfstate" {
 
   tags = {
     Name        = "Terraform State Bucket"
+    Environment = "global"
+    Project     = "spot"
+  }
+}
+
+# 더미 데이터 파일 저장
+resource "aws_s3_bucket" "dummy_data" {
+  bucket = "spot-dummy-data-bucket"
+
+  # 버킷에 객체(state 버전 포함)가 남아 있어도 destroy 시 강제 삭제
+  force_destroy = true
+
+  tags = {
+    Name        = "Dummy Data Bucket"
     Environment = "global"
     Project     = "spot"
   }
@@ -57,6 +71,7 @@ resource "aws_s3_bucket_public_access_block" "tfstate" {
   restrict_public_buckets = true
 }
 
+# AES256 암호화
 resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
   bucket = aws_s3_bucket.tfstate.id
 

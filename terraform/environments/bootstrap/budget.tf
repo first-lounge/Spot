@@ -30,27 +30,27 @@ locals {
 #   }
 # }
 
-# 알림 테스트용
-resource "aws_budgets_budget" "monthly" {
-  name         = "monthly-cost-budget"
-  budget_type  = "COST"
-  limit_amount = "1" # 테스트용 1달러
-  limit_unit   = "USD"
-  time_unit    = "MONTHLY"
+# # 알림 테스트용
+# resource "aws_budgets_budget" "monthly" {
+#   name         = "monthly-cost-budget"
+#   budget_type  = "COST"
+#   limit_amount = "1" # 테스트용 1달러
+#   limit_unit   = "USD"
+#   time_unit    = "MONTHLY"
 
-  cost_types {
-    include_credit = false # 크레딧 차감 전 금액으로 계산
-  }
+#   cost_types {
+#     include_credit = false # 크레딧 차감 전 금액으로 계산
+#   }
 
-  dynamic "notification" {
-    for_each = local.thresholds
+#   dynamic "notification" {
+#     for_each = local.thresholds
 
-    content {
-      comparison_operator        = "GREATER_THAN"
-      threshold                  = notification.value
-      threshold_type             = "PERCENTAGE"
-      notification_type          = "ACTUAL"
-      subscriber_email_addresses = [var.alert_email]
-    }
-  }
-}
+#     content {
+#       comparison_operator        = "GREATER_THAN"
+#       threshold                  = notification.value
+#       threshold_type             = "PERCENTAGE"
+#       notification_type          = "ACTUAL"
+#       subscriber_email_addresses = [var.alert_email]
+#     }
+#   }
+# }
