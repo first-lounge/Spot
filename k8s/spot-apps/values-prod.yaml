@@ -81,35 +81,35 @@ global:
 apps:
   gateway:
     replicas: 2
-    imageTag: ""
+    imageTag: "d254a078"
     rollout: true
     autoPromotionEnabled: false
     scaleDownDelaySeconds: 3600
     smokePath: /actuator/health
     
   user:
-    imageTag: ""
+    imageTag: "d254a078"
     rollout: true
     autoPromotionEnabled: false
     scaleDownDelaySeconds: 3600
     smokePath: /actuator/health
 
   payment:
-    imageTag: ""
+    imageTag: "d254a078"
     rollout: true
     autoPromotionEnabled: false
     scaleDownDelaySeconds: 3600
     smokePath: /actuator/health
 
   order:
-    imageTag: ""
+    imageTag: "d254a078"
     rollout: true
     autoPromotionEnabled: false
     scaleDownDelaySeconds: 900
     smokePath: /actuator/health
     
   store:
-    imageTag: ""
+    imageTag: "d254a078"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 300
