@@ -1,3 +1,36 @@
+locals {
+  oidc_provider = replace(aws_iam_openid_connect_provider.eks_irsa.url, "https://", "")
+
+  enable_data_init = var.environment == "prod"
+
+  irsa_roles = merge(
+    {
+      ebs_csi = {
+        namespace = "kube-system"
+        sa_name   = "ebs-csi-controller-sa"
+      }
+      eso = {
+        namespace = "external-secrets"
+        sa_name   = "external-secrets-sa"
+      }
+      external_dns = {
+        namespace = "external-dns"
+        sa_name   = "external-dns-sa"
+      }
+      lbc = {
+        namespace = "kube-system"
+        sa_name   = "aws-load-balancer-controller-sa"
+      }
+    },
+    local.enable_data_init ? {
+      data_init = {
+        namespace = "infra"
+        sa_name   = "data-init-job-sa"
+      }
+    } : {}
+  )
+}
+
 # =============================================================================
 # OIDC
 # =============================================================================
@@ -25,6 +58,36 @@ data "http" "lbc_policy" {
 resource "aws_iam_policy" "lbc" {
   name   = "${var.name_prefix}-lbc-policy"
   policy = data.http.lbc_policy.response_body
+}
+
+# Data Init Job Policy
+resource "aws_iam_policy" "data_init_policy" {
+  count = local.enable_data_init ? 1 : 0
+
+  name        = "${var.name_prefix}-data-init-job-policy"
+  description = "Dummy Data Init Job policy for Spot ${var.environment}"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "arn:aws:s3:::spot-dummy-data-bucket"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject"
+        ],
+        Resource = ["arn:aws:s3:::spot-dummy-data-bucket/*"]
+      }
+    ]
+  })
 }
 
 # External-DNS Policy
@@ -105,30 +168,6 @@ resource "aws_iam_policy" "external_secrets_policy" {
   })
 }
 
-# IRSA
-locals {
-  oidc_provider = replace(aws_iam_openid_connect_provider.eks_irsa.url, "https://", "")
-
-  irsa_roles = {
-    lbc = {
-      namespace = "kube-system"
-      sa_name   = "aws-load-balancer-controller-sa"
-    }
-    ebs_csi = {
-      namespace = "kube-system"
-      sa_name   = "ebs-csi-controller-sa"
-    }
-    eso = {
-      namespace = "external-secrets"
-      sa_name   = "external-secrets-sa"
-    }
-    external_dns = {
-      namespace = "external-dns"
-      sa_name   = "external-dns-sa"
-    }
-  }
-}
-
 # =============================================================================
 # IAM Role
 # =============================================================================
@@ -181,4 +220,11 @@ resource "aws_iam_role_policy_attachment" "external_dns" {
 resource "aws_iam_role_policy_attachment" "external_secrets" {
   policy_arn = aws_iam_policy.external_secrets_policy.arn
   role       = aws_iam_role.irsa["eso"].name
+}
+
+resource "aws_iam_role_policy_attachment" "data_init" {
+  count = local.enable_data_init ? 1 : 0
+
+  policy_arn = aws_iam_policy.data_init_policy[0].arn
+  role       = aws_iam_role.irsa["data_init"].name
 }
