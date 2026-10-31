@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: data-init-job-sa
-  namespace: infra
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::164076841262:role/spot-prod-data_init-role
