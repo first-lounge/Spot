@@ -98,7 +98,7 @@ resource "aws_eks_node_group" "this" {
   node_group_name = "${var.name_prefix}-${each.key}-node-group"
   node_role_arn   = var.node_group_role_arn
   subnet_ids      = var.node_subnet_ids
-  depends_on      = [aws_eks_cluster.cluster]
+  depends_on      = [aws_eks_cluster.cluster, aws_eks_addon.vpc_cni]
 
   capacity_type  = each.value.capacity_type # Dev=SPOT, Prod= SPOT + ON_DEMAND
   instance_types = var.instance_types
