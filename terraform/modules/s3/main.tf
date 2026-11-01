@@ -3,7 +3,7 @@
 # =============================================================================
 # log 파일 저장
 resource "aws_s3_bucket" "logs" {
-  bucket        = "${var.name_prefix}-logs"
+  bucket        = "${var.name_prefix}-alb-logs"
   force_destroy = true
   tags          = merge(var.common_tags, { Name = "${var.name_prefix}-s3-logs" })
 }

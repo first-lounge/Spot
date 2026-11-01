@@ -40,6 +40,7 @@ docker build -t "${ECR_REGISTRY}/spot-kafka-connect:3.4.0" "${BASE_DIR}/k8s/over
 docker push "${ECR_REGISTRY}/spot-kafka-connect:3.4.0"
 
 SERVICES=("gateway" "user" "store" "order" "payment")
+TAG="d254a078"
 
 for service in "${SERVICES[@]}"; do
     log_info "Building ${service}..."
@@ -48,9 +49,9 @@ for service in "${SERVICES[@]}"; do
 
     (cd "${SERVICE_DIR}" && ./gradlew bootJar -x test)
 
-    docker build -t "${ECR_REGISTRY}/spot-${service}:latest" "${SERVICE_DIR}"
+    docker build -t "${ECR_REGISTRY}/spot-${service}:${TAG}" "${SERVICE_DIR}"
 
-    docker push "${ECR_REGISTRY}/spot-${service}:latest"
+    docker push "${ECR_REGISTRY}/spot-${service}:${TAG}"
 
     log_info "spot-${service} 이미지 Push 성공!"
 done

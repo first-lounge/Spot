@@ -6,7 +6,7 @@ ingress:
   aws:
     enabled: true
   # ALB 로그 저장용 S3 버킷 이름
-  bucket: spot-dev-logs
+  bucket: spot-dev-alb-logs
   subs:
     spot:
       hostname: spot

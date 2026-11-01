@@ -8,7 +8,7 @@ ingress:
     enabled: true
 
   # ALB 로그 저장용 S3 버킷 이름
-  bucket: spot-prod-logs
+  bucket: spot-prod-alb-logs
 
   subs:
     spot:
