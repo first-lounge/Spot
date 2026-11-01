@@ -38,6 +38,11 @@ prometheus:
 grafana:
   enabled: false # 이미 Grafana 따로 쓰고 있으니까 OFF
 
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+
 alertmanager:
   enabled: true
   alertmanagerSpec:
@@ -51,6 +56,11 @@ alertmanager:
   config:
     route: # 알림을 어느 주소로 보낼지
       receiver: discord
+      routes:
+        - matchers: [alertname = "Watchdog"]
+          receiver: "null"
+        - matchers: [alertname = "InfoInhibitor"]
+          receiver: "null"
     receivers:
       - name: "null"
       - name: discord
