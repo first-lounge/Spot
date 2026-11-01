@@ -124,6 +124,12 @@ variable "vpc_cni_version" {
   default     = "v1.22.4-eksbuild.3"
 }
 
+variable "metrics_server_version" {
+  description = "EKS Addon Metrics Server 버전"
+  type        = string
+  default     = "v0.9.0-eksbuild.14"
+}
+
 variable "core_dns_version" {
   description = "EKS Addon Core DNS 버전"
   type        = string

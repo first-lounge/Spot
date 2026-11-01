@@ -161,6 +161,15 @@ resource "aws_eks_addon" "kube_proxy" {
   tags                        = merge(var.common_tags, { Name = "${var.name_prefix}-kube-proxy" })
 }
 
+resource "aws_eks_addon" "metrics_server" {
+  cluster_name                = var.cluster_name
+  addon_name                  = "metrics-server"
+  addon_version               = var.metrics_server_version != "" ? var.metrics_server_version : null
+  resolve_conflicts_on_update = "OVERWRITE"
+  depends_on                  = [aws_eks_cluster.cluster]
+  tags                        = merge(var.common_tags, { Name = "${var.name_prefix}-metrics-server" })
+}
+
 resource "aws_eks_addon" "core_dns" {
   cluster_name                = var.cluster_name
   addon_name                  = "coredns"
