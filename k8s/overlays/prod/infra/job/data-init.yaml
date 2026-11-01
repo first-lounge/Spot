@@ -69,7 +69,7 @@ spec:
                 fi
 
                 # 더미 데이터 삽입
-                pg_restore --data-only --no-owner --single-transaction --exit-on-error \
+                pg_restore -d "$D" --data-only --no-owner --single-transaction --exit-on-error \
                 /data/"$svc"-20261030.dump
 
                 # 삽입 증명용 테이블 생성
