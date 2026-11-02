@@ -183,15 +183,33 @@ data "aws_lb" "alb" {
   arn = one(data.aws_lbs.alb_list.arns)
 }
 
-data "aws_lb_target_group" "target_group" {
-  count = length(data.aws_lbs.alb_list.arns) > 0 ? 1 : 0
+data "aws_resourcegroupstaggingapi_resources" "tg_list" {
+  resource_type_filters = ["elasticloadbalancing:targetgroup"]
 
-  tags = { "ingress.k8s.aws/resource" = "spot/spot-ing-spot-gateway:80" }
+  tag_filter {
+    key    = "ingress.k8s.aws/resource"
+    values = ["spot/spot-ing-spot-gateway:80"]
+  }
+
+  tag_filter {
+    key    = "elbv2.k8s.aws/cluster"
+    values = [var.name_prefix]
+  }
+}
+
+locals {
+  tg_mappings = data.aws_resourcegroupstaggingapi_resources.tg_list.resource_tag_mapping_list
+}
+
+data "aws_lb_target_group" "target_group" {
+  count = length(local.tg_mappings) > 0 ? 1 : 0
+
+  arn = local.tg_mappings[0].resource_arn
 }
 
 # Target에서 생성된 5XX 응답 개수
 resource "aws_cloudwatch_metric_alarm" "httpcode_target_count" {
-  count = length(data.aws_lbs.alb_list.arns) > 0 ? 1 : 0
+  count = length(local.tg_mappings) > 0 ? 1 : 0
 
   alarm_name          = "${var.name_prefix}-target-5xx-count"
   alarm_description   = "Spot-Gateway의 5XX 응답 개수"
@@ -213,7 +231,7 @@ resource "aws_cloudwatch_metric_alarm" "httpcode_target_count" {
 
 # ALB 헬스체크 기준으로 unhealthy 판정을 받은 Target 개수
 resource "aws_cloudwatch_metric_alarm" "unhealthy_host_count" {
-  count = length(data.aws_lbs.alb_list.arns) > 0 ? 1 : 0
+  count = length(local.tg_mappings) > 0 ? 1 : 0
 
   alarm_name          = "${var.name_prefix}-unhealthy-host-count"
   alarm_description   = "UnHealthy 판정을 받은 Target 개수"
@@ -235,7 +253,7 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_host_count" {
 
 # ALB가 요청을 넘긴 후 gateway가 응답을 시작할 때까지 걸린 시간(p95, 초)
 resource "aws_cloudwatch_metric_alarm" "target_response_time" {
-  count = length(data.aws_lbs.alb_list.arns) > 0 ? 1 : 0
+  count = length(local.tg_mappings) > 0 ? 1 : 0
 
   alarm_name          = "${var.name_prefix}-target-response-time"
   alarm_description   = "ALB가 요청을 넘긴 후 gateway가 응답을 시작할 때까지 걸린 시간(p95, 초)"
