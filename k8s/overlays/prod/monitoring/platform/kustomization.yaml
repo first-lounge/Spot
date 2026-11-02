@@ -25,7 +25,7 @@ configMapGenerator:
     files:
       - alertmanager.json=grafana/dashboards/9578.json
 
-  - name: dashboards-k8s
+  - name: dashboards-eks
     files:
       - k8s-dashboard.json=grafana/dashboards/15661.json # K8S Dashboard
       - k8s-total.json=grafana/dashboards/15757.json # Kubernetes / Views / Global
@@ -38,6 +38,7 @@ configMapGenerator:
       - grafana/dashboards/temporal.json # Temporal
 
   # Spot App Logs
-  - name: grafana-dashboards-spot
+  - name: dashboards-spot
     files:
       - spot-logs.json=grafana/dashboards/spot-logs.json
+      - grafana/dashboards/spot-rollout.json

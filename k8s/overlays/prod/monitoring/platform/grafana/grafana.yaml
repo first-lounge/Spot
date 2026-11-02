@@ -62,7 +62,7 @@ spec:
 
         - name: dashboards-spot
           configMap:
-            name: grafana-dashboards-spot
+            name: dashboards-spot
 
         - name: prometheus-alertmanager
           configMap:
@@ -70,7 +70,7 @@ spec:
 
         - name: dashboards-k8s
           configMap:
-            name: dashboards-k8s
+            name: dashboards-eks
 
         - name: dashboards-infra
           configMap:
@@ -112,10 +112,9 @@ spec:
               subPath: dashboards.yaml
               readOnly: true
 
-            # Spot App Logs
+            # Spot App Dashboards (logs + rollout)
             - name: dashboards-spot
-              mountPath: /var/lib/grafana/dashboards/spot-logs.json
-              subPath: spot-logs.json
+              mountPath: /var/lib/grafana/dashboards/spot
               readOnly: true
 
             # Prometheus Alertmanager
