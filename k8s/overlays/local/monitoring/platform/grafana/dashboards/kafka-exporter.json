@@ -17,11 +17,11 @@
       {
         "current": { "selected": true, "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "definition": "label_values(kafka_consumergroup_lag, consumergroup)",
+        "definition": "label_values(kafka_consumergroup_members, consumergroup)",
         "includeAll": true,
         "multi": true,
         "name": "consumergroup",
-        "query": "label_values(kafka_consumergroup_lag, consumergroup)",
+        "query": "label_values(kafka_consumergroup_members, consumergroup)",
         "refresh": 2,
         "type": "query",
         "label": "Consumer Group"
@@ -29,11 +29,11 @@
       {
         "current": { "selected": true, "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "definition": "label_values(kafka_consumergroup_lag{consumergroup=~\"$consumergroup\"}, topic)",
+        "definition": "label_values(kafka_topic_partitions, topic)",
         "includeAll": true,
         "multi": true,
         "name": "topic",
-        "query": "label_values(kafka_consumergroup_lag{consumergroup=~\"$consumergroup\"}, topic)",
+        "query": "label_values(kafka_topic_partitions, topic)",
         "refresh": 2,
         "type": "query",
         "label": "Topic"
@@ -174,7 +174,7 @@
       },
       "targets": [
         {
-          "expr": "count(count by (consumergroup) (kafka_consumergroup_lag))",
+          "expr": "count(count by (consumergroup) (kafka_consumergroup_members))",
           "legendFormat": "Groups",
           "refId": "A"
         }
