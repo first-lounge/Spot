@@ -81,7 +81,7 @@ global:
 apps:
   gateway:
     replicas: 2
-    imageTag: "2503c730"
+    imageTag: "d254a078"
     rollout: true
     autoPromotionEnabled: false
     scaleDownDelaySeconds: 3600
