@@ -193,7 +193,7 @@ data "aws_resourcegroupstaggingapi_resources" "tg_list" {
 
   tag_filter {
     key    = "elbv2.k8s.aws/cluster"
-    values = [var.name_prefix]
+    values = ["${var.name_prefix}-cluster"]
   }
 }
 
