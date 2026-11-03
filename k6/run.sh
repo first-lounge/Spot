@@ -106,11 +106,15 @@ case "$TEST_TYPE" in
   spike)
     SCRIPT="${SCRIPT_DIR}/tests/spike.js"
     ;;
-  order-smoke|order-load|order-stress|order-spike)
+  order-bg|order-smoke|order-load|order-stress|order-spike)
       ORDER_TYPE="${TEST_TYPE#order-}"
       SCRIPT="${SCRIPT_DIR}/tests/order-only.js"
       TEST_TYPE="order-only"
       ;;
+  store-bg)
+    SCRIPT="${SCRIPT_DIR}/tests/store-bg.js"
+    ;;
+    
   *)
     if [ -f "$TEST_TYPE" ]; then
       SCRIPT="$TEST_TYPE"
