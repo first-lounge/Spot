@@ -9,7 +9,7 @@
     {
       "id": 1,
       "type": "timeseries",
-      "title": "Spot-Gateway",
+      "title": "Gateway - 버전별",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
       "fieldConfig": {
@@ -35,9 +35,46 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "label_replace(sum by (pod) (rate(http_server_requests_seconds_count{namespace=\"spot\", service=\"spot-gateway\"}[30s])), \"version\", \"$1\", \"pod\", \"spot-gateway-([^-]+)-.*\")",
+          "expr": "sum by (version) (label_replace(rate(http_server_requests_seconds_count{namespace=\"spot\", service=\"spot-gateway\"}[30s]), \"version\", \"$1\", \"pod\", \"spot-gateway-([^-]+)-.*\"))",
           "interval": "5s",
           "legendFormat": "{{version}}",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Gateway - 파드별",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "stacking": { "mode": "none", "group": "A" }
+          },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "single", "sort": "none" },
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom", "calcs": [] }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "label_replace(label_replace(sum by (pod) (rate(http_server_requests_seconds_count{namespace=\"spot\", service=\"spot-gateway\"}[30s])), \"version\", \"$1\", \"pod\", \"spot-gateway-([^-]+)-.*\"), \"podid\", \"$1\", \"pod\", \"spot-gateway-[^-]+-(.*)\")",
+          "interval": "5s",
+          "legendFormat": "{{version}} / {{podid}}",
           "range": true,
           "refId": "A"
         }
