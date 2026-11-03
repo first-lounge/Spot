@@ -102,14 +102,14 @@ apps:
     smokePath: /actuator/health
 
   order:
-    imageTag: "d254a078"
+    imageTag: "2503c730"
     rollout: true
     autoPromotionEnabled: false
     scaleDownDelaySeconds: 900
     smokePath: /actuator/health
     
   store:
-    imageTag: "d254a078"
+    imageTag: "2503c730"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 300
