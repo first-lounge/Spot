@@ -36,6 +36,22 @@ const TEST_TYPE = __ENV.TEST_TYPE || 'smoke';
 
 const profiles = {
     /**
+     * bg: Blue/Green 배포 테스트 때 사용
+     * 목적: 최소 VU로 Blue/Green 배포가 동작하는지 검증
+     */
+    bg: {
+        stages: [
+            { duration: '1m', target: 10 },
+            { duration: '10m', target: 10 },
+            { duration: '1m',  target: 0  }
+        ],
+        thresholds: {
+            'order_create_errors':   ['rate==0.0'],       // 오류율 0%
+            'order_create_duration': ['p(95)<1000'],      // 95%ile 1초 이내
+        },
+    },
+
+    /**
      * Smoke: 최소 VU로 기본 동작 확인
      * 목적: 스크립트 오류 없는지, 주문 생성이 정상적으로 되는지 빠르게 검증
      */
