@@ -31,8 +31,9 @@ export function testConfirmPayment(accessToken, orderId, confirmData) {
 
   const success = check(res, {
     'confirmPayment: status is 200': (r) => r.status === 200,
-    'confirmPayment: response time < 2000ms': (r) => r.timings.duration < 2000,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'confirmPayment: response time < 2000ms': (r) => r.timings.duration < 2000 });
 
   paymentConfirmDuration.add(res.timings.duration);
   paymentConfirmErrors.add(!success);
@@ -55,8 +56,9 @@ export function testCancelPayment(accessToken, orderId, cancelData) {
 
   const success = check(res, {
     'cancelPayment: status is 200': (r) => r.status === 200,
-    'cancelPayment: response time < 1000ms': (r) => r.timings.duration < 1000,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'cancelPayment: response time < 1000ms': (r) => r.timings.duration < 1000 });
 
   paymentCancelDuration.add(res.timings.duration);
   return success;
@@ -73,8 +75,9 @@ export function testGetPayments(accessToken) {
 
   const success = check(res, {
     'getPayments: status is 200': (r) => r.status === 200,
-    'getPayments: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getPayments: response time < 500ms': (r) => r.timings.duration < 500 });
 
   paymentListDuration.add(res.timings.duration);
   paymentListErrors.add(!success);
@@ -93,8 +96,9 @@ export function testGetPayment(accessToken, paymentId) {
 
   const success = check(res, {
     'getPayment: status is 200': (r) => r.status === 200,
-    'getPayment: response time < 300ms': (r) => r.timings.duration < 300,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getPayment: response time < 300ms': (r) => r.timings.duration < 300 });
 
   paymentDetailDuration.add(res.timings.duration);
   return success ? JSON.parse(res.body) : null;
@@ -111,8 +115,9 @@ export function testGetCancelledPayments(accessToken) {
 
   const success = check(res, {
     'getCancelledPayments: status is 200': (r) => r.status === 200,
-    'getCancelledPayments: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getCancelledPayments: response time < 500ms': (r) => r.timings.duration < 500 });
 
   return success ? JSON.parse(res.body) : null;
 }
@@ -128,8 +133,9 @@ export function testCheckBillingKeyExists(accessToken) {
 
   const success = check(res, {
     'checkBillingKeyExists: status is 200': (r) => r.status === 200,
-    'checkBillingKeyExists: response time < 200ms': (r) => r.timings.duration < 200,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'checkBillingKeyExists: response time < 200ms': (r) => r.timings.duration < 200 });
 
   billingKeyCheckDuration.add(res.timings.duration);
   return success ? JSON.parse(res.body) : null;
@@ -152,8 +158,9 @@ export function testSavePaymentHistory(accessToken, historyData) {
 
   const success = check(res, {
     'savePaymentHistory: status is 200 or 201': (r) => r.status === 200 || r.status === 201,
-    'savePaymentHistory: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'savePaymentHistory: response time < 500ms': (r) => r.timings.duration < 500 });
 
   return success;
 }

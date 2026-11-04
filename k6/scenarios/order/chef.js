@@ -23,8 +23,9 @@ export function testGetChefTodayOrders(accessToken) {
 
   const success = check(res, {
     'getChefTodayOrders: status is 200': (r) => r.status === 200,
-    'getChefTodayOrders: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getChefTodayOrders: response time < 500ms': (r) => r.timings.duration < 500 });
 
   chefTodayOrdersDuration.add(res.timings.duration);
   chefTodayOrdersErrors.add(!success);
@@ -43,8 +44,9 @@ export function testStartCooking(accessToken, orderId) {
 
   const success = check(res, {
     'startCooking: status is 200': (r) => r.status === 200,
-    'startCooking: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'startCooking: response time < 500ms': (r) => r.timings.duration < 500 });
 
   startCookingDuration.add(res.timings.duration);
   return success;
@@ -61,8 +63,9 @@ export function testReadyOrder(accessToken, orderId) {
 
   const success = check(res, {
     'readyOrder: status is 200': (r) => r.status === 200,
-    'readyOrder: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'readyOrder: response time < 500ms': (r) => r.timings.duration < 500 });
 
   readyOrderDuration.add(res.timings.duration);
   return success;

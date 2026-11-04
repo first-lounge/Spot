@@ -24,8 +24,9 @@ export function testGetCategories(accessToken = null) {
 
   const success = check(res, {
     'getCategories: status is 200': (r) => r.status === 200,
-    'getCategories: response time < 200ms': (r) => r.timings.duration < 200,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getCategories: response time < 200ms': (r) => r.timings.duration < 200 });
 
   categoryListDuration.add(res.timings.duration);
   categoryListErrors.add(!success);
@@ -46,8 +47,9 @@ export function testGetStoresByCategory(categoryName, accessToken = null) {
 
   const success = check(res, {
     'getStoresByCategory: status is 200': (r) => r.status === 200,
-    'getStoresByCategory: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getStoresByCategory: response time < 500ms': (r) => r.timings.duration < 500 });
 
   categoryStoresDuration.add(res.timings.duration);
   return success ? JSON.parse(res.body) : null;
@@ -68,8 +70,9 @@ export function testCreateCategory(accessToken, categoryData) {
 
   const success = check(res, {
     'createCategory: status is 200 or 201': (r) => r.status === 200 || r.status === 201,
-    'createCategory: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'createCategory: response time < 500ms': (r) => r.timings.duration < 500 });
 
   return success ? JSON.parse(res.body) : null;
 }

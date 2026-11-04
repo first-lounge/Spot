@@ -89,8 +89,9 @@ export function testGetMyOrders(accessToken, params = {}) {
 
   const success = check(res, {
     'getMyOrders: status is 200': (r) => r.status === 200,
-    'getMyOrders: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getMyOrders: response time < 500ms': (r) => r.timings.duration < 500 });
 
   orderListDuration.add(res.timings.duration);
   orderListErrors.add(!success);

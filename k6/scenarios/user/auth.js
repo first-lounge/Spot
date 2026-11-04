@@ -38,8 +38,9 @@ export function testLogin(userType = 'customer') {
         return false;
       }
     },
-    'login: response time < 300ms': (r) => r.timings.duration < 300,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'login: response time < 300ms': (r) => r.timings.duration < 300 });
 
   loginDuration.add(res.timings.duration);
   loginErrors.add(!success);
@@ -70,8 +71,9 @@ export function testJoin() {
 
   const success = check(res, {
     'join: status is 200 or 201': (r) => r.status === 200 || r.status === 201,
-    'join: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'join: response time < 500ms': (r) => r.timings.duration < 500 });
 
   joinDuration.add(res.timings.duration);
   joinErrors.add(!success);
@@ -99,8 +101,9 @@ export function testRefreshToken(refreshToken) {
         return false;
       }
     },
-    'refresh: response time < 200ms': (r) => r.timings.duration < 200,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'refresh: response time < 200ms': (r) => r.timings.duration < 200 });
 
   refreshDuration.add(res.timings.duration);
 
@@ -121,8 +124,9 @@ export function testLogout(accessToken) {
 
   const success = check(res, {
     'logout: status is 200': (r) => r.status === 200,
-    'logout: response time < 200ms': (r) => r.timings.duration < 200,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'logout: response time < 200ms': (r) => r.timings.duration < 200 });
 
   logoutDuration.add(res.timings.duration);
   return success;

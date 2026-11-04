@@ -26,12 +26,13 @@ export function createMetrics(prefix) {
  * @param {string} name - check name prefix
  * @param {number} expectedStatus - expected HTTP status (default: 200)
  * @param {number} maxDuration - max response time in ms (default: 500)
- * @returns {boolean} - all checks passed
+ * @returns {boolean} - status check passed (응답시간은 성공 여부에 포함하지 않음)
  */
 export function checkResponse(res, name, expectedStatus = 200, maxDuration = 500) {
+  // 느림은 성공/실패와 분리: 기록만 하고 반환값에는 섞지 않음
+  check(res, { [`${name}: response time < ${maxDuration}ms`]: (r) => r.timings.duration < maxDuration });
   return check(res, {
     [`${name}: status is ${expectedStatus}`]: (r) => r.status === expectedStatus,
-    [`${name}: response time < ${maxDuration}ms`]: (r) => r.timings.duration < maxDuration,
   });
 }
 

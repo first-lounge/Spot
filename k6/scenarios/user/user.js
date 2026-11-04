@@ -35,8 +35,9 @@ export function testGetUser(accessToken, userId) {
         return false;
       }
     },
-    'getUser: response time < 200ms': (r) => r.timings.duration < 200,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getUser: response time < 200ms': (r) => r.timings.duration < 200 });
 
   getUserDuration.add(res.timings.duration);
   getUserErrors.add(!success);
@@ -59,8 +60,9 @@ export function testUpdateUser(accessToken, userId, updateData) {
 
   const success = check(res, {
     'updateUser: status is 200': (r) => r.status === 200,
-    'updateUser: response time < 300ms': (r) => r.timings.duration < 300,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'updateUser: response time < 300ms': (r) => r.timings.duration < 300 });
 
   updateUserDuration.add(res.timings.duration);
   return success;
@@ -78,8 +80,9 @@ export function testSearchUsers(accessToken, nickname) {
 
   const success = check(res, {
     'searchUsers: status is 200': (r) => r.status === 200,
-    'searchUsers: response time < 300ms': (r) => r.timings.duration < 300,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'searchUsers: response time < 300ms': (r) => r.timings.duration < 300 });
 
   searchUserDuration.add(res.timings.duration);
   return success ? JSON.parse(res.body) : null;
@@ -103,8 +106,9 @@ export function testAdminGetUsers(accessToken, params = {}) {
 
   const success = check(res, {
     'adminGetUsers: status is 200': (r) => r.status === 200,
-    'adminGetUsers: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'adminGetUsers: response time < 500ms': (r) => r.timings.duration < 500 });
 
   adminGetUsersDuration.add(res.timings.duration);
   return success ? JSON.parse(res.body) : null;
@@ -121,8 +125,9 @@ export function testAdminStats(accessToken) {
 
   const success = check(res, {
     'adminStats: status is 200': (r) => r.status === 200,
-    'adminStats: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'adminStats: response time < 500ms': (r) => r.timings.duration < 500 });
 
   adminStatsDuration.add(res.timings.duration);
   return success ? JSON.parse(res.body) : null;
