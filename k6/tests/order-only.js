@@ -2,6 +2,10 @@
  * Order-Only Load Test
  * 주문 생성(POST /api/orders) 전용 k6 테스트
  *
+ * 고객 흐름 = 지금 FE(app/stores/[storeId]/page.tsx) 동작과 동일
+ *   매장 목록(GET /api/stores) → 매장 상세(GET /api/stores/{id}, 메뉴·옵션 포함) → 주문
+ *   (메뉴 클릭은 매장 상세 응답을 화면에 띄우기만 해서 API 호출 없음)
+ *
  * 사용법:
  *   smoke  : k6 run -e TEST_TYPE=smoke  order-only.js
  *   load   : k6 run -e TEST_TYPE=load   order-only.js
@@ -28,7 +32,9 @@ import { thinkTime, randomItem, buildQueryString } from '../lib/helpers.js';
 const orderCreateDuration = new Trend('order_create_duration');
 const orderCreateErrors   = new Rate('order_create_errors');
 const storeListDuration   = new Trend('store_list_duration');
-const menuListDuration    = new Trend('menu_list_duration');
+const storeDetailDuration = new Trend('store_detail_duration');
+const storeListErrors     = new Rate('store_list_errors');     // 매장 목록 실패율 (주문 전 단계 실패도 보이게)
+const storeDetailErrors   = new Rate('store_detail_errors');   // 매장 상세 실패율
 const priceIntegrityErrors = new Rate('price_integrity_errors');
 
 // ===================== Scenario Profiles =====================
@@ -153,7 +159,7 @@ export function setup() {
         throw new Error('Customer login failed. Check credentials and BASE_URL.');
     }
 
-    // 상점 목록 사전 로드 (setup에서 1번만 호출)
+    // 사전 확인: 주문 가능한(APPROVED) 매장이 있는지 (반복마다 매장 목록은 다시 조회함)
     const storesRes = http.get(
         buildUrl(endpoints.store.getStores) + '?page=0&size=50',
         { headers: getAuthHeaders(customerTokens.accessToken) }
@@ -179,70 +185,70 @@ export function setup() {
 
 // ===================== Main Scenario =====================
 export function orderScenario(data) {
-    const { accessToken, stores } = data;
+    group('Order Create Flow', () => orderFlow(data));
+
+    // 성공·실패와 상관없이 반복 사이에 쉼
+    // (중간에 return해도 여기는 실행됨 → 실패 시 쉬지 않고 재요청하는 폭주 방지)
+    thinkTime(2);
+}
+
+function orderFlow(data) {
+    const { accessToken } = data;
     if (!accessToken) return;
 
-    group('Order Create Flow', () => {
-        // 1. 상점 선택
-        const selectedStore = pickStore(accessToken, stores);
-        if (!selectedStore) return;
+    // 1. 매장 목록 → 매장 선택
+    const selectedStore = pickStore(accessToken);
+    if (!selectedStore) return;
 
-        const storeId = selectedStore.id || selectedStore.storeId;
+    const storeId = selectedStore.id || selectedStore.storeId;
 
-        // 2. 메뉴 선택
-        const selectedMenu = pickMenu(accessToken, storeId);
-        if (!selectedMenu) return;
+    // 2. 매장 상세(메뉴 포함) → 메뉴 선택
+    const selectedMenu = pickMenu(accessToken, storeId);
+    if (!selectedMenu) return;
 
-        const menuId    = selectedMenu.id    || selectedMenu.menuId;
-        const menuPrice = selectedMenu.price || 0;
-        const quantity  = Math.floor(Math.random() * 3) + 1;
+    const menuId    = selectedMenu.id    || selectedMenu.menuId;
+    const menuPrice = selectedMenu.price || 0;
+    const quantity  = Math.floor(Math.random() * 3) + 1;
 
-        thinkTime(3); // 사용자가 메뉴 고르는 시간
+    thinkTime(3); // 사용자가 메뉴 고르는 시간
 
-        // 3. 주문 생성
-        const orderResult = createOrder(accessToken, { storeId, menuId, quantity });
+    // 3. 주문 생성
+    const orderResult = createOrder(accessToken, { storeId, menuId, quantity });
 
-        // 4. 가격 정합성 검증
-        if (orderResult) {
-            const expectedTotal = menuPrice * quantity;
-            const actualTotal   = orderResult.totalPrice || orderResult.totalAmount || 0;
+    // 4. 가격 정합성 검증
+    if (orderResult) {
+        const expectedTotal = menuPrice * quantity;
+        const actualTotal   = orderResult.totalPrice || orderResult.totalAmount || 0;
 
-            if (expectedTotal > 0 && actualTotal > 0 && expectedTotal !== actualTotal) {
-                console.error(`[PRICE MISMATCH] expected=${expectedTotal}, actual=${actualTotal}`);
-                priceIntegrityErrors.add(1);
-            } else {
-                priceIntegrityErrors.add(0);
-            }
-
-            const orderId = (orderResult.result?.id || orderResult.result?.orderId || orderResult.id || orderResult.orderId);
-            console.log(`[Order OK] id=${orderId}, store=${storeId}, menu=${menuId}, qty=${quantity}`);
+        if (expectedTotal > 0 && actualTotal > 0 && expectedTotal !== actualTotal) {
+            console.error(`[PRICE MISMATCH] expected=${expectedTotal}, actual=${actualTotal}`);
+            priceIntegrityErrors.add(1);
+        } else {
+            priceIntegrityErrors.add(0);
         }
 
-        thinkTime(2);
-    });
+        const orderId = (orderResult.result?.id || orderResult.result?.orderId || orderResult.id || orderResult.orderId);
+        console.log(`[Order OK] id=${orderId}, store=${storeId}, menu=${menuId}, qty=${quantity}`);
+    }
 }
 
 // ===================== Helper Functions =====================
 
 /**
- * setup()에서 받아온 stores 목록을 우선 사용.
- * 비어있으면 실시간으로 GET /stores 재조회.
+ * 매장 목록 조회(FE 매장 목록 화면) → APPROVED 매장 중 랜덤 1개
+ * 응답: StorePageResponse { content: [...] } (ApiResponse로 감싸지 않음)
  */
-function pickStore(accessToken, cachedStores) {
-    if (cachedStores && cachedStores.length > 0) {
-        return randomItem(cachedStores);
-    }
-
-    // fallback: 실시간 조회
+function pickStore(accessToken) {
     const res = http.get(
         buildUrl(endpoints.store.getStores) + '?page=0&size=50',
         {
             headers: getAuthHeaders(accessToken),
-            tags: { name: 'GET /stores (fallback)' },
+            tags: { name: 'GET /stores' },
         }
     );
 
     storeListDuration.add(res.timings.duration);
+    storeListErrors.add(res.status !== 200);
 
     if (res.status !== 200) {
         console.warn(`Store list fetch failed: ${res.status}`);
@@ -250,7 +256,7 @@ function pickStore(accessToken, cachedStores) {
     }
 
     const data = JSON.parse(res.body);
-    const raw  = data.result || data.content || (Array.isArray(data) ? data : []);
+    const raw  = data.content || [];
     const open = raw.filter((s) => (s.status || s.storeStatus) === 'APPROVED');
 
     if (open.length === 0) {
@@ -262,25 +268,25 @@ function pickStore(accessToken, cachedStores) {
 }
 
 /**
- * storeId에 속한 메뉴 목록에서 랜덤 메뉴 반환
+ * 매장 상세 조회(FE 매장 화면, 메뉴·옵션 포함) → 메뉴 중 랜덤 1개
+ * 응답: StoreDetailResponse { ..., menus: [...] } (ApiResponse로 감싸지 않음)
  */
 function pickMenu(accessToken, storeId) {
-    const url = buildUrl(endpoints.store.getMenus(storeId));
-
-    const res = http.get(url, {
+    const res = http.get(buildUrl(endpoints.store.getStore(storeId)), {
         headers: getAuthHeaders(accessToken),
-        tags: { name: 'GET /menus' },
+        tags: { name: 'GET /stores/{id}' },
     });
 
-    menuListDuration.add(res.timings.duration);
+    storeDetailDuration.add(res.timings.duration);
+    storeDetailErrors.add(res.status !== 200);
 
     if (res.status !== 200) {
-        console.warn(`Menu list fetch failed for store ${storeId}: ${res.status}`);
+        console.warn(`Store detail fetch failed for store ${storeId}: ${res.status}`);
         return null;
     }
 
     const data     = JSON.parse(res.body);
-    const menuList = data.result || data.content || (Array.isArray(data) ? data : []);
+    const menuList = data.menus || [];
 
     if (menuList.length === 0) {
         console.warn(`No menus for store ${storeId}`);
