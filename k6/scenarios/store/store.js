@@ -31,8 +31,9 @@ export function testGetStores(accessToken, params = {}) {
 
   const success = check(res, {
     'getStores: status is 200': (r) => r.status === 200,
-    'getStores: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getStores: response time < 500ms': (r) => r.timings.duration < 500 });
 
   storeListDuration.add(res.timings.duration);
   storeListErrors.add(!success);
@@ -59,8 +60,9 @@ export function testGetStore(accessToken, storeId) {
         return false;
       }
     },
-    'getStore: response time < 300ms': (r) => r.timings.duration < 300,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getStore: response time < 300ms': (r) => r.timings.duration < 300 });
 
   storeDetailDuration.add(res.timings.duration);
   storeDetailErrors.add(!success);
@@ -85,8 +87,9 @@ export function testSearchStores(accessToken, keyword, params = {}) {
 
   const success = check(res, {
     'searchStores: status is 200': (r) => r.status === 200,
-    'searchStores: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'searchStores: response time < 500ms': (r) => r.timings.duration < 500 });
 
   storeSearchDuration.add(res.timings.duration);
   storeSearchErrors.add(!success);
@@ -105,8 +108,9 @@ export function testGetMyStore(accessToken) {
 
   const success = check(res, {
     'getMyStore: status is 200': (r) => r.status === 200,
-    'getMyStore: response time < 300ms': (r) => r.timings.duration < 300,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getMyStore: response time < 300ms': (r) => r.timings.duration < 300 });
 
   myStoreDuration.add(res.timings.duration);
   return success ? JSON.parse(res.body) : null;
@@ -131,8 +135,9 @@ export function testCreateStore(accessToken, storeData) {
 
   const success = check(res, {
     'createStore: status is 200 or 201': (r) => r.status === 200 || r.status === 201,
-    'createStore: response time < 1000ms': (r) => r.timings.duration < 1000,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'createStore: response time < 1000ms': (r) => r.timings.duration < 1000 });
 
   return success ? JSON.parse(res.body) : null;
 }

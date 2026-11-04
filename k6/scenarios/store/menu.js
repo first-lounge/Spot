@@ -23,8 +23,9 @@ export function testGetMenus(accessToken, storeId) {
 
   const success = check(res, {
     'getMenus: status is 200': (r) => r.status === 200,
-    'getMenus: response time < 300ms': (r) => r.timings.duration < 300,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getMenus: response time < 300ms': (r) => r.timings.duration < 300 });
 
   menuListDuration.add(res.timings.duration);
   menuListErrors.add(!success);
@@ -51,8 +52,9 @@ export function testGetMenu(accessToken, storeId, menuId) {
         return false;
       }
     },
-    'getMenu: response time < 200ms': (r) => r.timings.duration < 200,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getMenu: response time < 200ms': (r) => r.timings.duration < 200 });
 
   menuDetailDuration.add(res.timings.duration);
   menuDetailErrors.add(!success);
@@ -78,8 +80,9 @@ export function testCreateMenu(accessToken, storeId, menuData) {
 
   const success = check(res, {
     'createMenu: status is 200 or 201': (r) => r.status === 200 || r.status === 201,
-    'createMenu: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'createMenu: response time < 500ms': (r) => r.timings.duration < 500 });
 
   return success ? JSON.parse(res.body) : null;
 }
@@ -100,8 +103,9 @@ export function testUpdateMenu(accessToken, storeId, menuId, updateData) {
 
   const success = check(res, {
     'updateMenu: status is 200': (r) => r.status === 200,
-    'updateMenu: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'updateMenu: response time < 500ms': (r) => r.timings.duration < 500 });
 
   return success;
 }

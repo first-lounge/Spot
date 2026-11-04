@@ -28,8 +28,9 @@ export function testGetStoreReviews(storeId, params = {}) {
 
   const success = check(res, {
     'getStoreReviews: status is 200': (r) => r.status === 200,
-    'getStoreReviews: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getStoreReviews: response time < 500ms': (r) => r.timings.duration < 500 });
 
   reviewListDuration.add(res.timings.duration);
   reviewListErrors.add(!success);
@@ -48,8 +49,9 @@ export function testGetStoreReviewStats(storeId) {
 
   const success = check(res, {
     'getReviewStats: status is 200': (r) => r.status === 200,
-    'getReviewStats: response time < 300ms': (r) => r.timings.duration < 300,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getReviewStats: response time < 300ms': (r) => r.timings.duration < 300 });
 
   reviewStatsDuration.add(res.timings.duration);
   return success ? JSON.parse(res.body) : null;
@@ -73,8 +75,9 @@ export function testCreateReview(accessToken, reviewData) {
 
   const success = check(res, {
     'createReview: status is 200 or 201': (r) => r.status === 200 || r.status === 201,
-    'createReview: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'createReview: response time < 500ms': (r) => r.timings.duration < 500 });
 
   reviewCreateDuration.add(res.timings.duration);
   return success ? JSON.parse(res.body) : null;
@@ -96,8 +99,9 @@ export function testUpdateReview(accessToken, reviewId, updateData) {
 
   const success = check(res, {
     'updateReview: status is 200': (r) => r.status === 200,
-    'updateReview: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'updateReview: response time < 500ms': (r) => r.timings.duration < 500 });
 
   return success;
 }

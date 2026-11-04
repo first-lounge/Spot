@@ -35,8 +35,9 @@ export function testGetMyStoreOrders(accessToken, params = {}) {
 
   const success = check(res, {
     'getMyStoreOrders: status is 200': (r) => r.status === 200,
-    'getMyStoreOrders: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getMyStoreOrders: response time < 500ms': (r) => r.timings.duration < 500 });
 
   storeOrderListDuration.add(res.timings.duration);
   storeOrderListErrors.add(!success);
@@ -55,8 +56,9 @@ export function testGetMyStoreActiveOrders(accessToken) {
 
   const success = check(res, {
     'getMyStoreActiveOrders: status is 200': (r) => r.status === 200,
-    'getMyStoreActiveOrders: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'getMyStoreActiveOrders: response time < 500ms': (r) => r.timings.duration < 500 });
 
   storeOrderActiveDuration.add(res.timings.duration);
   return success ? JSON.parse(res.body) : null;
@@ -77,8 +79,9 @@ export function testAcceptOrder(accessToken, orderId, acceptData) {
 
   const success = check(res, {
     'acceptOrder: status is 200': (r) => r.status === 200,
-    'acceptOrder: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'acceptOrder: response time < 500ms': (r) => r.timings.duration < 500 });
 
   orderAcceptDuration.add(res.timings.duration);
   return success;
@@ -99,8 +102,9 @@ export function testRejectOrder(accessToken, orderId, rejectData) {
 
   const success = check(res, {
     'rejectOrder: status is 200': (r) => r.status === 200,
-    'rejectOrder: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'rejectOrder: response time < 500ms': (r) => r.timings.duration < 500 });
 
   orderRejectDuration.add(res.timings.duration);
   return success;
@@ -117,8 +121,9 @@ export function testCompleteOrder(accessToken, orderId) {
 
   const success = check(res, {
     'completeOrder: status is 200': (r) => r.status === 200,
-    'completeOrder: response time < 500ms': (r) => r.timings.duration < 500,
   });
+  // 느림은 성공/실패와 분리: 에러율·반환값에 섞지 않음 (기준은 *_duration p95 threshold)
+  check(res, { 'completeOrder: response time < 500ms': (r) => r.timings.duration < 500 });
 
   orderCompleteDuration.add(res.timings.duration);
   return success;

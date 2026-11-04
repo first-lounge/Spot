@@ -71,10 +71,10 @@ spec:
           resources:
             requests:
               cpu: {{ $.Values.global.requests.cpu }}
-              memory: {{ $.Values.global.requests.memory}}
+              memory: {{ $val | dig "resources" "requests" "memory" $.Values.global.requests.memory }}
             limits:
               cpu: {{ $.Values.global.limits.cpu }}
-              memory: {{ $.Values.global.limits.memory }}
+              memory: {{ $val | dig "resources" "limits" "memory" $.Values.global.limits.memory }}
 
           # Startup
           startupProbe:

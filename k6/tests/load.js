@@ -85,8 +85,9 @@ export function customerBrowseScenario(data) {
       const storeId = selectedStore.id || selectedStore.storeId;
       testGetStore(token, storeId);
 
+      // 실패(또는 300ms 초과)면 null → null.result 에러로 반복이 중간에 끊기지 않게 먼저 확인
       const menusRes = testGetMenus(token, storeId);
-      const menuList = menusRes.result || menusRes.content || [];
+      const menuList = (menusRes && (menusRes.result || menusRes.content)) || [];
 
       if (menuList.length > 0) {
         const selectedMenu = randomItem(menuList);

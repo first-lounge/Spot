@@ -41,7 +41,7 @@ global:
   # 이미지
   imagePullPolicy: Always
 
-  # 리소스 제한
+  # 리소스
   requests:
     cpu: '250m'
     memory: '256Mi'
@@ -92,6 +92,11 @@ apps:
     imageTag: latest
     dbEnabled: true
     rollout: false
+    resources:
+      requests:
+        memory: '512Mi'
+      limits:
+        memory: '1Gi'
 
   order:
     name: spot-order
@@ -99,6 +104,11 @@ apps:
     imageTag: latest
     dbEnabled: true
     rollout: false
+    resources:
+      requests:
+        memory: '512Mi'
+      limits:
+        memory: '1Gi'
 
   payment:
     name: spot-payment
