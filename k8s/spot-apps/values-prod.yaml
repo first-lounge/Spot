@@ -102,7 +102,7 @@ apps:
     smokePath: /actuator/health
 
   order:
-    imageTag: "2503c730" # "d254a078"
+    imageTag: "d254a078" # "2503c730"
     rollout: true
     autoPromotionEnabled: false
     scaleDownDelaySeconds: 900
