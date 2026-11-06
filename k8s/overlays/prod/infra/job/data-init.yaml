@@ -72,6 +72,10 @@ spec:
                 pg_restore -d "$D" --data-only --no-owner --single-transaction --exit-on-error \
                 /data/"$svc"-20261030.dump
 
+                if [ "$svc" = "payment" ]; then
+                  psql -v ON_ERROR_STOP=1 -1 -f /data/payment-billing.sql
+                fi
+
                 # 삽입 증명용 테이블 생성
                 psql -c "CREATE TABLE $TABLE (created_at TIMESTAMP DEFAULT now())"
                 psql -c "INSERT INTO $TABLE DEFAULT VALUES"

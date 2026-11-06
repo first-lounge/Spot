@@ -116,6 +116,11 @@ apps:
     imageTag: latest
     dbEnabled: true
     rollout: false
+    resources:
+      requests:
+        memory: '512Mi'
+      limits:
+        memory: '1Gi'
 
 # [4] envFrom
 envFrom:

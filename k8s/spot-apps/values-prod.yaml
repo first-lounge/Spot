@@ -109,7 +109,7 @@ apps:
     smokePath: /actuator/health
     
   store:
-    imageTag: "2503c730"  # "d254a078"
+    imageTag: "d254a078"  # "2503c730"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 300
