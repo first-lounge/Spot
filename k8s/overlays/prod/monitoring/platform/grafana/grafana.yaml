@@ -76,6 +76,10 @@ spec:
           configMap:
             name: dashboards-infra
 
+        - name: dashboards-k6
+          configMap:
+            name: dashboards-k6
+
       containers:
         - name: grafana
           image: grafana/grafana:10.4.3
@@ -131,4 +135,9 @@ spec:
             # Infra Dashboards
             - name: dashboards-infra
               mountPath: /var/lib/grafana/dashboards/infra
+              readOnly: true
+
+            # K6 Dashboards
+            - name: dashboards-k6
+              mountPath: /var/lib/grafana/dashboards/k6
               readOnly: true
