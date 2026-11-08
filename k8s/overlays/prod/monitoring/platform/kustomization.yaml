@@ -42,3 +42,8 @@ configMapGenerator:
     files:
       - spot-logs.json=grafana/dashboards/spot-logs.json
       - grafana/dashboards/spot-rollout.json
+
+  # K6
+  - name: dashboards-k6
+    files:
+      - grafana/dashboards/k6.json
