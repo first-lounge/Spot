@@ -9,7 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.Spot.payments.domain.gateway.PaymentGateway;
@@ -62,11 +62,8 @@ public class TossPaymentClient implements PaymentGateway {
           TossPaymentResponse.class);
 
       return response.getBody();
-    } catch (HttpClientErrorException e) {
-      throw new RuntimeException("[TossPayment] 자동결제 실패 HttpClientErrorException: " + e.getMessage());
     } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException("[TossPayment] 자동결제 실패: " + e.getMessage());
+      throw tossFailure("[TossPayment] 자동결제 실패", e);
     }
   }
 
@@ -90,8 +87,8 @@ public class TossPaymentClient implements PaymentGateway {
       ResponseEntity<TossPaymentResponse> response = restTemplate.postForEntity(url, request,
           TossPaymentResponse.class);
       return response.getBody();
-    } catch (HttpClientErrorException e) {
-      throw new RuntimeException("[TossPayment] 결제 취소 실패: " + e.getMessage());
+    } catch (Exception e) {
+      throw tossFailure("[TossPayment] 결제 취소 실패", e);
     }
   }
 
@@ -114,8 +111,8 @@ public class TossPaymentClient implements PaymentGateway {
       ResponseEntity<TossPaymentResponse> response = restTemplate.postForEntity(url, request,
           TossPaymentResponse.class);
       return response.getBody();
-    } catch (HttpClientErrorException e) {
-      throw new RuntimeException("[TossPayment] 결제 부분 취소 실패: " + e.getMessage());
+    } catch (Exception e) {
+      throw tossFailure("[TossPayment] 결제 부분 취소 실패", e);
     }
   }
 
@@ -141,10 +138,18 @@ public class TossPaymentClient implements PaymentGateway {
           TossPaymentResponse.class);
       return response.getBody();
 
-    } catch (HttpClientErrorException e) {
-
-      throw new RuntimeException("[TossPayment] 빌링키 발급 실패: " + e.getMessage());
+    } catch (Exception e) {
+      throw tossFailure("[TossPayment] 빌링키 발급 실패", e);
     }
+  }
+
+  // 상태 코드와 Toss 응답 본문만 남기고, 원본 예외는 cause로도 넘기지 않음
+  private RuntimeException tossFailure(String label, Exception e) {
+    if (e instanceof RestClientResponseException responseException) {
+      return new RuntimeException(label + ": " + responseException.getStatusCode()
+          + " " + responseException.getResponseBodyAsString());
+    }
+    return new RuntimeException(label + ": " + e.getClass().getSimpleName());
   }
 
   private HttpHeaders createHeaders() {
