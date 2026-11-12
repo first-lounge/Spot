@@ -15,6 +15,7 @@ import com.example.Spot.order.presentation.dto.response.OrderContextDto;
 
 import io.temporal.activity.ActivityOptions;
 import io.temporal.common.RetryOptions;
+import io.temporal.failure.ActivityFailure;
 import io.temporal.spring.boot.WorkflowImpl;
 import io.temporal.workflow.ChildWorkflowOptions;
 import io.temporal.workflow.ChildWorkflowStub;
@@ -31,14 +32,34 @@ public class OrderWorkflowImpl implements OrderWorkflow {
     private boolean isRefundCompleted = false;
 
     private static final ActivityOptions ACTIVITY_OPTIONS = ActivityOptions.newBuilder()
-            .setStartToCloseTimeout(Duration.ofSeconds(10))
+            .setStartToCloseTimeout(Duration.ofSeconds(20))
             .setRetryOptions(RetryOptions.newBuilder().setMaximumAttempts(5).build())
+            .build();
+
+    // 주문 저장이 최종 실패했을 때 실패 기록을 남기는 작업용 옵션
+    // DB가 회복될 때까지 간격을 늘려 가며(5초 → 최대 1분) 다시 시도하고, 30분을 넘기면 포기
+    private static final ActivityOptions FAILURE_RECORD_OPTIONS = ActivityOptions.newBuilder()
+            .setStartToCloseTimeout(Duration.ofSeconds(20))
+            .setScheduleToCloseTimeout(Duration.ofMinutes(30))
+            .setRetryOptions(RetryOptions.newBuilder()
+                    .setInitialInterval(Duration.ofSeconds(5))
+                    .setBackoffCoefficient(2.0)
+                    .setMaximumInterval(Duration.ofMinutes(1))
+                    .build())
             .build();
 
     @Override
     public void processOrder(UUID orderId, Integer userId, OrderCreateRequestDto requestDto, OrderContextDto contextDto) {
         OrderActivity activities = Workflow.newActivityStub(OrderActivity.class, ACTIVITY_OPTIONS);
-        activities.createOrderInDb(orderId, userId, requestDto, contextDto);
+        try {
+            activities.createOrderInDb(orderId, userId, requestDto, contextDto);
+        } catch (ActivityFailure e) {
+            // 재시도를 다 쓰고도 저장하지 못하면
+            // 고객이 주문 목록에서 볼 수 있게 실패 기록을 남기고 워크플로는 실패로 종료
+            OrderActivity failureActivities = Workflow.newActivityStub(OrderActivity.class, FAILURE_RECORD_OPTIONS);
+            failureActivities.recordOrderCreationFailure(orderId, userId, requestDto, contextDto);
+            throw e;
+        }
 
         ChildWorkflowStub paymentStub = Workflow.newUntypedChildWorkflowStub("PaymentApproveWorkflow",
                 ChildWorkflowOptions.newBuilder()

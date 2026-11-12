@@ -17,6 +17,9 @@ public interface OrderActivity {
     void createOrderInDb(UUID orderId, Integer userId, OrderCreateRequestDto requestDto, OrderContextDto contextDto);
     
     @ActivityMethod
+    void recordOrderCreationFailure(UUID orderId, Integer userId, OrderCreateRequestDto requestDto, OrderContextDto contextDto);
+
+    @ActivityMethod
     void updateOrderStatusInDb(UUID orderId, OrderStatus nextStatus, Integer estimatedTime, String reason, CancelledBy actor);
     
     @ActivityMethod

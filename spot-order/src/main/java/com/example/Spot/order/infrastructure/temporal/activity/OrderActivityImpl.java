@@ -1,26 +1,20 @@
 package com.example.Spot.order.infrastructure.temporal.activity;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.Spot.global.feign.dto.MenuOptionResponse;
-import com.example.Spot.global.feign.dto.MenuResponse;
+import com.example.Spot.order.application.service.OrderCreationService;
 import com.example.Spot.order.application.service.OrderNumberCounterService;
 import com.example.Spot.order.domain.entity.OrderEntity;
-import com.example.Spot.order.domain.entity.OrderItemEntity;
-import com.example.Spot.order.domain.entity.OrderItemOptionEntity;
 import com.example.Spot.order.domain.enums.CancelledBy;
 import com.example.Spot.order.domain.enums.OrderStatus;
 import com.example.Spot.order.domain.repository.OrderRepository;
 import com.example.Spot.order.infrastructure.producer.OrderEventProducer;
 import com.example.Spot.order.infrastructure.temporal.config.OrderConstants;
 import com.example.Spot.order.presentation.dto.request.OrderCreateRequestDto;
-import com.example.Spot.order.presentation.dto.request.OrderItemOptionRequestDto;
-import com.example.Spot.order.presentation.dto.request.OrderItemRequestDto;
 import com.example.Spot.order.presentation.dto.response.OrderContextDto;
 
 import io.temporal.spring.boot.ActivityImpl;
@@ -35,70 +29,19 @@ public class OrderActivityImpl implements OrderActivity {
 
     private final OrderRepository orderRepository;
     private final OrderEventProducer orderEventProducer;
+    private final OrderCreationService orderCreationService;
     private final OrderNumberCounterService orderNumberCounterService;
 
     @Override
     public void createOrderInDb(UUID orderId, Integer userId, OrderCreateRequestDto requestDto, OrderContextDto contextDto) {
-        if (orderRepository.existsById(orderId)) {
-            return;
-        }
-
         String orderNumber = orderNumberCounterService.issueOrderNumber();
-        BigDecimal totalAmount = BigDecimal.ZERO;
+        orderCreationService.saveOrder(orderId, userId, orderNumber, requestDto, contextDto);
+    }
 
-        OrderEntity order = OrderEntity.builder()
-                .id(orderId)
-                .storeId(contextDto.getStore().getId())
-                .userId(userId)
-                .orderNumber(orderNumber)
-                .pickupTime(requestDto.getPickupTime())
-                .needDisposables(requestDto.getNeedDisposables())
-                .request(requestDto.getRequest())
-                .orderStatus(OrderStatus.PAYMENT_PENDING)
-                .build();
-
-        for (OrderItemRequestDto itemDto : requestDto.getOrderItems()) {
-            MenuResponse menu = contextDto.getMenuMap().get(itemDto.getMenuId());
-            BigDecimal itemPrice = BigDecimal.valueOf(menu.getPrice());
-
-            // 총액 합산 로직
-            totalAmount = totalAmount.add(itemPrice.multiply(BigDecimal.valueOf(itemDto.getQuantity())));
-
-            OrderItemEntity orderItem = OrderItemEntity.builder()
-                    .menuId(menu.getId())
-                    .menuName(menu.getName())
-                    .menuPrice(itemPrice)
-                    .quantity(itemDto.getQuantity())
-                    .build();
-
-            for (OrderItemOptionRequestDto optionDto : itemDto.getOptions()) {
-                MenuOptionResponse menuOption = contextDto.getOptionMap().get(optionDto.getMenuOptionId());
-                BigDecimal optionPrice = BigDecimal.valueOf(menuOption.getPrice());
-
-                // 옵션 총액 합산
-                totalAmount = totalAmount.add(optionPrice);
-
-                OrderItemOptionEntity orderItemOption = OrderItemOptionEntity.builder()
-                        .menuOptionId(menuOption.getId())
-                        .optionName(menuOption.getName())
-                        .optionDetail(menuOption.getDetail())
-                        .optionPrice(optionPrice)
-                        .build();
-
-                orderItem.addOrderItemOption(orderItemOption);
-            }
-            order.addOrderItem(orderItem);
-        }
-
-        orderRepository.save(order);
-
-        orderEventProducer.reserveOrderCreated(
-                orderId,
-                userId,
-                totalAmount.longValue()
-        );
-
-        log.info("주문 생성이 완료되었습니다. OrderID: {}, OrderNumber: {}", orderId, orderNumber);
+    @Override
+    public void recordOrderCreationFailure(UUID orderId, Integer userId, OrderCreateRequestDto requestDto, OrderContextDto contextDto) {
+        String orderNumber = orderNumberCounterService.issueOrderNumber();
+        orderCreationService.saveFailedOrder(orderId, userId, orderNumber, requestDto, contextDto);
     }
 
     @Override

@@ -28,6 +28,9 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
             "WHERE o.id = :orderId")
     Optional<OrderEntity> findByIdWithOrderItems(@Param("orderId") UUID orderId);
 
+    @Query(value = "SELECT pg_try_advisory_xact_lock(:key)", nativeQuery = true)
+    Boolean lockByKey(@Param("key") long key);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT o FROM OrderEntity o WHERE o.id = :orderId")
     Optional<OrderEntity> findByIdWithLock(@Param("orderId") UUID orderId);
