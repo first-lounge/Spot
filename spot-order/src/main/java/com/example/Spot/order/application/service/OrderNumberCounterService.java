@@ -18,7 +18,7 @@ public class OrderNumberCounterService {
     private final OrderNumberCounterRepository orderNumberCounterRepository;
     private static final DateTimeFormatter ORDER_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 2)
     public String issueOrderNumber() {
         LocalDate today = LocalDate.now();
 
