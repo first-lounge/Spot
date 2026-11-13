@@ -124,14 +124,14 @@ TOSS_SECRET_KEY=
 
 | 디렉터리                                                                                                                                                            | 설명                                                                                                                               |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `spot-gateway`                                                                                                                                                      | Spring Cloud Gateway (라우팅, 인증/인가)                                                                                           |
+| `spot-gateway`                                                                                                                                                      | Spring Cloud Gateway (라우팅)                                                                                                      |
 | [`spot-user`](./spot-user/README.md) / [`spot-store`](./spot-store/README.md) / [`spot-order`](./spot-order/README.md) / [`spot-payment`](./spot-payment/README.md) | 도메인 서비스 (**링크 = 각 도메인별 README**)                                                                                      |
 | `spot-mono`                                                                                                                                                         | 모놀리식 통합 모듈                                                                                                                 |
 | `FE`                                                                                                                                                                | 프론트엔드                                                                                                                         |
 | `config`                                                                                                                                                            | 공통 Spring 설정(yml) — Docker Compose 실행 시 사용 (`./config:/config` 마운트)                                                    |
 | `k8s`                                                                                                                                                               | Kustomize(base/overlays) + Helm 차트(spot-apps), ArgoCD App-of-Apps(`argo/` — Dev/Prod GitOps 전용), k3d 부트스트랩, 배포 스크립트 |
 | `k8s/base/secret`                                                                                                                                                   | `.env` → Secret 생성 (kustomize secretGenerator, `.env`는 gitignore 대상)                                                          |
-| `k8s/overlays/local` · `k8s/overlays/dev`                                                                                                                           | 환경별 매니페스트 (config / infra / monitoring)                                                                                    |
+| `k8s/overlays/local` · `k8s/overlays/dev` · `k8s/overlays/prod`                                                                                                     | 환경별 매니페스트 (config / infra / monitoring)                                                                                    |
 | `terraform`                                                                                                                                                         | AWS 인프라 IaC (modules + environments) — [실행 가이드](./terraform/README.md)                                                     |
 | `k6`                                                                                                                                                                | 부하 테스트 스크립트                                                                                                               |
 | `docs`                                                                                                                                                              | 기능 문서                                                                                                                          |
@@ -157,14 +157,14 @@ TOSS_SECRET_KEY=
 
 1. **회원 관리**: API Gateway → User Service → User DB
 2. **매장/메뉴 조회**: API Gateway → Store Service → Store/Menu DB (Redis 캐싱)
-3. **주문 생성**: API Gateway → Order Service → 사용자/가게/메뉴 유효성 검증 → Order DB
-4. **결제 처리**: Order Service → Payment Service → TossPG 승인/취소 API 호출
-5. **결제 결과**: TossPG Webhook → Payment Service → Kafka → 결제 결과 확정
+3. **주문 생성**: API Gateway → Order Service → 사용자/가게/메뉴 유효성 검증 → Temporal 주문 워크플로 → Order DB 저장 + Outbox → Kafka(`spot.order.created`)
+4. **결제 처리**: Payment Service가 주문 생성 이벤트 수신 → Temporal 결제 워크플로 → TossPG 빌링 결제 API 호출
+5. **결제 결과**: Payment DB Outbox → Kafka(`spot.payment.succeeded`) → Order Service가 주문 워크플로에 결과 전달 → 주문 상태 확정
 
 ### 서비스 간 통신
 
 - **동기 통신**: OpenFeign을 통한 REST API 호출 (Resilience4j 서킷 브레이커 적용)
-- **비동기 통신**: Kafka를 통한 이벤트 기반 메시징
+- **비동기 통신**: Kafka를 통한 이벤트 기반 메시징 (Transactional Outbox + Debezium CDC로 DB 저장과 이벤트 발행을 함께 보장)
 - **워크플로 오케스트레이션**: Temporal을 통한 주문/결제 워크플로 관리
 - **캐싱**: Redis(ElastiCache)를 통한 메뉴/매장 정보 캐싱
 
@@ -195,7 +195,8 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 
 - **EKS**
   - 5개 서비스 (Gateway, User, Store, Order, Payment) 및 인프라 워크로드(Kafka, Temporal, 모니터링) 배포
-  - SPOT 노드 사용
+  - 노드 그룹 4개(taint·label로 워크로드 분리): backend(서비스, SPOT) / infra(Kafka·Temporal, ON_DEMAND) / monitoring(ON_DEMAND) / etc(ArgoCD·컨트롤러·EKS 애드온, ON_DEMAND)
+  - 서비스는 replicas 3(gateway 2)으로 AZ에 나눠 배치
 - **AWS Load Balancer Controller**: Ingress 기반 ALB 자동 생성 및 트래픽 분산
 - **ECR**: 컨테이너 이미지 저장소
 
@@ -203,19 +204,24 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 
 - **ArgoCD**
   - App-of-Apps 패턴으로 `k8s/`의 매니페스트를 pull 방식으로 동기화
-  - Terraform(`environments/argo`)으로 부트스트랩
-- **GitHub Actions**: dev 머지 시 변경된 서비스만 빌드해 ECR push (OIDC 인증) — 클러스터 반영은 ArgoCD 담당
-- **External Secrets Operator**: Parameter Store의 값을 클러스터 Secret으로 동기화 (`ClusterSecretStore` + `ExternalSecret`)
+  - 각 환경의 Terraform(`environments/dev`·`environments/prod`)이 설치와 root App 배포까지 담당
+- **Argo Rollouts (Blue/Green)**: 전 서비스를 Rollout으로 배포. 새 버전은 preview로 띄워 스모크 테스트(prePromotionAnalysis) 후 전환
+  - 서비스별 승격 정책(장애 시 복구 난이도 기준): gateway·user·payment = 수동 승격·구버전 3600초 유지 / order = 수동·900초 / store = 자동·300초
+  - 롤백은 `git revert` (ArgoCD selfHeal과 충돌하지 않도록 Git을 기준으로 되돌림)
+- **GitHub Actions**: dev 머지 시 변경된 서비스만 빌드해 ECR push (OIDC 인증) → `values-dev.yaml` imageTag 커밋 → ArgoCD 반영
+  - Prod는 CI/CD 통합 전까지 이미지 push와 `values-prod.yaml` imageTag를 수동으로 갱신
+- **External Secrets Operator**: AWS의 시크릿을 클러스터 Secret으로 동기화 (`ClusterSecretStore` + `ExternalSecret`)
+  - Parameter Store(앱 시크릿) + Secrets Manager(Prod RDS 관리형 마스터 암호)
 - **external-dns**: Ingress 생성 시 Route 53 레코드 자동 등록
 
 > GitOps는 Dev/Prod 환경에만 적용됩니다. 로컬 k3d는 셸 스크립트(`run_k3d.sh`)로 배포합니다.
 
 ### 데이터베이스 및 메시징
 
-- **RDS**: PostgreSQL 16 — Dev는 단일 인스턴스에 서비스별 데이터베이스, Prod는 서비스별 인스턴스 분리 예정
-- **ElastiCache**: Redis 7 캐시
-- **Kafka**: Strimzi Operator (KRaft 모드)
-- **Temporal**: 워크플로 엔진
+- **RDS**: PostgreSQL 16 — Dev는 단일 인스턴스에 서비스별 데이터베이스, Prod는 서비스별 인스턴스 5대(user·store·order·payment·temporal, Multi-AZ)
+- **ElastiCache**: Redis 7 캐시 (Prod: primary + replica, AUTH 토큰·TLS)
+- **Kafka**: Strimzi Operator (KRaft 모드) + Kafka Connect(Debezium, Outbox CDC)
+- **Temporal**: 워크플로 엔진 (Prod는 공식 Helm 차트, frontend·history·matching replicas 2)
 
 ### 보안 및 관리
 
@@ -223,9 +229,9 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 | --------------- | ---------------------------------------------------------------------------- |
 | IAM             | 접근 권한 관리 (GitHub Actions OIDC 포함)                                    |
 | WAF             | 웹 방화벽 (rate limiting)                                                    |
-| Secrets Manager | RDS 마스터 암호 관리                                                         |
+| Secrets Manager | Prod RDS 마스터 암호 관리 (ESO가 클러스터 Secret으로 동기화)                 |
 | Parameter Store | 앱 시크릿 저장 — External Secrets Operator(ESO)가 클러스터 Secret으로 동기화 |
-| KMS             | tfstate 암호화 (S3 backend, 전 환경 공용 키)                                 |
+| KMS             | tfstate 암호화(전 환경 공용 키) + Prod EBS·RDS 암호화용 CMK                  |
 | ACM             | TLS 인증서 관리                                                              |
 
 ### 모니터링 및 로깅
@@ -233,6 +239,7 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 - **Prometheus / Grafana**: 메트릭 수집 및 대시보드 (서비스·Kafka·Temporal 모니터링)
 - **Loki / fluent-bit**: 로그 수집 및 조회
 - **CloudWatch / CloudTrail**: AWS 리소스 모니터링 및 감사 로그
+- **알림**: CloudWatch 알람(RDS·ElastiCache·ALB) → SNS → Lambda → Discord / Prometheus Alertmanager → Discord
 - **S3**: 정적 파일, ALB 액세스 로그 및 백업 스토리지
 
 ### Terraform 폴더 구조
@@ -240,18 +247,21 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 ```
 terraform/
 ├── environments/
-│   ├── bootstrap/   # tfstate용 S3 + DynamoDB lock (최초 1회, destroy 금지)
-│   ├── dev/         # Dev 환경 (VPC, EKS, RDS 등)
-│   └── argo/        # ArgoCD 루트 모듈 (dev 클러스터를 참조, 별도 state)
+│   ├── bootstrap/   # tfstate용 S3 + DynamoDB lock, 더미 데이터 버킷 (최초 1회, destroy 금지)
+│   ├── dev/         # Dev 환경 (VPC, EKS, RDS, ArgoCD 등)
+│   └── prod/        # Prod 환경 (Dev + RDS 서비스별 분리, KMS, 알람 등)
 └── modules
     ├─acm
+    ├─alarm
     ├─argocd
     ├─ecr
     ├─eks
+    ├─elasticache
     ├─github-oidc
+    ├─kms
     ├─network
+    ├─parameter-store
     ├─rds
-    ├─redis
     ├─route53
     ├─s3
     ├─security
