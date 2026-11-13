@@ -2,26 +2,29 @@
 
 ## 모듈 구성
 
-| Root 모듈 | 역할                                           | backend key            |
-| --------- | ---------------------------------------------- | ---------------------- |
-| bootstrap | tfstate 저장소(S3) + 잠금(DynamoDB) 프로비저닝 | 로컬 tfstate           |
-| dev       | EKS Dev 인프라 프로비저닝                      | dev/terraform.tfstate  |
-| argo      | ArgoCD 설치 및 root App 배포(kubectl_manifest) | argo/terraform.tfstate |
+| Root 모듈 | 역할                                                                | backend key            |
+| --------- | ------------------------------------------------------------------- | ---------------------- |
+| bootstrap | tfstate 저장소(S3) + 잠금(DynamoDB) + 더미 데이터 버킷 프로비저닝   | 로컬 tfstate           |
+| dev       | EKS Dev 인프라 프로비저닝 + ArgoCD 설치·root App(`root-dev`) 배포   | dev/terraform.tfstate  |
+| prod      | EKS Prod 인프라 프로비저닝 + ArgoCD 설치·root App(`root-prod`) 배포 | prod/terraform.tfstate |
 
-| Child 모듈  | 역할                                                          |
-| ----------- | ------------------------------------------------------------- |
-| acm         | HTTPS 인증서 발급 및 갱신                                     |
-| argocd      | ArgoCD 설치 및 root App 배포(kubectl_manifest)                |
-| eks         | 클러스터, AWS LBC(Load Balancer Controller) 설치 및 IRSA 설정 |
-| ecr         | Docker 이미지 레지스트리                                      |
-| github-oidc | GitHub Action OIDC                                            |
-| network     | VPC, Nat Instance, Route Table, IGW(Internet GateWay)         |
-| rds         | 단일 RDS (Dev)                                                |
-| elasticache | 단일 Redis (Dev)                                              |
-| route53     | A 레코드로 DNS 등록                                           |
-| s3          | ALB 로그 기록 저장                                            |
-| security    | SG 규칙, EKS IAM Role 설정                                    |
-| waf         | 웹 애플리케이션 방화벽                                        |
+| Child 모듈      | 역할                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------ |
+| acm             | HTTPS 인증서 발급 및 갱신                                                            |
+| alarm           | CloudWatch 알람(RDS·ElastiCache·ALB) → SNS → Lambda → Discord (Prod)                 |
+| argocd          | ArgoCD 설치 및 root App 배포(Helm `argocd-apps`)                                     |
+| eks             | 클러스터, 노드 그룹, EKS 애드온, AWS LBC(Load Balancer Controller) 설치 및 IRSA 설정 |
+| ecr             | Docker 이미지 레지스트리                                                             |
+| elasticache     | Redis (Dev 단일 노드 / Prod primary + replica, AUTH·TLS)                             |
+| github-oidc     | GitHub Action OIDC                                                                   |
+| kms             | EBS·RDS 암호화용 CMK (Prod)                                                          |
+| network         | VPC, NAT(Dev NAT Instance / Prod AZ별 NAT Gateway), Route Table, IGW                 |
+| parameter-store | 앱 시크릿·DB 접속 정보 SSM 파라미터 (ESO가 동기화)                                   |
+| rds             | PostgreSQL (Dev 단일 인스턴스 / Prod 서비스별 인스턴스 5대)                          |
+| route53         | 호스팅 영역 (레코드는 external-dns가 등록)                                           |
+| s3              | ALB 액세스 로그 버킷                                                                 |
+| security        | SG 규칙, EKS IAM Role 설정                                                           |
+| waf             | 웹 애플리케이션 방화벽 (Prod)                                                        |
 
 ## 실행 가이드
 
