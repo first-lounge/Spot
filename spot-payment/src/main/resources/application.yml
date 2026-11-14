@@ -12,5 +12,3 @@ spring:
       - optional:file:/config/common.yml
       - optional:file:/config/kafka-topics.yml
       - optional:file:/config/spot-payment.yml
-
-      # cd-test 4
