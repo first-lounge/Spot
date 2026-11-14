@@ -70,7 +70,7 @@ apps:
     scaleDownDelaySeconds: 300
     smokePath: /actuator/health
   payment:
-    imageTag: "0e43cf43"
+    imageTag: "de79f1a6"
     rollout: true
     autoPromotionEnabled: true
     scaleDownDelaySeconds: 900
