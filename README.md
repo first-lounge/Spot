@@ -64,7 +64,7 @@ TOSS_SECRET_KEY=
 
 #### 2. 실행
 
-> ⚠️ 로컬은 셸 스크립트 실행으로 ArgoCD는 사용하지 않습니다. (Dev/Prod는 GitOps)
+> ⚠️ 로컬은 셸 스크립트 실행으로 ArgoCD는 사용하지 않습니다.
 
 ```bash
 # 전체 실행
@@ -91,8 +91,8 @@ TOSS_SECRET_KEY=
 
 - **Windows**
 
-  ```
-  # 1. 메모장을 "관리자 권한으로 실행"한 뒤, 아래 파일을 엽니다
+  ```PowerShell
+  # 1. 메모장을 관리자 권한으로 실행 후, 아래 파일을 엽니다
   C:\Windows\System32\drivers\etc\hosts
 
   # 2. 파일 맨 아래에 아래 내용을 추가하고 저장합니다
@@ -195,7 +195,11 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 
 - **EKS**
   - 5개 서비스 (Gateway, User, Store, Order, Payment) 및 인프라 워크로드(Kafka, Temporal, 모니터링) 배포
-  - 노드 그룹 4개(taint·label로 워크로드 분리): backend(서비스, SPOT) / infra(Kafka·Temporal, ON_DEMAND) / monitoring(ON_DEMAND) / etc(ArgoCD·컨트롤러·EKS 애드온, ON_DEMAND)
+  - 노드 그룹 4개(taint·label로 워크로드 분리)
+    - backend(서비스, SPOT)
+    - infra(Kafka·Temporal, ON_DEMAND)
+    - monitoring(ON_DEMAND)
+    - etc(ArgoCD·컨트롤러·EKS 애드온, ON_DEMAND)
   - 서비스는 replicas 3(gateway 2)으로 AZ에 나눠 배치
 - **AWS Load Balancer Controller**: Ingress 기반 ALB 자동 생성 및 트래픽 분산
 - **ECR**: 컨테이너 이미지 저장소
@@ -205,20 +209,26 @@ User → Route 53 → ALB (AWS Load Balancer Controller) → Spring Cloud Gatewa
 - **ArgoCD**
   - App-of-Apps 패턴으로 `k8s/`의 매니페스트를 pull 방식으로 동기화
   - 각 환경의 Terraform(`environments/dev`·`environments/prod`)이 설치와 root App 배포까지 담당
-- **Argo Rollouts (Blue/Green)**: 전 서비스를 Rollout으로 배포. 새 버전은 preview로 띄워 스모크 테스트(prePromotionAnalysis) 후 전환
-  - 서비스별 승격 정책(장애 시 복구 난이도 기준): gateway·user·payment = 수동 승격·구버전 3600초 유지 / order = 수동·900초 / store = 자동·300초
+- **Argo Rollouts (Blue/Green)**
+  - 전 서비스를 Rollout으로 배포
+  - 새 버전은 preview로 띄워 스모크 테스트(prePromotionAnalysis) 후 전환
+  - 서비스별 승격 정책(장애 시 복구 난이도 기준): gateway·user·payment = 수동 승격 & 구버전 3600초 유지 / order = 수동 & 900초 / store = 자동 & 300초
   - 롤백은 `git revert` (ArgoCD selfHeal과 충돌하지 않도록 Git을 기준으로 되돌림)
-- **GitHub Actions**: dev 머지 시 변경된 서비스만 빌드해 ECR push (OIDC 인증) → `values-dev.yaml` imageTag 커밋 → ArgoCD 반영
-  - Prod는 CI/CD 통합 전까지 이미지 push와 `values-prod.yaml` imageTag를 수동으로 갱신
-- **External Secrets Operator**: AWS의 시크릿을 클러스터 Secret으로 동기화 (`ClusterSecretStore` + `ExternalSecret`)
+- **GitHub Actions**
+  - dev 머지 시 변경된 서비스만 빌드해 ECR push (OIDC 인증) → `values-dev.yaml` imageTag 커밋 → ArgoCD 반영
+  - Prod는 CI/CD 수정 전까지 이미지 push와 `values-prod.yaml` imageTag를 수동으로 갱신
+- **External Secrets Operator**
+  - AWS의 시크릿을 클러스터 Secret으로 동기화 (`ClusterSecretStore` + `ExternalSecret`)
   - Parameter Store(앱 시크릿) + Secrets Manager(Prod RDS 관리형 마스터 암호)
 - **external-dns**: Ingress 생성 시 Route 53 레코드 자동 등록
 
-> GitOps는 Dev/Prod 환경에만 적용됩니다. 로컬 k3d는 셸 스크립트(`run_k3d.sh`)로 배포합니다.
+> GitOps는 Dev/Prod 환경에만 적용되며, k3d는 셸 스크립트(`run_k3d.sh`)로 배포합니다.
 
 ### 데이터베이스 및 메시징
 
-- **RDS**: PostgreSQL 16 — Dev는 단일 인스턴스에 서비스별 데이터베이스, Prod는 서비스별 인스턴스 5대(user·store·order·payment·temporal, Multi-AZ)
+- **RDS**: PostgreSQL 16
+  - Dev는 단일 인스턴스에 서비스별 데이터베이스
+  - Prod는 서비스별 인스턴스 5대(user·store·order·payment·temporal, Multi-AZ)
 - **ElastiCache**: Redis 7 캐시 (Prod: primary + replica, AUTH 토큰·TLS)
 - **Kafka**: Strimzi Operator (KRaft 모드) + Kafka Connect(Debezium, Outbox CDC)
 - **Temporal**: 워크플로 엔진 (Prod는 공식 Helm 차트, frontend·history·matching replicas 2)
