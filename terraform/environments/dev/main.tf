@@ -75,7 +75,7 @@ module "eks" {
   # Node Group
   node_group_role_arn = module.security.node_group_role_arn
   node_group_sg_id    = module.security.node_group_sg_id
-  node_subnet_ids     = module.network.private_subnet_ids
+  node_subnet_ids     = [module.network.private_subnet_ids_map["a"]]
   subnet_ids          = module.network.private_subnet_ids
   public_access_cidrs = var.public_access_cidrs
 
