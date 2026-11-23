@@ -3,7 +3,7 @@ WORKDIR /build
 
 COPY build/libs/*.jar app.jar
 
-RUN java -Djarmode=tools -jar app.jar extract --layers --launcher --destination extracted
+RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
@@ -17,4 +17,4 @@ COPY --from=builder /build/extracted/application/ ./
 ENV SPRING_CONFIG_ADDITIONAL_LOCATION=file:/config/
 
 EXPOSE 8082
-ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
